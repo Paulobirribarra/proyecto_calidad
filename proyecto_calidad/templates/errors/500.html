@@ -1,0 +1,32 @@
+{% extends 'base.html' %}
+
+{% block title %}Error del servidor - 500{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="row justify-content-center">
+        <div class="col-md-6 text-center">
+            <div class="card">
+                <div class="card-body py-5">
+                    <i class="fas fa-server fa-5x text-danger mb-4" aria-hidden="true"></i>
+                    <h1 class="display-1 text-muted">500</h1>
+                    <h3 class="mb-3">Error interno del servidor</h3>
+                    <p class="text-muted mb-4">
+                        Ha ocurrido un error interno. Nuestro equipo ha sido notificado y está trabajando para solucionarlo.
+                    </p>
+                    <div class="d-flex justify-content-center gap-2">
+                        <a href="{% url 'rooms:room_list' %}" class="btn btn-primary">
+                            <i class="fas fa-home" aria-hidden="true"></i>
+                            Ir al Inicio
+                        </a>
+                        <button onclick="location.reload()" class="btn btn-outline-secondary">
+                            <i class="fas fa-redo" aria-hidden="true"></i>
+                            Reintentar
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

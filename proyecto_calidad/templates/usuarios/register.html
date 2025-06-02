@@ -1,0 +1,492 @@
+{% extends 'base.html' %}
+
+{% block title %}Registro - Salas de Estudio{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="row justify-content-center">
+        <div class="col-md-8 col-lg-6">
+            <div class="card mt-4">
+                <div class="card-header text-center bg-success text-white">
+                    <h2 class="mb-0">
+                        <i class="fas fa-user-plus" aria-hidden="true"></i>
+                        Crear Nueva Cuenta
+                    </h2>
+                </div>
+                <div class="card-body p-4">
+                    <form method="post" novalidate>
+                        {% csrf_token %}
+                        
+                        <div class="row">
+                            <!-- First Name -->
+                            <div class="col-md-6 mb-3">
+                                <label for="{{ form.first_name.id_for_label }}" class="form-label">
+                                    <i class="fas fa-user" aria-hidden="true"></i>
+                                    Nombre
+                                    <span class="text-danger" aria-label="Campo obligatorio">*</span>
+                                </label>
+                                {{ form.first_name }}
+                                {% if form.first_name.errors %}
+                                    <div class="invalid-feedback d-block">
+                                        {% for error in form.first_name.errors %}
+                                            {{ error }}
+                                        {% endfor %}
+                                    </div>
+                                {% endif %}
+                            </div>
+
+                            <!-- Last Name -->
+                            <div class="col-md-6 mb-3">
+                                <label for="{{ form.last_name.id_for_label }}" class="form-label">
+                                    <i class="fas fa-user" aria-hidden="true"></i>
+                                    Apellido
+                                    <span class="text-danger" aria-label="Campo obligatorio">*</span>
+                                </label>
+                                {{ form.last_name }}
+                                {% if form.last_name.errors %}
+                                    <div class="invalid-feedback d-block">
+                                        {% for error in form.last_name.errors %}
+                                            {{ error }}
+                                        {% endfor %}
+                                    </div>
+                                {% endif %}
+                            </div>
+                        </div>
+
+                        <!-- Username -->
+                        <div class="mb-3">
+                            <label for="{{ form.username.id_for_label }}" class="form-label">
+                                <i class="fas fa-at" aria-hidden="true"></i>
+                                Nombre de Usuario
+                                <span class="text-danger" aria-label="Campo obligatorio">*</span>
+                            </label>
+                            {{ form.username }}
+                            <div class="form-text">
+                                <i class="fas fa-info-circle" aria-hidden="true"></i>
+                                Mínimo 3 caracteres. Solo letras, números y @/./+/-/_ permitidos.
+                            </div>
+                            {% if form.username.errors %}
+                                <div class="invalid-feedback d-block">
+                                    {% for error in form.username.errors %}
+                                        {{ error }}
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                        </div>
+
+                        <!-- Email -->
+                        <div class="mb-3">
+                            <label for="{{ form.email.id_for_label }}" class="form-label">
+                                <i class="fas fa-envelope" aria-hidden="true"></i>
+                                Correo Electrónico
+                                <span class="text-danger" aria-label="Campo obligatorio">*</span>
+                            </label>
+                            {{ form.email }}
+                            {% if form.email.errors %}
+                                <div class="invalid-feedback d-block">
+                                    {% for error in form.email.errors %}
+                                        {{ error }}
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                        </div>
+
+                        <!-- Phone Number -->
+                        <div class="mb-3">
+                            <label for="{{ form.phone_number.id_for_label }}" class="form-label">
+                                <i class="fas fa-phone" aria-hidden="true"></i>
+                                Número de Teléfono
+                            </label>
+                            {{ form.phone_number }}
+                            <div class="form-text">
+                                <i class="fas fa-info-circle" aria-hidden="true"></i>
+                                Formato: +123456789 o 123-456-7890
+                            </div>
+                            {% if form.phone_number.errors %}
+                                <div class="invalid-feedback d-block">
+                                    {% for error in form.phone_number.errors %}
+                                        {{ error }}
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                        </div>
+
+                        <div class="row">
+                            <!-- Password -->
+                            <div class="col-md-6 mb-3">
+                                <label for="{{ form.password1.id_for_label }}" class="form-label">
+                                    <i class="fas fa-lock" aria-hidden="true"></i>
+                                    Contraseña
+                                    <span class="text-danger" aria-label="Campo obligatorio">*</span>
+                                </label>
+                                {{ form.password1 }}
+                                <div class="form-text">
+                                    <i class="fas fa-shield-alt" aria-hidden="true"></i>
+                                    Mínimo 8 caracteres, debe incluir números y letras.
+                                </div>
+                                {% if form.password1.errors %}
+                                    <div class="invalid-feedback d-block">
+                                        {% for error in form.password1.errors %}
+                                            {{ error }}
+                                        {% endfor %}
+                                    </div>
+                                {% endif %}
+                            </div>
+
+                            <!-- Password Confirmation -->
+                            <div class="col-md-6 mb-3">
+                                <label for="{{ form.password2.id_for_label }}" class="form-label">
+                                    <i class="fas fa-lock" aria-hidden="true"></i>
+                                    Confirmar Contraseña
+                                    <span class="text-danger" aria-label="Campo obligatorio">*</span>
+                                </label>
+                                {{ form.password2 }}
+                                {% if form.password2.errors %}
+                                    <div class="invalid-feedback d-block">
+                                        {% for error in form.password2.errors %}
+                                            {{ error }}
+                                        {% endfor %}
+                                    </div>
+                                {% endif %}
+                            </div>
+                        </div>
+
+                        <!-- Email Notifications -->
+                        <div class="mb-3 form-check">
+                            {{ form.email_notifications }}
+                            <label class="form-check-label" for="{{ form.email_notifications.id_for_label }}">
+                                <i class="fas fa-bell" aria-hidden="true"></i>
+                                Recibir notificaciones por correo electrónico
+                            </label>
+                            <div class="form-text">
+                                Te notificaremos sobre confirmaciones de reserva y recordatorios.
+                            </div>
+                            {% if form.email_notifications.errors %}
+                                <div class="invalid-feedback d-block">
+                                    {% for error in form.email_notifications.errors %}
+                                        {{ error }}
+                                    {% endfor %}
+                                </div>
+                            {% endif %}                        </div>
+
+                        <!-- Terms and Conditions -->
+                        <div class="mb-3 form-check">
+                            {{ form.terms_accepted }}
+                            <label class="form-check-label" for="{{ form.terms_accepted.id_for_label }}">
+                                <i class="fas fa-file-contract" aria-hidden="true"></i>
+                                Acepto los <a href="#" data-bs-toggle="modal" data-bs-target="#termsModal">términos y condiciones</a>
+                                <span class="text-danger" aria-label="Campo obligatorio">*</span>
+                            </label>
+                            {% if form.terms_accepted.errors %}
+                                <div class="invalid-feedback d-block">
+                                    {% for error in form.terms_accepted.errors %}
+                                        {{ error }}
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                        </div>
+
+                        <!-- Submit button -->
+                        <div class="d-grid">
+                            <button type="submit" class="btn btn-success btn-lg">
+                                <i class="fas fa-user-plus" aria-hidden="true"></i>
+                                Crear Cuenta
+                            </button>
+                        </div>
+
+                        <!-- Non-field errors -->
+                        {% if form.non_field_errors %}
+                            <div class="alert alert-danger mt-3" role="alert">
+                                {% for error in form.non_field_errors %}
+                                    {{ error }}
+                                {% endfor %}
+                            </div>
+                        {% endif %}
+                    </form>
+                </div>
+                <div class="card-footer text-center">
+                    <p class="mb-0">
+                        ¿Ya tienes una cuenta? 
+                        <a href="{% url 'usuarios:login' %}" class="text-decoration-none">
+                            Inicia sesión aquí
+                        </a>
+                    </p>
+                </div>
+            </div>        </div>
+    </div>
+</div>
+
+<!-- Terms and Conditions Modal -->
+<div class="modal fade" id="termsModal" tabindex="-1" aria-labelledby="termsModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="termsModalLabel">
+                    <i class="fas fa-file-contract" aria-hidden="true"></i>
+                    Términos y Condiciones
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+            </div>
+            <div class="modal-body">
+                <h6>1. Uso del Sistema</h6>
+                <p>Al utilizar este sistema de reservas de salas de estudio, aceptas usar los servicios de manera responsable y conforme a las normas establecidas.</p>
+                
+                <h6>2. Reservas</h6>
+                <p>Las reservas deben realizarse con veracidad en la información proporcionada. El mal uso o cancelaciones recurrentes pueden resultar en la suspensión de la cuenta.</p>
+                
+                <h6>3. Privacidad</h6>
+                <p>Respetamos tu privacidad. Los datos personales serán utilizados únicamente para la gestión de reservas y comunicaciones relacionadas con el servicio.</p>
+                
+                <h6>4. Responsabilidades</h6>
+                <p>Los usuarios son responsables del cuidado de las instalaciones durante el tiempo de reserva. Cualquier daño será responsabilidad del usuario que realizó la reserva.</p>
+                
+                <h6>5. Modificaciones</h6>
+                <p>Nos reservamos el derecho de modificar estos términos cuando sea necesario. Los usuarios serán notificados de cambios importantes.</p>
+                
+                <h6>6. Contacto</h6>
+                <p>Para cualquier consulta sobre estos términos, puedes contactarnos a través de nuestros canales oficiales.</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                    <i class="fas fa-times" aria-hidden="true"></i>
+                    Cerrar
+                </button>
+                <button type="button" class="btn btn-primary" onclick="acceptTerms()">
+                    <i class="fas fa-check" aria-hidden="true"></i>
+                    Acepto los Términos
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// Function to accept terms
+function acceptTerms() {
+    document.querySelector('#id_terms_accepted').checked = true;
+    const modal = bootstrap.Modal.getInstance(document.getElementById('termsModal'));
+    modal.hide();
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+    // Add Bootstrap classes to form fields
+    const formFields = document.querySelectorAll('input[type="text"], input[type="email"], input[type="password"], input[type="tel"]');
+    formFields.forEach(field => {
+        field.classList.add('form-control');
+        if (field.hasAttribute('required')) {
+            field.setAttribute('aria-required', 'true');
+        }
+    });
+
+    // Add Bootstrap classes to checkbox
+    const checkboxes = document.querySelectorAll('input[type="checkbox"]');
+    checkboxes.forEach(checkbox => {
+        checkbox.classList.add('form-check-input');
+    });
+
+    // Focus on first name field
+    const firstNameField = document.querySelector('#id_first_name');
+    if (firstNameField) {
+        firstNameField.focus();
+    }
+
+    // Password fields with toggle visibility
+    const passwordFields = document.querySelectorAll('input[type="password"]');
+    passwordFields.forEach(field => {
+        const wrapper = field.parentNode;
+        const toggleBtn = document.createElement('button');
+        toggleBtn.type = 'button';
+        toggleBtn.className = 'btn btn-outline-secondary btn-sm mt-2';
+        toggleBtn.innerHTML = '<i class="fas fa-eye" aria-hidden="true"></i> Mostrar';
+        toggleBtn.style.fontSize = '0.8rem';
+        toggleBtn.setAttribute('aria-label', 'Mostrar contraseña');
+
+        toggleBtn.addEventListener('click', function() {
+            if (field.type === 'password') {
+                field.type = 'text';
+                this.innerHTML = '<i class="fas fa-eye-slash" aria-hidden="true"></i> Ocultar';
+                this.setAttribute('aria-label', 'Ocultar contraseña');
+            } else {
+                field.type = 'password';
+                this.innerHTML = '<i class="fas fa-eye" aria-hidden="true"></i> Mostrar';
+                this.setAttribute('aria-label', 'Mostrar contraseña');
+            }
+        });
+
+        wrapper.appendChild(toggleBtn);
+    });
+
+    // Password strength indicator
+    const password1 = document.querySelector('#id_password1');
+    const password2 = document.querySelector('#id_password2');
+
+    if (password1) {
+        password1.addEventListener('input', function() {
+            const password = this.value;
+            const strengthDiv = this.parentNode.querySelector('.password-strength');
+            
+            if (strengthDiv) {
+                strengthDiv.remove();
+            }
+
+            if (password.length > 0) {
+                const newStrengthDiv = document.createElement('div');
+                newStrengthDiv.className = 'password-strength mt-2';
+                
+                let strength = 0;
+                let feedback = [];
+
+                if (password.length >= 8) strength++;
+                else feedback.push('Al menos 8 caracteres');
+
+                if (/[a-z]/.test(password)) strength++;
+                else feedback.push('Incluir minúsculas');
+
+                if (/[A-Z]/.test(password)) strength++;
+                else feedback.push('Incluir mayúsculas');
+
+                if (/[0-9]/.test(password)) strength++;
+                else feedback.push('Incluir números');
+
+                if (/[^A-Za-z0-9]/.test(password)) strength++;
+                else feedback.push('Incluir símbolos');
+
+                let strengthText = '';
+                let strengthClass = '';
+
+                if (strength < 2) {
+                    strengthText = 'Débil';
+                    strengthClass = 'text-danger';
+                } else if (strength < 4) {
+                    strengthText = 'Media';
+                    strengthClass = 'text-warning';
+                } else {
+                    strengthText = 'Fuerte';
+                    strengthClass = 'text-success';
+                }
+
+                newStrengthDiv.innerHTML = `
+                    <small class="${strengthClass}">
+                        <i class="fas fa-shield-alt" aria-hidden="true"></i>
+                        Fortaleza: ${strengthText}
+                        ${feedback.length > 0 ? ' - Falta: ' + feedback.join(', ') : ''}
+                    </small>
+                `;
+                
+                this.parentNode.appendChild(newStrengthDiv);
+            }
+        });
+    }
+
+    // Password confirmation validation
+    if (password2) {
+        password2.addEventListener('input', function() {
+            const password1Value = password1.value;
+            const password2Value = this.value;
+
+            if (password2Value && password1Value !== password2Value) {
+                this.classList.add('is-invalid');
+                
+                let feedbackDiv = this.parentNode.querySelector('.password-match-feedback');
+                if (!feedbackDiv) {
+                    feedbackDiv = document.createElement('div');
+                    feedbackDiv.className = 'password-match-feedback invalid-feedback d-block';
+                    this.parentNode.appendChild(feedbackDiv);
+                }
+                feedbackDiv.textContent = 'Las contraseñas no coinciden';
+            } else {
+                this.classList.remove('is-invalid');
+                const feedbackDiv = this.parentNode.querySelector('.password-match-feedback');
+                if (feedbackDiv) {
+                    feedbackDiv.remove();
+                }
+            }
+        });
+    }
+
+    // Form validation
+    const form = document.querySelector('form');
+    form.addEventListener('submit', function(e) {
+        let isValid = true;
+        const requiredFields = form.querySelectorAll('[required]');
+
+        requiredFields.forEach(field => {
+            if (field.type === 'checkbox') {
+                if (!field.checked) {
+                    field.classList.add('is-invalid');
+                    isValid = false;
+                } else {
+                    field.classList.remove('is-invalid');
+                }
+            } else {
+                if (!field.value.trim()) {
+                    field.classList.add('is-invalid');
+                    isValid = false;
+                } else {
+                    field.classList.remove('is-invalid');
+                }
+            }
+        });
+
+        // Check terms acceptance
+        const termsCheckbox = document.querySelector('#id_terms_accepted');
+        if (termsCheckbox && !termsCheckbox.checked) {
+            termsCheckbox.classList.add('is-invalid');
+            isValid = false;
+            
+            // Show error message
+            let errorDiv = termsCheckbox.parentNode.querySelector('.terms-error');
+            if (!errorDiv) {
+                errorDiv = document.createElement('div');
+                errorDiv.className = 'terms-error invalid-feedback d-block';
+                errorDiv.textContent = 'Debes aceptar los términos y condiciones.';
+                termsCheckbox.parentNode.appendChild(errorDiv);
+            }
+        } else if (termsCheckbox) {
+            termsCheckbox.classList.remove('is-invalid');
+            const errorDiv = termsCheckbox.parentNode.querySelector('.terms-error');
+            if (errorDiv) {
+                errorDiv.remove();
+            }
+        }
+
+        if (!isValid) {
+            e.preventDefault();
+            const firstInvalid = form.querySelector('.is-invalid');
+            if (firstInvalid) {
+                firstInvalid.focus();
+            }
+        }
+    });
+
+    // Remove validation errors on input
+    document.querySelectorAll('.form-control').forEach(field => {
+        field.addEventListener('input', function() {
+            this.classList.remove('is-invalid');
+        });
+    });
+
+    // Remove validation errors on checkbox change
+    document.querySelectorAll('.form-check-input').forEach(field => {
+        field.addEventListener('change', function() {
+            this.classList.remove('is-invalid');
+        });
+    });
+
+    // Phone number formatting
+    const phoneField = document.querySelector('#id_phone_number');
+    if (phoneField) {
+        phoneField.addEventListener('input', function() {
+            let value = this.value.replace(/\D/g, '');
+            if (value.length >= 10) {
+                value = value.slice(0, 10);
+                value = value.replace(/(\d{3})(\d{3})(\d{4})/, '$1-$2-$3');
+            }
+            this.value = value;
+        });
+    }
+});
+</script>
+{% endblock %}

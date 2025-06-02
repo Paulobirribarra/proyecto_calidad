@@ -1,0 +1,31 @@
+# Sistema de Gestión de Salas de Estudio Inteligentes
+# Dependencias del proyecto
+
+# Framework principal
+Django==5.2.1
+
+# Dependencias de Django
+asgiref==3.8.1
+sqlparse==0.5.3
+tzdata==2025.2
+
+# Base de datos (desarrollo)
+# Para producción, considerar PostgreSQL o MySQL
+
+# Utilidades adicionales (opcionales)
+# Pillow==10.4.0  # Para manejo de imágenes si se implementan fotos de salas
+# django-crispy-forms==2.3  # Para formularios más elegantes
+# django-widget-tweaks==1.5.0  # Para personalización de widgets
+# python-decouple==3.8  # Para variables de entorno
+# whitenoise==6.7.0  # Para servir archivos estáticos en producción
+
+# Desarrollo y testing
+# coverage==7.6.1  # Para cobertura de tests
+# django-debug-toolbar==4.4.6  # Para debugging en desarrollo
+# flake8==7.1.1  # Para linting de código
+# black==24.8.0  # Para formateo de código
+
+# Producción
+# gunicorn==23.0.0  # Servidor WSGI para producción
+# psycopg2-binary==2.9.9  # Conector PostgreSQL
+# django-cors-headers==4.4.0  # Para CORS si se implementa API

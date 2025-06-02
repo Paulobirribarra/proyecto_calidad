@@ -1,0 +1,317 @@
+{% extends 'base.html' %}
+
+{% block title %}Reservar {{ room.name }} - Salas de Estudio{% endblock %}
+
+{% block content %}
+<div class="container my-5">
+    <!-- Room Header -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item"><a href="{% url 'rooms:room_list' %}">Salas</a></li>
+                    <li class="breadcrumb-item"><a href="{% url 'rooms:room_detail' room.pk %}">{{ room.name }}</a></li>
+                    <li class="breadcrumb-item active" aria-current="page">Reservar</li>
+                </ol>
+            </nav>
+        </div>
+    </div>
+
+    <div class="row">
+        <!-- Room Info -->
+        <div class="col-lg-4 mb-4">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        <i class="fas fa-building" aria-hidden="true"></i>
+                        {{ room.name }}
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <p class="text-muted mb-2">
+                        <i class="fas fa-map-marker-alt" aria-hidden="true"></i>
+                        {{ room.location }}
+                    </p>
+                    
+                    <p class="mb-2">
+                        <strong>Capacidad:</strong> {{ room.capacity }} personas
+                    </p>
+                    
+                    <p class="mb-2">
+                        <strong>Horario:</strong> 
+                        {{ room.opening_time|time:"H:i" }} - {{ room.closing_time|time:"H:i" }}
+                    </p>
+                      <p class="mb-3">
+                        <strong>Precio:</strong> 
+                        {% if user.is_estudiante and room.hourly_rate == 0 %}
+                            <span class="text-success h5">
+                                <i class="fas fa-gift me-1"></i>Gratuita
+                            </span>
+                        {% elif user.is_estudiante %}
+                            <span class="text-muted">
+                                <i class="fas fa-info-circle me-1"></i>Contactar coordinación
+                            </span>
+                        {% else %}
+                            <span class="text-success h5">${{ room.hourly_rate|floatformat:0 }}/hora</span>
+                        {% endif %}
+                    </p>
+                    
+                    {% if room.equipment %}
+                    <div class="mb-3">
+                        <strong>Equipamiento:</strong>
+                        <div class="mt-2">
+                            {% for equipment in room.get_equipment_list %}
+                                <span class="badge bg-light text-dark me-1 mb-1">{{ equipment|title }}</span>
+                            {% endfor %}
+                        </div>
+                    </div>
+                    {% endif %}
+                    
+                    <div class="alert alert-info">
+                        <small>
+                            <i class="fas fa-info-circle" aria-hidden="true"></i>
+                            Puedes cancelar tu reserva hasta 1 hora antes del inicio.
+                        </small>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Reservation Form -->
+        <div class="col-lg-8">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        <i class="fas fa-calendar-plus" aria-hidden="true"></i>
+                        Realizar Reserva
+                    </h5>
+                </div>
+                <div class="card-body">
+                    {% if messages %}
+                        {% for message in messages %}
+                            <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                                {{ message }}
+                                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                            </div>
+                        {% endfor %}
+                    {% endif %}                    <form method="post" id="reservation-form">
+                        {% csrf_token %}
+                        
+                        <!-- Campo oculto para la sala -->
+                        <input type="hidden" name="room" value="{{ room.id }}">
+                        
+                        <div class="row g-3">
+                            <!-- Fecha -->
+                            <div class="col-md-6">
+                                <label for="{{ form.start_time.id_for_label }}" class="form-label">
+                                    <i class="fas fa-calendar" aria-hidden="true"></i>
+                                    Fecha y Hora de Inicio *
+                                </label>
+                                {{ form.start_time }}
+                                {% if form.start_time.errors %}
+                                    <div class="text-danger small">{{ form.start_time.errors }}</div>
+                                {% endif %}
+                            </div>
+
+                            <!-- Hora fin -->
+                            <div class="col-md-6">
+                                <label for="{{ form.end_time.id_for_label }}" class="form-label">
+                                    <i class="fas fa-clock" aria-hidden="true"></i>
+                                    Fecha y Hora de Fin *
+                                </label>
+                                {{ form.end_time }}
+                                {% if form.end_time.errors %}
+                                    <div class="text-danger small">{{ form.end_time.errors }}</div>
+                                {% endif %}
+                            </div>
+
+                            <!-- Propósito -->
+                            <div class="col-12">
+                                <label for="{{ form.purpose.id_for_label }}" class="form-label">
+                                    <i class="fas fa-bullseye" aria-hidden="true"></i>
+                                    Propósito de la Reserva *
+                                </label>
+                                {{ form.purpose }}
+                                {% if form.purpose.errors %}
+                                    <div class="text-danger small">{{ form.purpose.errors }}</div>
+                                {% endif %}
+                            </div>
+
+                            <!-- Número de asistentes -->
+                            <div class="col-md-6">
+                                <label for="{{ form.attendees_count.id_for_label }}" class="form-label">
+                                    <i class="fas fa-users" aria-hidden="true"></i>
+                                    Número de Asistentes *
+                                </label>
+                                {{ form.attendees_count }}
+                                <small class="form-text text-muted">
+                                    Máximo: {{ room.capacity }} personas
+                                </small>
+                                {% if form.attendees_count.errors %}
+                                    <div class="text-danger small">{{ form.attendees_count.errors }}</div>
+                                {% endif %}
+                            </div>                            <!-- Duración y costo estimado -->
+                            <div class="col-md-6">
+                                <label class="form-label">Información de la Reserva</label>
+                                <div class="p-3 bg-light rounded" id="reservation-info">
+                                    <div class="d-flex justify-content-between">
+                                        <span>Duración:</span>
+                                        <span id="duration-display">-- horas</span>
+                                    </div>
+                                    {% if not user.is_estudiante or room.hourly_rate == 0 %}
+                                    <div class="d-flex justify-content-between">
+                                        <span>Costo Total:</span>
+                                        {% if user.is_estudiante and room.hourly_rate == 0 %}
+                                            <span id="cost-display" class="fw-bold text-success">Gratuita</span>
+                                        {% else %}
+                                            <span id="cost-display" class="fw-bold text-success">$--</span>
+                                        {% endif %}
+                                    </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+
+                            <!-- Notas adicionales -->
+                            <div class="col-12">
+                                <label for="{{ form.notes.id_for_label }}" class="form-label">
+                                    <i class="fas fa-sticky-note" aria-hidden="true"></i>
+                                    Notas Adicionales
+                                </label>
+                                {{ form.notes }}
+                                {% if form.notes.errors %}
+                                    <div class="text-danger small">{{ form.notes.errors }}</div>
+                                {% endif %}
+                            </div>
+                        </div>
+
+                        <!-- Botones -->
+                        <div class="row mt-4">
+                            <div class="col-12">
+                                <div class="d-flex gap-3">
+                                    <button type="submit" class="btn btn-success btn-lg">
+                                        <i class="fas fa-check" aria-hidden="true"></i>
+                                        Confirmar Reserva
+                                    </button>
+                                    <a href="{% url 'rooms:room_detail' room.pk %}" class="btn btn-secondary btn-lg">
+                                        <i class="fas fa-arrow-left" aria-hidden="true"></i>
+                                        Volver
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Availability Check Modal -->
+<div class="modal fade" id="availabilityModal" tabindex="-1" aria-labelledby="availabilityModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="availabilityModalLabel">Verificando Disponibilidad</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="text-center">
+                    <div class="spinner-border text-primary" role="status">
+                        <span class="visually-hidden">Verificando...</span>
+                    </div>
+                    <p class="mt-2">Verificando disponibilidad de la sala...</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const form = document.getElementById('reservation-form');
+    const startTimeField = document.getElementById('{{ form.start_time.id_for_label }}');
+    const endTimeField = document.getElementById('{{ form.end_time.id_for_label }}');
+    const durationDisplay = document.getElementById('duration-display');
+    const costDisplay = document.getElementById('cost-display');
+    const hourlyRate = {{ room.hourly_rate }};
+
+    // Add Bootstrap classes
+    const formFields = form.querySelectorAll('input, textarea, select');
+    formFields.forEach(field => {
+        field.classList.add('form-control');
+    });
+
+    // Calculate duration and cost
+    function updateReservationInfo() {
+        const startTime = new Date(startTimeField.value);
+        const endTime = new Date(endTimeField.value);
+
+        if (startTime && endTime && endTime > startTime) {
+            const duration = (endTime - startTime) / (1000 * 60 * 60); // hours
+            const cost = duration * hourlyRate;
+
+            durationDisplay.textContent = duration.toFixed(1) + ' horas';
+            costDisplay.textContent = '$' + cost.toFixed(0);
+        } else {
+            durationDisplay.textContent = '-- horas';
+            costDisplay.textContent = '$--';
+        }
+    }
+
+    // Event listeners
+    startTimeField.addEventListener('change', updateReservationInfo);
+    endTimeField.addEventListener('change', updateReservationInfo);
+
+    // Set minimum datetime to now
+    const now = new Date();
+    const minDateTime = new Date(now.getTime() + 60000).toISOString().slice(0, 16);
+    startTimeField.setAttribute('min', minDateTime);
+    endTimeField.setAttribute('min', minDateTime);
+
+    // Update end time minimum when start time changes
+    startTimeField.addEventListener('change', function() {
+        if (this.value) {
+            const startTime = new Date(this.value);
+            const minEndTime = new Date(startTime.getTime() + 30 * 60000); // 30 minutes later
+            endTimeField.setAttribute('min', minEndTime.toISOString().slice(0, 16));
+        }
+    });
+
+    // Form validation
+    form.addEventListener('submit', function(e) {
+        const startTime = new Date(startTimeField.value);
+        const endTime = new Date(endTimeField.value);
+
+        if (!startTime || !endTime) {
+            e.preventDefault();
+            alert('Por favor, completa las fechas de inicio y fin.');
+            return;
+        }
+
+        if (endTime <= startTime) {
+            e.preventDefault();
+            alert('La hora de fin debe ser posterior a la hora de inicio.');
+            return;
+        }
+
+        const duration = (endTime - startTime) / (1000 * 60 * 60);
+        if (duration < 0.5) {
+            e.preventDefault();
+            alert('La duración mínima de una reserva es 30 minutos.');
+            return;
+        }
+
+        if (duration > 8) {
+            e.preventDefault();
+            alert('La duración máxima de una reserva es 8 horas.');
+            return;
+        }
+    });
+
+    // Initial calculation
+    updateReservationInfo();
+});
+</script>
+{% endblock %}

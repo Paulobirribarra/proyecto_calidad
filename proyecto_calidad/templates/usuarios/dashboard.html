@@ -1,0 +1,169 @@
+{% extends 'base.html' %}
+
+{% block title %}Dashboard - Salas de Estudio{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="row">
+        <div class="col-12">
+            <h2 class="mb-4">
+                <i class="fas fa-tachometer-alt" aria-hidden="true"></i>
+                Panel de Control
+            </h2>
+        </div>
+    </div>
+
+    <!-- Quick Stats -->
+    <div class="row mb-4">
+        <div class="col-md-3">
+            <div class="card text-center">
+                <div class="card-body">
+                    <i class="fas fa-calendar-check fa-2x text-primary mb-2" aria-hidden="true"></i>
+                    <h5 class="card-title">{{ reservation_count }}</h5>
+                    <p class="card-text">Reservas Totales</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card text-center">
+                <div class="card-body">
+                    <i class="fas fa-clock fa-2x text-success mb-2" aria-hidden="true"></i>
+                    <h5 class="card-title">{{ active_reservations }}</h5>
+                    <p class="card-text">Reservas Activas</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card text-center">
+                <div class="card-body">
+                    <i class="fas fa-star fa-2x text-warning mb-2" aria-hidden="true"></i>
+                    <h5 class="card-title">{{ review_count }}</h5>
+                    <p class="card-text">Reseñas Escritas</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card text-center">
+                <div class="card-body">
+                    <i class="fas fa-user fa-2x text-info mb-2" aria-hidden="true"></i>
+                    <h5 class="card-title">{{ user.get_full_name|default:user.username }}</h5>
+                    <p class="card-text">Bienvenido</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <!-- Upcoming Reservations -->
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        <i class="fas fa-calendar-alt" aria-hidden="true"></i>
+                        Próximas Reservas
+                    </h5>
+                </div>
+                <div class="card-body">
+                    {% if upcoming_reservations %}
+                        <div class="table-responsive">
+                            <table class="table table-hover">
+                                <thead>
+                                    <tr>
+                                        <th>Sala</th>
+                                        <th>Fecha</th>
+                                        <th>Hora</th>
+                                        <th>Estado</th>
+                                        <th>Acciones</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for reservation in upcoming_reservations %}
+                                    <tr>
+                                        <td>{{ reservation.room.name }}</td>
+                                        <td>{{ reservation.date|date:"d/m/Y" }}</td>
+                                        <td>{{ reservation.start_time|time:"H:i" }} - {{ reservation.end_time|time:"H:i" }}</td>
+                                        <td>
+                                            <span class="badge bg-{{ reservation.get_status_color }}">
+                                                {{ reservation.get_status_display }}
+                                            </span>
+                                        </td>
+                                        <td>
+                                            <a href="{% url 'rooms:reservation_detail' reservation.pk %}" class="btn btn-sm btn-outline-primary">
+                                                Ver
+                                            </a>
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    {% else %}
+                        <div class="text-center py-4">
+                            <i class="fas fa-calendar-times fa-3x text-muted mb-3" aria-hidden="true"></i>
+                            <h6 class="text-muted">No tienes reservas próximas</h6>
+                            <a href="{% url 'rooms:room_list' %}" class="btn btn-primary mt-2">
+                                <i class="fas fa-plus" aria-hidden="true"></i>
+                                Hacer una Reserva
+                            </a>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Quick Actions -->
+        <div class="col-md-4">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        <i class="fas fa-bolt" aria-hidden="true"></i>
+                        Acciones Rápidas
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="d-grid gap-2">
+                        <a href="{% url 'rooms:room_list' %}" class="btn btn-primary">
+                            <i class="fas fa-search" aria-hidden="true"></i>
+                            Buscar Salas
+                        </a>
+                        <a href="{% url 'rooms:my_reservations' %}" class="btn btn-outline-primary">
+                            <i class="fas fa-calendar-check" aria-hidden="true"></i>
+                            Mis Reservas
+                        </a>
+                        <a href="{% url 'usuarios:profile' %}" class="btn btn-outline-secondary">
+                            <i class="fas fa-user-edit" aria-hidden="true"></i>
+                            Editar Perfil
+                        </a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Popular Rooms -->
+            <div class="card mt-3">
+                <div class="card-header">
+                    <h6 class="mb-0">
+                        <i class="fas fa-fire" aria-hidden="true"></i>
+                        Salas Populares
+                    </h6>
+                </div>
+                <div class="card-body">
+                    {% if popular_rooms %}
+                        {% for room in popular_rooms %}
+                        <div class="d-flex justify-content-between align-items-center mb-2">
+                            <div>
+                                <strong>{{ room.name }}</strong>
+                                <br><small class="text-muted">{{ room.location }}</small>
+                            </div>
+                            <span class="badge bg-primary">{{ room.capacity }} per.</span>
+                        </div>
+                        {% if not forloop.last %}<hr>{% endif %}
+                        {% endfor %}
+                    {% else %}
+                        <p class="text-muted text-center">No hay datos disponibles</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

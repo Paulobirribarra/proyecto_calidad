@@ -1,0 +1,546 @@
+{% extends 'base.html' %}
+
+{% block title %}Salas Disponibles - Salas de Estudio{% endblock %}
+
+{% block content %}
+<!-- Hero Section -->
+{% if not user.is_authenticated %}
+<section class="hero-section">
+    <div class="container">
+        <div class="row">
+            <div class="col-lg-8 mx-auto text-center">
+                <h1 class="display-4 fw-bold mb-3">
+                    <i class="fas fa-building" aria-hidden="true"></i>
+                    Salas de Estudio Inteligentes
+                </h1>
+                <p class="lead mb-4">
+                    Reserva salas de estudio modernas y bien equipadas de manera rápida y sencilla. 
+                    Gestiona tus reservas, deja reseñas y disfruta de una experiencia de estudio excepcional.
+                </p>
+                <div class="d-flex justify-content-center gap-3">
+                    <a href="{% url 'usuarios:register' %}" class="btn btn-light btn-lg">
+                        <i class="fas fa-user-plus" aria-hidden="true"></i>
+                        Registrarse Gratis
+                    </a>
+                    <a href="{% url 'usuarios:login' %}" class="btn btn-outline-light btn-lg">
+                        <i class="fas fa-sign-in-alt" aria-hidden="true"></i>
+                        Iniciar Sesión
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Features Section -->
+<section class="py-5">
+    <div class="container">
+        <div class="row">
+            <div class="col-lg-4 text-center mb-4">
+                <div class="feature-icon">
+                    <i class="fas fa-calendar-check" aria-hidden="true"></i>
+                </div>
+                <h4>Reservas Fáciles</h4>
+                <p class="text-muted">Sistema de reservas intuitivo con disponibilidad en tiempo real.</p>
+            </div>
+            <div class="col-lg-4 text-center mb-4">
+                <div class="feature-icon">
+                    <i class="fas fa-star" aria-hidden="true"></i>
+                </div>
+                <h4>Sistema de Calificaciones</h4>
+                <p class="text-muted">Califica y revisa salas para ayudar a otros usuarios.</p>
+            </div>
+            <div class="col-lg-4 text-center mb-4">
+                <div class="feature-icon">
+                    <i class="fas fa-shield-alt" aria-hidden="true"></i>
+                </div>
+                <h4>Seguro y Confiable</h4>
+                <p class="text-muted">Plataforma segura con autenticación y protección de datos.</p>
+            </div>
+        </div>
+    </div>
+</section>
+{% endif %}
+
+<!-- Main Content -->
+<div class="container my-5">
+    <!-- Search and Filter Section -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h4 class="mb-0">
+                        <i class="fas fa-search" aria-hidden="true"></i>
+                        Buscar Salas
+                    </h4>
+                </div>                <div class="card-body">
+                    <form method="get" class="row g-3" id="search-form">
+                        <!-- Primera fila de filtros -->
+                        <div class="col-md-4">
+                            <label for="id_search_query" class="form-label">Buscar por nombre</label>
+                            {{ form.search_query }}
+                        </div>
+                        <div class="col-md-2">
+                            <label for="id_min_capacity" class="form-label">Capacidad mínima</label>
+                            {{ form.min_capacity }}
+                        </div>
+                        <div class="col-md-3">
+                            <label for="id_user_role_filter" class="form-label">Filtrar por rol</label>
+                            {{ form.user_role_filter }}
+                            <small class="form-text text-muted">Salas según tu tipo de usuario</small>
+                        </div>                        <div class="col-md-3">
+                            <label for="id_availability_filter" class="form-label">Disponibilidad</label>
+                            {{ form.availability_filter }}
+                        </div>
+                        
+                        <!-- Segunda fila de filtros -->
+                        <div class="col-md-3">
+                            <label for="id_room_type_filter" class="form-label">Tipo de sala</label>
+                            {{ form.room_type_filter }}
+                            <small class="form-text text-muted">Filtrar por tipo específico</small>
+                        </div>
+                        <div class="col-md-3">
+                            <label for="id_available_date" class="form-label">Fecha específica</label>
+                            {{ form.available_date }}
+                            <small class="form-text text-muted">Solo para horario específico</small>
+                        </div>
+                        <div class="col-md-3 d-flex align-items-end">
+                            <div class="d-grid gap-2 w-100">
+                                <button type="submit" class="btn btn-primary">
+                                    <i class="fas fa-search" aria-hidden="true"></i>
+                                    Buscar
+                                </button>
+                            </div>
+                        </div>
+                        <div class="col-md-3 d-flex align-items-end">
+                            <div class="d-grid w-100">
+                                <a href="{% url 'rooms:room_list' %}" class="btn btn-outline-secondary">
+                                    <i class="fas fa-times" aria-hidden="true"></i>
+                                    Limpiar filtros
+                                </a>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Admin Actions -->
+    {% if user.is_authenticated and user.is_admin %}
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card border-success">
+                <div class="card-body">
+                    <h5 class="card-title text-success">
+                        <i class="fas fa-cog" aria-hidden="true"></i>
+                        Panel de Administración
+                    </h5>
+                    <div class="d-flex gap-2 flex-wrap">
+                        <a href="{% url 'rooms:room_create' %}" class="btn btn-success">
+                            <i class="fas fa-plus" aria-hidden="true"></i>
+                            Crear Nueva Sala
+                        </a>
+                        <a href="{% url 'rooms:reservation_admin' %}" class="btn btn-outline-success">
+                            <i class="fas fa-calendar-alt" aria-hidden="true"></i>
+                            Gestionar Reservas
+                        </a>
+                        <a href="/admin/" class="btn btn-outline-success">
+                            <i class="fas fa-tools" aria-hidden="true"></i>
+                            Panel Admin Django
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>    {% endif %}
+
+    <!-- Results Header with Filter Info -->
+    <div class="row mb-3">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center flex-wrap">
+                <div>
+                    <h3>
+                        <i class="fas fa-list" aria-hidden="true"></i>
+                        Salas Disponibles
+                        {% if total_rooms %}
+                            <span class="badge bg-primary">{{ total_rooms }}</span>
+                        {% endif %}
+                    </h3>
+                    
+                    <!-- Filtros aplicados -->
+                    {% if request.GET %}
+                    <div class="filters-applied mt-2">
+                        <small class="text-muted">
+                            <i class="fas fa-filter me-1"></i>
+                            Filtros aplicados:
+                            {% if request.GET.search_query %}
+                                <span class="badge bg-light text-dark me-1">Búsqueda: "{{ request.GET.search_query }}"</span>
+                            {% endif %}
+                            {% if request.GET.user_role_filter %}
+                                <span class="badge bg-info me-1">Rol: {{ request.GET.user_role_filter|capfirst }}</span>
+                            {% endif %}
+                            {% if request.GET.availability_filter %}
+                                <span class="badge bg-success me-1">
+                                    {% if request.GET.availability_filter == 'available_now' %}
+                                        Disponibles ahora
+                                    {% elif request.GET.availability_filter == 'available_today' %}
+                                        Disponibles hoy
+                                    {% elif request.GET.availability_filter == 'available_custom' %}
+                                        Horario específico
+                                    {% endif %}
+                                </span>
+                            {% endif %}                            {% if request.GET.min_capacity %}
+                                <span class="badge bg-warning text-dark me-1">Min. {{ request.GET.min_capacity }} personas</span>
+                            {% endif %}
+                        </small>
+                    </div>
+                    {% endif %}
+                </div>
+                
+                {% if user.is_authenticated %}
+                <div class="btn-group" role="group">
+                    <button type="button" class="btn btn-outline-secondary" id="view-grid" title="Vista de cuadrícula">
+                        <i class="fas fa-th-large" aria-hidden="true"></i>
+                    </button>
+                    <button type="button" class="btn btn-secondary" id="view-list" title="Vista de lista">
+                        <i class="fas fa-list" aria-hidden="true"></i>
+                    </button>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Rooms Grid/List -->
+    <div class="row" id="rooms-container">
+        {% if rooms %}
+            {% for room in rooms %}
+            <div class="col-lg-4 col-md-6 mb-4 room-card">
+                <div class="card h-100">
+                    <!-- Room Image Placeholder -->
+                    <div class="card-img-top bg-light d-flex align-items-center justify-content-center" style="height: 200px;">
+                        <i class="fas fa-building fa-3x text-muted" aria-hidden="true"></i>
+                    </div>
+                    
+                    <div class="card-body d-flex flex-column">
+                        <div class="d-flex justify-content-between align-items-start mb-2">
+                            <h5 class="card-title mb-0">{{ room.name }}</h5>
+                            <span class="badge bg-primary">
+                                <i class="fas fa-users" aria-hidden="true"></i>
+                                {{ room.capacity }}
+                            </span>
+                        </div>
+                        
+                        <p class="card-text text-muted small mb-2">
+                            <i class="fas fa-map-marker-alt" aria-hidden="true"></i>
+                            {{ room.location }}
+                        </p>
+                        
+                        <p class="card-text flex-grow-1">
+                            {{ room.description|truncatewords:15 }}
+                        </p>
+                        
+                        <!-- Equipment Tags -->
+                        {% if room.equipment %}
+                        <div class="mb-2">
+                            {% for equipment in room.get_equipment_list %}
+                                <span class="badge bg-light text-dark me-1">{{ equipment|title }}</span>
+                            {% endfor %}
+                        </div>
+                        {% endif %}
+                        
+                        <!-- Rating -->
+                        <div class="mb-2">
+                            {% if room.average_rating %}
+                                <div class="d-flex align-items-center">
+                                    <div class="text-warning me-2">
+                                        {% for i in "12345" %}
+                                            {% if forloop.counter <= room.average_rating %}
+                                                <i class="fas fa-star" aria-hidden="true"></i>
+                                            {% else %}
+                                                <i class="far fa-star" aria-hidden="true"></i>
+                                            {% endif %}
+                                        {% endfor %}
+                                    </div>
+                                    <small class="text-muted">
+                                        {{ room.average_rating|floatformat:1 }} ({{ room.review_count }} reseña{{ room.review_count|pluralize:"s" }})
+                                    </small>
+                                </div>
+                            {% else %}
+                                <small class="text-muted">Sin calificaciones aún</small>
+                            {% endif %}
+                        </div>                        <!-- Equipment and Location -->
+                        <div class="mb-3">
+                            <small class="text-muted">
+                                <i class="fas fa-map-marker-alt me-1"></i>{{ room.location }}
+                            </small>
+                            {% if room.equipment %}
+                                <div class="mt-1">
+                                    <small class="text-muted">
+                                        <i class="fas fa-tools me-1"></i>{{ room.equipment|truncatewords:5 }}
+                                    </small>
+                                </div>
+                            {% endif %}
+                        </div>
+                        
+                        <!-- Action Buttons -->
+                        <div class="mt-auto">
+                            <div class="d-flex gap-2">
+                                <a href="{% url 'rooms:room_detail' room.pk %}" class="btn btn-primary flex-grow-1">
+                                    <i class="fas fa-eye" aria-hidden="true"></i>
+                                    Ver Detalles
+                                </a>
+                                {% if user.is_authenticated %}
+                                    <a href="{% url 'rooms:reservation_create' room.pk %}" class="btn btn-success">
+                                        <i class="fas fa-calendar-plus" aria-hidden="true"></i>
+                                        Reservar
+                                    </a>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Availability Indicator -->
+                    <div class="card-footer bg-transparent">
+                        {% if room.is_available_now %}
+                            <small class="text-success">
+                                <i class="fas fa-circle" aria-hidden="true"></i>
+                                Disponible ahora
+                            </small>
+                        {% else %}
+                            <small class="text-warning">
+                                <i class="fas fa-circle" aria-hidden="true"></i>
+                                No disponible en este momento
+                            </small>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        {% else %}
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-body text-center py-5">
+                        <i class="fas fa-search fa-3x text-muted mb-3" aria-hidden="true"></i>
+                        <h4 class="text-muted">No se encontraron salas</h4>
+                        <p class="text-muted">
+                            {% if request.GET %}
+                                No hay salas que coincidan con tus criterios de búsqueda.
+                                <br><a href="{% url 'rooms:room_list' %}" class="btn btn-outline-primary mt-2">
+                                    <i class="fas fa-refresh" aria-hidden="true"></i>
+                                    Ver todas las salas
+                                </a>
+                            {% else %}
+                                Aún no hay salas registradas en el sistema.
+                                {% if user.is_authenticated and user.is_admin %}
+                                    <br><a href="{% url 'rooms:room_create' %}" class="btn btn-success mt-2">
+                                        <i class="fas fa-plus" aria-hidden="true"></i>
+                                        Crear la primera sala
+                                    </a>
+                                {% endif %}
+                            {% endif %}
+                        </p>
+                    </div>
+                </div>
+            </div>
+        {% endif %}
+    </div>
+
+    <!-- Pagination -->
+    {% if is_paginated %}
+    <div class="row">
+        <div class="col-12">
+            <nav aria-label="Navegación de páginas">
+                <ul class="pagination justify-content-center">
+                    {% if page_obj.has_previous %}
+                        <li class="page-item">
+                            <a class="page-link" href="?page=1{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}{% if request.GET.capacity %}&capacity={{ request.GET.capacity }}{% endif %}{% if request.GET.max_rate %}&max_rate={{ request.GET.max_rate }}{% endif %}{% if request.GET.equipment %}&equipment={{ request.GET.equipment }}{% endif %}" aria-label="Primera página">
+                                <span aria-hidden="true">&laquo;&laquo;</span>
+                            </a>
+                        </li>
+                        <li class="page-item">
+                            <a class="page-link" href="?page={{ page_obj.previous_page_number }}{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}{% if request.GET.capacity %}&capacity={{ request.GET.capacity }}{% endif %}{% if request.GET.max_rate %}&max_rate={{ request.GET.max_rate }}{% endif %}{% if request.GET.equipment %}&equipment={{ request.GET.equipment }}{% endif %}" aria-label="Página anterior">
+                                <span aria-hidden="true">&laquo;</span>
+                            </a>
+                        </li>
+                    {% endif %}
+
+                    {% for num in page_obj.paginator.page_range %}
+                        {% if page_obj.number == num %}
+                            <li class="page-item active" aria-current="page">
+                                <span class="page-link">{{ num }}</span>
+                            </li>
+                        {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
+                            <li class="page-item">
+                                <a class="page-link" href="?page={{ num }}{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}{% if request.GET.capacity %}&capacity={{ request.GET.capacity }}{% endif %}{% if request.GET.max_rate %}&max_rate={{ request.GET.max_rate }}{% endif %}{% if request.GET.equipment %}&equipment={{ request.GET.equipment }}{% endif %}">{{ num }}</a>
+                            </li>
+                        {% endif %}
+                    {% endfor %}
+
+                    {% if page_obj.has_next %}
+                        <li class="page-item">
+                            <a class="page-link" href="?page={{ page_obj.next_page_number }}{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}{% if request.GET.capacity %}&capacity={{ request.GET.capacity }}{% endif %}{% if request.GET.max_rate %}&max_rate={{ request.GET.max_rate }}{% endif %}{% if request.GET.equipment %}&equipment={{ request.GET.equipment }}{% endif %}" aria-label="Página siguiente">
+                                <span aria-hidden="true">&raquo;</span>
+                            </a>
+                        </li>
+                        <li class="page-item">
+                            <a class="page-link" href="?page={{ page_obj.paginator.num_pages }}{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}{% if request.GET.capacity %}&capacity={{ request.GET.capacity }}{% endif %}{% if request.GET.max_rate %}&max_rate={{ request.GET.max_rate }}{% endif %}{% if request.GET.equipment %}&equipment={{ request.GET.equipment }}{% endif %}" aria-label="Última página">
+                                <span aria-hidden="true">&raquo;&raquo;</span>
+                            </a>
+                        </li>
+                    {% endif %}
+                </ul>
+            </nav>
+        </div>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Add Bootstrap classes to form fields
+    const formFields = document.querySelectorAll('#search-form input, #search-form select');
+    formFields.forEach(field => {
+        field.classList.add('form-control');
+    });
+
+    // View toggle functionality
+    const viewGrid = document.getElementById('view-grid');
+    const viewList = document.getElementById('view-list');
+    const roomsContainer = document.getElementById('rooms-container');
+
+    if (viewGrid && viewList) {
+        viewGrid.addEventListener('click', function() {
+            roomsContainer.className = 'row';
+            document.querySelectorAll('.room-card').forEach(card => {
+                card.className = 'col-lg-4 col-md-6 mb-4 room-card';
+            });
+            viewGrid.classList.add('btn-secondary');
+            viewGrid.classList.remove('btn-outline-secondary');
+            viewList.classList.add('btn-outline-secondary');
+            viewList.classList.remove('btn-secondary');
+        });
+
+        viewList.addEventListener('click', function() {
+            roomsContainer.className = 'row';
+            document.querySelectorAll('.room-card').forEach(card => {
+                card.className = 'col-12 mb-3 room-card';
+            });
+            viewList.classList.add('btn-secondary');
+            viewList.classList.remove('btn-outline-secondary');
+            viewGrid.classList.add('btn-outline-secondary');
+            viewGrid.classList.remove('btn-secondary');
+        });
+    }
+
+    // Auto-submit search form on change (optional)
+    const searchForm = document.getElementById('search-form');
+    if (searchForm) {
+        const autoSubmitFields = searchForm.querySelectorAll('select');
+        autoSubmitFields.forEach(field => {
+            field.addEventListener('change', function() {
+                // Optional: Auto-submit on select change
+                // searchForm.submit();
+            });
+        });
+    }
+
+    // Price filter formatting
+    const priceField = document.querySelector('#id_max_rate');
+    if (priceField) {
+        priceField.addEventListener('input', function() {
+            let value = this.value.replace(/[^\d.]/g, '');
+            if (value.includes('.')) {
+                const parts = value.split('.');
+                value = parts[0] + '.' + parts[1].substring(0, 2);
+            }
+            this.value = value;
+        });
+    }    // Capacity filter validation with improved limits
+    const capacityField = document.querySelector('#id_min_capacity');
+    if (capacityField) {
+        capacityField.addEventListener('input', function() {
+            let value = parseInt(this.value);
+            if (value < 1) this.value = '';
+            if (value > 500) {
+                this.value = '500';
+                // Mostrar mensaje de advertencia
+                const warningMsg = this.parentNode.querySelector('.capacity-warning');
+                if (!warningMsg) {
+                    const warning = document.createElement('small');
+                    warning.className = 'form-text text-danger capacity-warning';
+                    warning.textContent = 'La capacidad máxima permitida es de 500 personas';
+                    this.parentNode.appendChild(warning);
+                    setTimeout(() => warning.remove(), 3000);
+                }
+            }
+        });
+    }
+
+    // Availability filter logic (simplified without time fields)
+    const availabilityFilter = document.querySelector('#id_availability_filter');
+    const dateField = document.querySelector('#id_available_date');
+    
+    if (availabilityFilter && dateField) {
+        function toggleCustomFields() {
+            const isCustom = availabilityFilter.value === 'available_custom';
+            
+            dateField.disabled = !isCustom;
+            dateField.required = isCustom;
+            if (isCustom) {
+                dateField.style.backgroundColor = '';
+            } else {
+                dateField.style.backgroundColor = '#f8f9fa';
+                dateField.value = '';
+            }
+        }
+        
+        availabilityFilter.addEventListener('change', toggleCustomFields);
+        toggleCustomFields(); // Inicializar
+    }
+
+    // Role filter info tooltip
+    const roleFilter = document.querySelector('#id_user_role_filter');
+    if (roleFilter) {
+        roleFilter.addEventListener('change', function() {
+            const value = this.value;
+            const helpText = this.parentNode.querySelector('.form-text');
+            
+            if (helpText) {
+                let text = 'Salas según tu tipo de usuario';
+                
+                switch(value) {
+                    case 'estudiante':
+                        text = 'Solo salas de estudio individuales y salas gratuitas';
+                        break;
+                    case 'profesor':
+                        text = 'Todas las salas excepto las restringidas para administradores';
+                        break;
+                    case 'administrador':
+                        text = 'Acceso completo a todas las salas del sistema';
+                        break;
+                    case 'soporte':
+                        text = 'Salas técnicas, laboratorios y multimedia';
+                        break;
+                }
+                
+                helpText.textContent = text;
+            }
+        });
+    }
+
+    // Accessibility: Announce search results
+    const resultsCount = document.querySelectorAll('.room-card').length;
+    if (resultsCount > 0) {
+        const announcement = document.createElement('div');
+        announcement.textContent = `Se encontraron ${resultsCount} salas`;
+        announcement.className = 'sr-only';
+        announcement.setAttribute('aria-live', 'polite');
+        document.body.appendChild(announcement);
+    }
+});
+</script>
+{% endblock %}

@@ -1,0 +1,267 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Mis Reservas - Sistema de Salas{% endblock %}
+
+{% block extra_head %}
+<style>
+    .reservation-card {
+        transition: transform 0.2s ease-in-out;
+    }
+    .reservation-card:hover {
+        transform: translateY(-2px);
+    }
+    .status-badge {
+        font-size: 0.85rem;
+        padding: 0.4rem 0.8rem;
+    }
+    .status-confirmed {
+        background-color: #28a745;
+    }
+    .status-pending {
+        background-color: #ffc107;
+        color: #212529;
+    }
+    .status-cancelled {
+        background-color: #dc3545;
+    }
+    .status-completed {
+        background-color: #6c757d;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <div class="row">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h2 class="mb-0">
+                    <i class="fas fa-calendar-check me-2"></i>
+                    Mis Reservas
+                </h2>
+                <a href="{% url 'rooms:room_list' %}" class="btn btn-outline-primary">
+                    <i class="fas fa-plus me-2"></i>
+                    Nueva Reserva
+                </a>
+            </div>
+
+            {% if reservations %}
+                <div class="row">
+                    {% for reservation in reservations %}
+                    <div class="col-md-6 col-lg-4 mb-4">
+                        <div class="card reservation-card h-100 shadow-sm">
+                            <div class="card-header d-flex justify-content-between align-items-center">
+                                <h6 class="mb-0 text-truncate me-2">{{ reservation.room.name }}</h6>
+                                <span class="badge status-badge status-{{ reservation.status }}">
+                                    {% if reservation.status == 'confirmed' %}
+                                        Confirmada
+                                    {% elif reservation.status == 'pending' %}
+                                        Pendiente
+                                    {% elif reservation.status == 'cancelled' %}
+                                        Cancelada
+                                    {% elif reservation.status == 'completed' %}
+                                        Completada
+                                    {% else %}
+                                        {{ reservation.get_status_display }}
+                                    {% endif %}
+                                </span>
+                            </div>
+                            <div class="card-body">
+                                <div class="mb-3">
+                                    <h6 class="text-muted mb-2">
+                                        <i class="fas fa-calendar me-2"></i>
+                                        {{ reservation.start_time|date:"d/m/Y" }}
+                                    </h6>
+                                    <p class="mb-1">
+                                        <i class="fas fa-clock me-2"></i>
+                                        <strong>{{ reservation.start_time|date:"H:i" }} - {{ reservation.end_time|date:"H:i" }}</strong>
+                                    </p>
+                                    <p class="mb-1">
+                                        <i class="fas fa-users me-2"></i>
+                                        {{ reservation.attendees_count }} persona{{ reservation.attendees_count|pluralize }}
+                                    </p>
+                                    <p class="mb-1">
+                                        <i class="fas fa-map-marker-alt me-2"></i>
+                                        {{ reservation.room.location }}
+                                    </p>
+                                </div>
+
+                                {% if reservation.purpose %}
+                                <div class="mb-3">
+                                    <h6 class="text-muted mb-1">Propósito:</h6>
+                                    <p class="small text-muted">{{ reservation.purpose|truncatewords:10 }}</p>
+                                </div>
+                                {% endif %}
+
+                                <div class="text-muted small">
+                                    <i class="fas fa-info-circle me-1"></i>
+                                    Reservado: {{ reservation.created_at|date:"d/m/Y H:i" }}
+                                </div>
+                            </div>
+                            <div class="card-footer bg-transparent">
+                                <div class="d-flex justify-content-between">
+                                    <a href="{% url 'rooms:room_detail' reservation.room.id %}" 
+                                       class="btn btn-outline-info btn-sm">
+                                        <i class="fas fa-eye me-1"></i>
+                                        Ver Sala
+                                    </a>
+                                      {% if reservation.status == 'confirmed' %}
+                                    <div class="btn-group btn-group-sm">
+                                        <a href="{% url 'rooms:reservation_detail' reservation.id %}" 
+                                           class="btn btn-outline-primary">
+                                            <i class="fas fa-info me-1"></i>
+                                            Detalles
+                                        </a>
+                                        {% if reservation.can_be_cancelled %}
+                                        <button type="button" 
+                                                class="btn btn-outline-danger"
+                                                data-bs-toggle="modal" 
+                                                data-bs-target="#cancelModal{{ reservation.id }}">
+                                            <i class="fas fa-times me-1"></i>
+                                            Cancelar
+                                        </button>
+                                        {% endif %}
+                                    </div>
+                                    {% elif reservation.status == 'completed' %}
+                                    <div class="btn-group btn-group-sm">
+                                        <a href="{% url 'rooms:reservation_detail' reservation.id %}" 
+                                           class="btn btn-outline-primary">
+                                            <i class="fas fa-info me-1"></i>
+                                            Detalles
+                                        </a>
+                                        {% if reservation.can_be_reviewed %}
+                                        <a href="{% url 'rooms:room_review' reservation.id %}" 
+                                           class="btn btn-warning">
+                                            <i class="fas fa-star me-1"></i>
+                                            Calificar
+                                        </a>
+                                        {% else %}
+                                        <span class="btn btn-outline-success btn-sm disabled">
+                                            <i class="fas fa-check me-1"></i>
+                                            Ya calificada
+                                        </span>
+                                        {% endif %}
+                                    </div>
+                                    {% else %}
+                                    <a href="{% url 'rooms:reservation_detail' reservation.id %}" 
+                                       class="btn btn-outline-primary btn-sm">
+                                        <i class="fas fa-info me-1"></i>
+                                        Detalles
+                                    </a>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Modal de cancelación -->
+                    {% if reservation.status == 'confirmed' and reservation.can_be_cancelled %}
+                    <div class="modal fade" id="cancelModal{{ reservation.id }}" tabindex="-1">
+                        <div class="modal-dialog">
+                            <div class="modal-content">
+                                <div class="modal-header">
+                                    <h5 class="modal-title">Cancelar Reserva</h5>
+                                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                                </div>
+                                <div class="modal-body">
+                                    <p>¿Estás seguro de que deseas cancelar la reserva de <strong>{{ reservation.room.name }}</strong>?</p>
+                                    <div class="text-muted small">
+                                        <i class="fas fa-calendar me-1"></i>
+                                        {{ reservation.start_time|date:"d/m/Y H:i" }} - {{ reservation.end_time|date:"H:i" }}
+                                    </div>
+                                </div>
+                                <div class="modal-footer">
+                                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                                        No, mantener reserva
+                                    </button>
+                                    <form method="post" action="{% url 'rooms:reservation_cancel' reservation.id %}" class="d-inline">
+                                        {% csrf_token %}
+                                        <button type="submit" class="btn btn-danger">
+                                            <i class="fas fa-times me-1"></i>
+                                            Sí, cancelar reserva
+                                        </button>
+                                    </form>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    {% endif %}
+                    {% endfor %}
+                </div>
+
+                <!-- Paginación -->
+                {% if is_paginated %}
+                <nav aria-label="Navegación de reservas">
+                    <ul class="pagination justify-content-center">
+                        {% if page_obj.has_previous %}
+                            <li class="page-item">
+                                <a class="page-link" href="?page=1">&laquo; Primera</a>
+                            </li>
+                            <li class="page-item">
+                                <a class="page-link" href="?page={{ page_obj.previous_page_number }}">Anterior</a>
+                            </li>
+                        {% endif %}
+
+                        <li class="page-item active">
+                            <span class="page-link">
+                                Página {{ page_obj.number }} de {{ page_obj.paginator.num_pages }}
+                            </span>
+                        </li>
+
+                        {% if page_obj.has_next %}
+                            <li class="page-item">
+                                <a class="page-link" href="?page={{ page_obj.next_page_number }}">Siguiente</a>
+                            </li>
+                            <li class="page-item">
+                                <a class="page-link" href="?page={{ page_obj.paginator.num_pages }}">Última &raquo;</a>
+                            </li>
+                        {% endif %}
+                    </ul>
+                </nav>
+                {% endif %}
+
+            {% else %}
+                <div class="text-center py-5">
+                    <div class="mb-4">
+                        <i class="fas fa-calendar-times text-muted" style="font-size: 4rem;"></i>
+                    </div>
+                    <h4 class="text-muted mb-3">No tienes reservas aún</h4>
+                    <p class="text-muted mb-4">
+                        ¡Es hora de reservar tu primera sala de estudio!
+                    </p>
+                    <a href="{% url 'rooms:room_list' %}" class="btn btn-primary btn-lg">
+                        <i class="fas fa-search me-2"></i>
+                        Explorar Salas Disponibles
+                    </a>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Auto-cerrar modales después de la acción
+    const modals = document.querySelectorAll('.modal');
+    modals.forEach(modal => {
+        modal.addEventListener('hidden.bs.modal', function() {
+            // Limpiar estado del modal
+        });
+    });
+    
+    // Confirmación adicional para cancelaciones
+    const cancelForms = document.querySelectorAll('form[action*="cancel"]');
+    cancelForms.forEach(form => {
+        form.addEventListener('submit', function(e) {
+            const confirmed = confirm('¿Estás absolutamente seguro de que deseas cancelar esta reserva?');
+            if (!confirmed) {
+                e.preventDefault();
+            }
+        });
+    });
+});
+</script>
+{% endblock %}

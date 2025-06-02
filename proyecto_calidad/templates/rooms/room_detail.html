@@ -1,0 +1,333 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ room.name }} - Salas de Estudio{% endblock %}
+
+{% block content %}
+<div class="container my-5">
+    <!-- Breadcrumb -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item"><a href="{% url 'rooms:room_list' %}">Salas</a></li>
+                    <li class="breadcrumb-item active" aria-current="page">{{ room.name }}</li>
+                </ol>
+            </nav>
+        </div>
+    </div>
+
+    <div class="row">
+        <!-- Room Details -->
+        <div class="col-lg-8 mb-4">
+            <div class="card">
+                <!-- Room Image Placeholder -->
+                <div class="card-img-top bg-light d-flex align-items-center justify-content-center" style="height: 300px;">
+                    <i class="fas fa-building fa-4x text-muted" aria-hidden="true"></i>
+                </div>
+                
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-start mb-3">
+                        <div>
+                            <h1 class="card-title h2 mb-2">{{ room.name }}</h1>
+                            <p class="text-muted mb-2">
+                                <i class="fas fa-map-marker-alt" aria-hidden="true"></i>
+                                {{ room.location }}
+                            </p>
+                        </div>
+                        <div class="text-end">
+                            {% if room.is_available_now %}
+                                <span class="badge bg-success fs-6">
+                                    <i class="fas fa-circle" aria-hidden="true"></i>
+                                    Disponible
+                                </span>
+                            {% else %}
+                                <span class="badge bg-warning fs-6">
+                                    <i class="fas fa-circle" aria-hidden="true"></i>
+                                    Ocupada
+                                </span>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    <!-- Rating and Reviews -->
+                    {% if avg_rating %}
+                    <div class="mb-3">
+                        <div class="d-flex align-items-center">
+                            <div class="text-warning me-2">
+                                {% for i in "12345" %}
+                                    {% if forloop.counter <= avg_rating %}
+                                        <i class="fas fa-star" aria-hidden="true"></i>
+                                    {% else %}
+                                        <i class="far fa-star" aria-hidden="true"></i>
+                                    {% endif %}
+                                {% endfor %}
+                            </div>
+                            <span class="fw-bold">{{ avg_rating|floatformat:1 }}</span>
+                            <span class="text-muted ms-2">({{ total_reviews }} reseña{{ total_reviews|pluralize:"s" }})</span>
+                        </div>
+                    </div>
+                    {% endif %}                    <!-- Description -->
+                    <div class="mb-4">
+                        <h5>Descripción</h5>
+                        <p class="text-muted">{{ room.description }}</p>
+                    </div>
+
+                    <!-- Availability Status -->
+                    <div class="mb-4">
+                        <h5>Estado de Disponibilidad</h5>
+                        
+                        {% if has_current_reservation %}
+                            <div class="alert alert-warning d-flex align-items-center" role="alert">
+                                <i class="fas fa-exclamation-triangle me-2" aria-hidden="true"></i>
+                                <div>
+                                    <strong>Sala Ocupada Actualmente</strong><br>
+                                    {% for reservation in current_reservations %}
+                                        Reservada de {{ reservation.start_time|date:"H:i" }} a {{ reservation.end_time|date:"H:i" }} ({{ reservation.start_time|date:"d/m/Y" }})
+                                        {% if not forloop.last %}<br>{% endif %}
+                                    {% endfor %}
+                                </div>
+                            </div>
+                        {% else %}
+                            <div class="alert alert-success d-flex align-items-center" role="alert">
+                                <i class="fas fa-check-circle me-2" aria-hidden="true"></i>
+                                <div>
+                                    <strong>Sala Disponible Ahora</strong><br>
+                                    <small class="text-muted">Horario de operación: {{ room.opening_time|time:"H:i" }} - {{ room.closing_time|time:"H:i" }}</small>
+                                </div>
+                            </div>
+                        {% endif %}
+
+                        <!-- Upcoming Reservations -->
+                        {% if upcoming_reservations %}
+                            <div class="mt-3">
+                                <h6 class="text-muted">Próximas Reservas (7 días)</h6>
+                                <div class="row">
+                                    {% for reservation in upcoming_reservations|slice:":6" %}
+                                        <div class="col-md-6 mb-2">
+                                            <div class="card border-left-warning h-100">
+                                                <div class="card-body py-2 px-3">
+                                                    <div class="d-flex justify-content-between align-items-center">
+                                                        <div>
+                                                            <small class="fw-bold text-dark">
+                                                                {{ reservation.start_time|date:"d/m" }}
+                                                            </small>
+                                                            <br>
+                                                            <small class="text-muted">
+                                                                {{ reservation.start_time|time:"H:i" }} - {{ reservation.end_time|time:"H:i" }}
+                                                            </small>
+                                                        </div>
+                                                        <span class="badge bg-warning text-dark">
+                                                            <i class="fas fa-clock" aria-hidden="true"></i>
+                                                            Reservada
+                                                        </span>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    {% endfor %}
+                                </div>
+                                {% if upcoming_reservations|length > 6 %}
+                                    <small class="text-muted">
+                                        <i class="fas fa-info-circle" aria-hidden="true"></i>
+                                        Mostrando 6 de {{ upcoming_reservations|length }} reservas próximas
+                                    </small>
+                                {% endif %}
+                            </div>
+                        {% endif %}
+                    </div>
+
+                    <!-- Equipment -->
+                    {% if room.equipment %}
+                    <div class="mb-4">
+                        <h5>Equipamiento Disponible</h5>
+                        <div class="row">
+                            {% for equipment in room.get_equipment_list %}
+                                <div class="col-md-6 mb-2">
+                                    <span class="badge bg-primary me-2">
+                                        <i class="fas fa-check" aria-hidden="true"></i>
+                                    </span>
+                                    {{ equipment|title }}
+                                </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                    {% endif %}
+
+                    <!-- Recent Reviews -->
+                    {% if recent_reviews %}
+                    <div class="mb-4">
+                        <h5>Reseñas Recientes</h5>
+                        {% for review in recent_reviews %}
+                        <div class="card mb-3">
+                            <div class="card-body">
+                                <div class="d-flex justify-content-between align-items-start mb-2">
+                                    <div>
+                                        <h6 class="mb-0">{{ review.user.get_full_name|default:review.user.username }}</h6>
+                                        <small class="text-muted">{{ review.created_at|date:"d/m/Y" }}</small>
+                                    </div>
+                                    <div class="text-warning">
+                                        {% for i in "12345" %}
+                                            {% if forloop.counter <= review.rating %}
+                                                <i class="fas fa-star" aria-hidden="true"></i>
+                                            {% else %}
+                                                <i class="far fa-star" aria-hidden="true"></i>
+                                            {% endif %}
+                                        {% endfor %}
+                                    </div>
+                                </div>
+                                {% if review.comment %}
+                                    <p class="mb-0">{{ review.comment }}</p>
+                                {% endif %}
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Sidebar -->
+        <div class="col-lg-4">
+            <!-- Booking Card -->
+            <div class="card mb-4">
+                <div class="card-body">
+                    <h5 class="card-title">
+                        <i class="fas fa-calendar-plus" aria-hidden="true"></i>
+                        Información de Reserva
+                    </h5>
+                      <!-- Price -->
+                    <div class="mb-3">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <span>Precio por hora:</span>
+                            {% if user.is_authenticated and user.is_estudiante and room.hourly_rate == 0 %}
+                                <span class="h4 text-success mb-0">
+                                    <i class="fas fa-gift me-1"></i>Gratuita
+                                </span>
+                            {% elif user.is_authenticated and user.is_estudiante %}
+                                <span class="text-muted">
+                                    <i class="fas fa-info-circle me-1"></i>Contactar coordinación
+                                </span>
+                            {% else %}
+                                <span class="h4 text-success mb-0">${{ room.hourly_rate|floatformat:0 }}</span>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    <!-- Capacity -->
+                    <div class="mb-3">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <span>Capacidad:</span>
+                            <span class="fw-bold">{{ room.capacity }} personas</span>
+                        </div>
+                    </div>
+
+                    <!-- Hours -->
+                    <div class="mb-4">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <span>Horario:</span>
+                            <span class="fw-bold">{{ room.opening_time|time:"H:i" }} - {{ room.closing_time|time:"H:i" }}</span>
+                        </div>
+                    </div>
+
+                    <!-- Action Buttons -->
+                    {% if can_reserve %}
+                        <a href="{% url 'rooms:reservation_create' room.pk %}" class="btn btn-success btn-lg w-100 mb-2">
+                            <i class="fas fa-calendar-plus" aria-hidden="true"></i>
+                            Reservar Ahora
+                        </a>
+                    {% else %}
+                        <div class="alert alert-info text-center">
+                            <i class="fas fa-info-circle" aria-hidden="true"></i>
+                            <a href="{% url 'usuarios:login' %}" class="alert-link">Inicia sesión</a> para reservar
+                        </div>
+                    {% endif %}
+
+                    <a href="{% url 'rooms:room_list' %}" class="btn btn-outline-secondary w-100">
+                        <i class="fas fa-arrow-left" aria-hidden="true"></i>
+                        Volver a la Lista
+                    </a>
+                </div>
+            </div>
+
+            <!-- Quick Stats -->
+            <div class="card">
+                <div class="card-body">
+                    <h6 class="card-title">Estadísticas</h6>
+                    
+                    <div class="row text-center">
+                        <div class="col-6 border-end">
+                            <div class="h4 text-primary mb-0">{{ total_reviews }}</div>
+                            <small class="text-muted">Reseñas</small>
+                        </div>
+                        <div class="col-6">
+                            <div class="h4 text-success mb-0">
+                                {% if avg_rating %}{{ avg_rating|floatformat:1 }}{% else %}--{% endif %}
+                            </div>
+                            <small class="text-muted">Calificación</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+.border-left-warning {
+    border-left: 4px solid #ffc107 !important;
+}
+
+.card.border-left-warning {
+    transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+}
+
+.card.border-left-warning:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+}
+
+.availability-card {
+    background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+    border: none;
+    border-radius: 10px;
+}
+
+.alert {
+    border-radius: 10px;
+    border: none;
+}
+</style>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Add smooth scrolling to anchors
+    const links = document.querySelectorAll('a[href^="#"]');
+    links.forEach(link => {
+        link.addEventListener('click', function(e) {
+            e.preventDefault();
+            const target = document.querySelector(this.getAttribute('href'));
+            if (target) {
+                target.scrollIntoView({
+                    behavior: 'smooth'
+                });
+            }
+        });
+    });
+
+    // Lazy load room image placeholder with animation
+    const imageContainer = document.querySelector('.card-img-top');
+    if (imageContainer) {
+        imageContainer.style.opacity = '0';
+        setTimeout(() => {
+            imageContainer.style.transition = 'opacity 0.5s ease-in-out';
+            imageContainer.style.opacity = '1';
+        }, 100);
+    }
+});
+</script>
+{% endblock %}
