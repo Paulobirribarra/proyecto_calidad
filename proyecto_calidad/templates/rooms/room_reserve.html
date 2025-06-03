@@ -36,24 +36,9 @@
                     <p class="mb-2">
                         <strong>Capacidad:</strong> {{ room.capacity }} personas
                     </p>
-                    
-                    <p class="mb-2">
+                      <p class="mb-2">
                         <strong>Horario:</strong> 
                         {{ room.opening_time|time:"H:i" }} - {{ room.closing_time|time:"H:i" }}
-                    </p>
-                      <p class="mb-3">
-                        <strong>Precio:</strong> 
-                        {% if user.is_estudiante and room.hourly_rate == 0 %}
-                            <span class="text-success h5">
-                                <i class="fas fa-gift me-1"></i>Gratuita
-                            </span>
-                        {% elif user.is_estudiante %}
-                            <span class="text-muted">
-                                <i class="fas fa-info-circle me-1"></i>Contactar coordinación
-                            </span>
-                        {% else %}
-                            <span class="text-success h5">${{ room.hourly_rate|floatformat:0 }}/hora</span>
-                        {% endif %}
                     </p>
                     
                     {% if room.equipment %}

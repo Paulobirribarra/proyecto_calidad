@@ -1,152 +1,120 @@
-# ===== SISTEMA DE GESTIÓN DE SALAS - PROYECTO DJANGO =====
+# Django #
+*.log
+*.pot
+*.pyc
+__pycache__/
+local_settings.py
+db.sqlite3
+db.sqlite3-journal
+media
 
-# ===== BASE DE DATOS =====
-**/db.sqlite3
-**/db.sqlite3-journal
-**/*.sql
-
-# ===== ARCHIVOS PYTHON =====
-**/__pycache__/
-**/*.pyc
-**/*.pyo
-**/*.pyd
-**/*.so
-**/.Python
-**/build/
-**/dist/
-**/*.egg-info/
-**/*.egg
-
-# ===== ENTORNOS VIRTUALES =====
+# Si tienes un entorno virtual dentro del proyecto
 venv/
 env/
-.venv/
-.env/
 ENV/
-env.bak/
-venv.bak/
 
-# ===== LOGS Y DEBUGGING =====
-**/logs/
-**/*.log
-**/*.pot
-.coverage
+# Distribution / packaging
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+
+# Archivos de logs
+logs/
+*.log
+
+# Unit test / coverage reports
 htmlcov/
-.pytest_cache/
 .tox/
 .nox/
-
-# ===== CONFIGURACIONES SENSIBLES =====
-**/.env
-**/local_settings.py
-**/settings_local.py
-**/secret_key.txt
-
-# ===== ARCHIVOS TEMPORALES Y BACKUP =====
-**/*_backup.py
-**/*_broken.py
-**/*_test.py
-**/*_old.py
-**/*_new.py
-**/*_fixed.py
-**/*.bak
-**/*.tmp
-**/*~
-
-# ===== IDEs Y EDITORES =====
-.vscode/
-.idea/
-**/*.swp
-**/*.swo
-**/*~
-
-# ===== SISTEMA OPERATIVO =====
-.DS_Store
-.DS_Store?
-._*
-.Spotlight-V100
-.Trashes
-Thumbs.db
-ehthumbs.db
-desktop.ini
-**/*.lnk
-
-# ===== DJANGO ESPECÍFICOS =====
-**/static/
-**/staticfiles/
-**/media/
-**/migrations/__pycache__/
-
-# ===== TESTING =====
+.coverage
 .coverage.*
 .cache
 nosetests.xml
 coverage.xml
 *.cover
-*.py,cover
 .hypothesis/
+.pytest_cache/
 
-# ===== JUPYTER NOTEBOOKS =====
+# Traducciones
+*.mo
+
+# Django drf-spectacular
+/schema/
+
+# Archivos estáticos recogidos en producción
+staticfiles/
+
+# Documentación
+/site
+
+# mypy
+.mypy_cache/
+.dmypy.json
+dmypy.json
+
+# Archivos IDE específicos
+# Visual Studio Code
+.vscode/
+.history/
+*.code-workspace
+
+# PyCharm
+.idea/
+*.iml
+*.iws
+*.ipr
+*.iws
+.idea_modules/
+out/
+
+# Jupyter Notebook
 .ipynb_checkpoints
-profile_default/
-ipython_config.py
 
-# ===== NODE.JS (SI SE USA) =====
-node_modules/
-npm-debug.log*
-yarn-debug.log*
-yarn-error.log*
-.npm
-.eslintcache
-*.tgz
-.yarn-integrity
+# pyenv
+.python-version
 
-# ===== DOCUMENTOS TEMPORALES =====
-~$*.docx
-~$*.doc
-~$*.pptx
-~$*.xlsx
+# Archivos de sistema operativo
+# Mac OS
+.DS_Store
+.AppleDouble
+.LSOverride
 
-# ===== ARCHIVOS QUE SÍ QUEREMOS VERSIONAR =====
-# (Estos patterns anulan las exclusiones anteriores)
+# Windows
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+$RECYCLE.BIN/
+*.cab
+*.msi
+*.msm
+*.msp
+*.lnk
 
-# Documentación principal
-!README.md
-!INFORME_CALIDAD.md
+# Archivos de configuración local
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
 
-# Código fuente principal
-!**/models.py
-!**/views.py
-!**/forms.py
-!**/admin.py
-!**/urls.py
-!**/apps.py
-!**/tests.py
-!**/__init__.py
+# Archivos de respaldo
+*.bak
+*.swp
+*~
 
-# Configuración del proyecto
-!manage.py
-!requirements.txt
-!robots.txt
-!**/settings.py
-!**/wsgi.py
-!**/asgi.py
-
-# Templates
-!**/templates/
-!**/templates/**/*.html
-
-# Scripts de utilidad
-!**/scripts/
-!**/scripts/**/*.py
-!**/scripts/README.md
-
-# Migraciones (importantes para Django)
-!**/migrations/
-!**/migrations/*.py
-
-# Estructura de apps
-!proyecto_calidad/core/
-!proyecto_calidad/usuarios/
-!proyecto_calidad/rooms/
-!proyecto_calidad/proyecto_calidad/
+# Archivos generados durante la ejecución
+*.tmp

@@ -2,6 +2,37 @@
 
 {% block title %}Salas Disponibles - Salas de Estudio{% endblock %}
 
+{% block extra_head %}
+<style>
+    /* Estilos para salas no disponibles */
+    .room-unavailable .card {
+        transition: all 0.3s ease;
+    }
+    
+    .room-unavailable .btn-outline-secondary {
+        background-color: #f8f9fa;
+    }
+
+    /* Estilo para el separador */
+    .rooms-separator {
+        margin: 1rem 0 1.5rem;
+        border-top: 1px dashed #dee2e6;
+        position: relative;
+    }
+    
+    .rooms-separator-text {
+        position: absolute;
+        top: -12px;
+        left: 50%;
+        transform: translateX(-50%);
+        background: white;
+        padding: 0 15px;
+        color: #6c757d;
+        font-size: 0.9rem;
+    }
+</style>
+{% endblock %}
+
 {% block content %}
 <!-- Hero Section -->
 {% if not user.is_authenticated %}
@@ -79,8 +110,7 @@
                         <div class="col-md-4">
                             <label for="id_search_query" class="form-label">Buscar por nombre</label>
                             {{ form.search_query }}
-                        </div>
-                        <div class="col-md-2">
+                        </div>                        <div class="col-md-2">
                             <label for="id_min_capacity" class="form-label">Capacidad mínima</label>
                             {{ form.min_capacity }}
                         </div>
@@ -88,32 +118,21 @@
                             <label for="id_user_role_filter" class="form-label">Filtrar por rol</label>
                             {{ form.user_role_filter }}
                             <small class="form-text text-muted">Salas según tu tipo de usuario</small>
-                        </div>                        <div class="col-md-3">
+                        </div>
+                        <div class="col-md-3">
                             <label for="id_availability_filter" class="form-label">Disponibilidad</label>
                             {{ form.availability_filter }}
-                        </div>
-                        
-                        <!-- Segunda fila de filtros -->
-                        <div class="col-md-3">
-                            <label for="id_room_type_filter" class="form-label">Tipo de sala</label>
-                            {{ form.room_type_filter }}
-                            <small class="form-text text-muted">Filtrar por tipo específico</small>
-                        </div>
-                        <div class="col-md-3">
+                        </div>                        <div class="col-md-2">
                             <label for="id_available_date" class="form-label">Fecha específica</label>
                             {{ form.available_date }}
                             <small class="form-text text-muted">Solo para horario específico</small>
-                        </div>
-                        <div class="col-md-3 d-flex align-items-end">
-                            <div class="d-grid gap-2 w-100">
-                                <button type="submit" class="btn btn-primary">
+                        </div>                        <div class="col-md-4">
+                            <label class="form-label">&nbsp;</label>
+                            <div class="d-flex gap-2">
+                                <button type="submit" class="btn btn-primary flex-grow-1">
                                     <i class="fas fa-search" aria-hidden="true"></i>
                                     Buscar
                                 </button>
-                            </div>
-                        </div>
-                        <div class="col-md-3 d-flex align-items-end">
-                            <div class="d-grid w-100">
                                 <a href="{% url 'rooms:room_list' %}" class="btn btn-outline-secondary">
                                     <i class="fas fa-times" aria-hidden="true"></i>
                                     Limpiar filtros
@@ -159,12 +178,14 @@
     <div class="row mb-3">
         <div class="col-12">
             <div class="d-flex justify-content-between align-items-center flex-wrap">
-                <div>
-                    <h3>
+                <div>                    <h3>
                         <i class="fas fa-list" aria-hidden="true"></i>
                         Salas Disponibles
                         {% if total_rooms %}
                             <span class="badge bg-primary">{{ total_rooms }}</span>
+                            {% if filtered_by_role %}
+                                <small class="text-muted ms-2"></small>
+                            {% endif %}
                         {% endif %}
                     </h3>
                     
@@ -210,9 +231,7 @@
                 {% endif %}
             </div>
         </div>
-    </div>
-
-    <!-- Rooms Grid/List -->
+    </div>    <!-- Rooms Grid/List -->
     <div class="row" id="rooms-container">
         {% if rooms %}
             {% for room in rooms %}
@@ -223,8 +242,7 @@
                         <i class="fas fa-building fa-3x text-muted" aria-hidden="true"></i>
                     </div>
                     
-                    <div class="card-body d-flex flex-column">
-                        <div class="d-flex justify-content-between align-items-start mb-2">
+                    <div class="card-body d-flex flex-column">                        <div class="d-flex justify-content-between align-items-start mb-2">
                             <h5 class="card-title mb-0">{{ room.name }}</h5>
                             <span class="badge bg-primary">
                                 <i class="fas fa-users" aria-hidden="true"></i>
@@ -232,10 +250,28 @@
                             </span>
                         </div>
                         
-                        <p class="card-text text-muted small mb-2">
-                            <i class="fas fa-map-marker-alt" aria-hidden="true"></i>
-                            {{ room.location }}
-                        </p>
+                        <div class="d-flex justify-content-between align-items-center mb-2">
+                            <p class="card-text text-muted small mb-0">
+                                <i class="fas fa-map-marker-alt" aria-hidden="true"></i>
+                                {{ room.location }}
+                            </p>
+                            
+                            {% if room.room_type == 'sala_estudio' %}
+                                <span class="badge bg-success text-white">Sala de Estudio</span>
+                            {% elif room.room_type == 'sala_individual' %}
+                                <span class="badge bg-success text-white">Sala Individual</span>
+                            {% elif room.room_type == 'aula' %}
+                                <span class="badge bg-info text-dark">Aula</span>
+                            {% elif room.room_type == 'sala_reunion' %}
+                                <span class="badge bg-info text-dark">Sala de Reuniones</span>
+                            {% elif room.room_type == 'laboratorio' %}
+                                <span class="badge bg-warning text-dark">Laboratorio</span>
+                            {% elif room.room_type == 'auditorio' %}
+                                <span class="badge bg-danger text-white">Auditorio</span>
+                            {% else %}
+                                <span class="badge bg-secondary">{{ room.get_room_type_display }}</span>
+                            {% endif %}
+                        </div>
                         
                         <p class="card-text flex-grow-1">
                             {{ room.description|truncatewords:15 }}
@@ -286,12 +322,10 @@
                         
                         <!-- Action Buttons -->
                         <div class="mt-auto">
-                            <div class="d-flex gap-2">
-                                <a href="{% url 'rooms:room_detail' room.pk %}" class="btn btn-primary flex-grow-1">
+                            <div class="d-flex gap-2">                                <a href="{% url 'rooms:room_detail' room.pk %}" class="btn btn-primary flex-grow-1">
                                     <i class="fas fa-eye" aria-hidden="true"></i>
                                     Ver Detalles
-                                </a>
-                                {% if user.is_authenticated %}
+                                </a>                                {% if user.is_authenticated %}
                                     <a href="{% url 'rooms:reservation_create' room.pk %}" class="btn btn-success">
                                         <i class="fas fa-calendar-plus" aria-hidden="true"></i>
                                         Reservar
@@ -315,8 +349,7 @@
                             </small>
                         {% endif %}
                     </div>
-                </div>
-            </div>
+                </div>            </div>
             {% endfor %}
         {% else %}
             <div class="col-12">

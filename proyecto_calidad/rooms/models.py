@@ -229,18 +229,24 @@ class Room(models.Model):
             
         if hasattr(user, 'is_profesor') and user.is_profesor():
             return True
-        
-        # Verificar si el rol del usuario está en los roles permitidos
+          # Verificar si el rol del usuario está en los roles permitidos
         allowed = self.allowed_roles.split(',')
         
         if hasattr(user, 'role') and user.role in allowed:
             # Restricciones específicas para estudiantes
             if hasattr(user, 'is_estudiante') and user.is_estudiante():
                 # Los estudiantes solo pueden reservar salas de estudio y salas individuales
-                if self.room_type in ['sala_estudio', 'sala_individual']:
+                if self.room_type in ['sala_estudio', 'sala_individual', 'auditorio']:
                     return True
                 return False
             
+            # Restricciones para soporte técnico
+            if hasattr(user, 'role') and user.role == 'soporte':
+                # Soporte puede reservar laboratorios, salas de reuniones y auditorios
+                if self.room_type in ['laboratorio', 'sala_reunion', 'auditorio']:
+                    return True
+                return False
+                
             # Para otros roles permitidos
             return True
         
@@ -357,8 +363,27 @@ class Reservation(models.Model):
         """
         if self.status in ['cancelled', 'completed', 'no_show']:
             return False
-        # Permitir cancelación hasta 1 hora antes
-        return timezone.now() < (self.start_time - timedelta(hours=1))
+        # Permitir cancelación hasta 1 hora antes        return timezone.now() < (self.start_time - timedelta(hours=1))
+    
+    def update_status_if_needed(self):
+        """
+        Actualiza el estado de la reserva basado en la hora actual.
+        
+        Si la hora de finalización ya pasó y el estado es 'confirmed',
+        cambia el estado a 'completed'.
+        
+        Returns:
+            bool: True si se actualizó el estado
+        """
+        now = timezone.now()
+        
+        if self.status == 'confirmed' and now > self.end_time:
+            self.status = 'completed'
+            self.save(update_fields=['status'])
+            logger.info(f"Reserva #{self.id} actualizada automáticamente a 'completed'")
+            return True
+        
+        return False
     
     def can_be_reviewed(self):
         """
@@ -366,8 +391,10 @@ class Reservation(models.Model):
         
         Returns:
             bool: True si puede ser calificada
-        """
-        return (self.status == 'completed' and 
+        """        # Actualizar el estado si es necesario antes de verificar
+        self.update_status_if_needed()
+        
+        return (self.status == 'completed' and
                 not hasattr(self, 'review'))
     
     def clean(self):

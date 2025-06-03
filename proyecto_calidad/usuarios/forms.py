@@ -123,7 +123,7 @@ class CustomUserCreationForm(UserCreationForm):
         max_length=15,
         required=False,        widget=forms.TextInput(attrs={
             'class': 'form-control',
-            'placeholder': '+52 555 123 4567'
+            'placeholder': '+56 949 377 625'
         })
     )
     
@@ -289,7 +289,7 @@ class ProfileForm(forms.ModelForm):
             }),
             'phone_number': forms.TextInput(attrs={
                 'class': 'form-control',
-                'placeholder': '+52 555 123 4567'
+                'placeholder': '+569 49377625'
             }),
             'email_notifications': forms.CheckboxInput(attrs={
                 'class': 'form-check-input'
@@ -316,7 +316,6 @@ class ProfileForm(forms.ModelForm):
             existing_user = CustomUser.objects.filter(email=email).exclude(pk=self.instance.pk)
             if existing_user.exists():
                 raise ValidationError("Ya existe otro usuario con este email.")
-        
         return email
     
     def clean_phone_number(self):
@@ -327,7 +326,7 @@ class ProfileForm(forms.ModelForm):
             # Validar formato básico
             if not re.match(r'^\+?[\d\s\-\(\)]{10,15}$', phone):
                 raise ValidationError(
-                    "Formato de teléfono inválido. Ejemplo: +52 555 123 4567"
+                    "Formato de teléfono inválido. Ejemplo: +569 49377625"
                 )
         
         return phone

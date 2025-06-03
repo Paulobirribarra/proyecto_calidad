@@ -362,23 +362,13 @@ class RoomSearchForm(forms.Form):
         ('administrador', 'Todas las salas (admin)'),
         ('soporte', 'Salas de soporte técnico'),
     ]
-      # Opciones para disponibilidad
+    
+    # Opciones para disponibilidad
     AVAILABILITY_CHOICES = [
         ('', 'Todas las salas'),
         ('available_now', 'Disponibles ahora'),
         ('available_today', 'Disponibles hoy'),
         ('available_custom', 'Disponibles en horario específico'),
-    ]
-    
-    # Opciones para tipo de sala
-    ROOM_TYPE_CHOICES = [
-        ('', 'Todos los tipos'),
-        ('aula', 'Aula'),
-        ('sala_estudio', 'Sala de Estudio'),
-        ('sala_individual', 'Sala Individual'),
-        ('sala_reunion', 'Sala de Reuniones'),
-        ('laboratorio', 'Laboratorio'),
-        ('auditorio', 'Auditorio'),
     ]
     
     search_query = forms.CharField(
@@ -417,18 +407,7 @@ class RoomSearchForm(forms.Form):
         required=False,
         widget=forms.Select(attrs={
             'class': 'form-select'
-        }),
-        label='Filtrar por disponibilidad'
-    )
-    
-    # Nuevo: Filtro por tipo de sala
-    room_type_filter = forms.ChoiceField(
-        choices=ROOM_TYPE_CHOICES,
-        required=False,
-        widget=forms.Select(attrs={
-            'class': 'form-select'
-        }),
-        label='Filtrar por tipo de sala'
+        }),        label='Filtrar por disponibilidad'
     )
     
     available_date = forms.DateField(

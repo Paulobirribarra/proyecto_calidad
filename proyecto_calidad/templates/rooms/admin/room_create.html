@@ -1,0 +1,376 @@
+{% extends 'base.html' %}
+
+{% block title %}Crear Nueva Sala - Panel de Administración{% endblock %}
+
+{% block content %}
+<div class="container my-5">
+    <!-- Header -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item"><a href="{% url 'rooms:room_list' %}">Salas</a></li>
+                    <li class="breadcrumb-item active" aria-current="page">Crear Nueva Sala</li>
+                </ol>
+            </nav>
+        </div>
+    </div>
+
+    <div class="row">
+        <!-- Admin Info Panel -->
+        <div class="col-lg-4 mb-4">
+            <div class="card border-success">
+                <div class="card-header bg-success text-white">
+                    <h5 class="mb-0">
+                        <i class="fas fa-cog" aria-hidden="true"></i>
+                        Panel de Administración
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <p class="card-text">
+                        <i class="fas fa-info-circle text-success me-2"></i>
+                        Desde aquí puedes crear nuevas salas para el sistema.
+                    </p>
+                    
+                    <div class="mb-3">
+                        <strong>Características importantes:</strong>
+                        <ul class="mt-2 small">
+                            <li>El nombre de la sala debe ser único</li>
+                            <li>La capacidad máxima permitida es 100 personas</li>
+                            <li>Los horarios deben estar entre 6:00 AM y 11:00 PM</li>
+                            <li>Tarifa de $0.00 significa sala gratuita</li>
+                        </ul>
+                    </div>
+                    
+                    <div class="alert alert-warning">
+                        <small>
+                            <i class="fas fa-exclamation-triangle" aria-hidden="true"></i>
+                            Asegúrate de completar toda la información antes de crear la sala.
+                        </small>
+                    </div>
+                    
+                    <!-- Quick Actions -->
+                    <div class="d-grid gap-2">
+                        <a href="{% url 'rooms:room_list' %}" class="btn btn-outline-success">
+                            <i class="fas fa-list" aria-hidden="true"></i>
+                            Ver Todas las Salas
+                        </a>
+                        <a href="{% url 'rooms:reservation_admin' %}" class="btn btn-outline-success">
+                            <i class="fas fa-calendar-alt" aria-hidden="true"></i>
+                            Gestionar Reservas
+                        </a>
+                        <a href="/admin/" class="btn btn-outline-success">
+                            <i class="fas fa-tools" aria-hidden="true"></i>
+                            Panel Admin Django
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Room Creation Form -->
+        <div class="col-lg-8">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        <i class="fas fa-plus-circle" aria-hidden="true"></i>
+                        Información de la Nueva Sala
+                    </h5>
+                </div>
+                <div class="card-body">
+                    {% if messages %}
+                        {% for message in messages %}
+                            <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                                {{ message }}
+                                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                            </div>
+                        {% endfor %}
+                    {% endif %}
+
+                    <form method="post" id="room-form">
+                        {% csrf_token %}
+                        
+                        <div class="row g-3">
+                            <!-- Nombre de la sala -->
+                            <div class="col-md-6">
+                                <label for="{{ form.name.id_for_label }}" class="form-label">
+                                    <i class="fas fa-tag" aria-hidden="true"></i>
+                                    Nombre de la Sala *
+                                </label>
+                                {{ form.name }}
+                                {% if form.name.errors %}
+                                    <div class="text-danger small">{{ form.name.errors }}</div>
+                                {% endif %}
+                                <div class="form-text">Nombre único e identificativo de la sala</div>
+                            </div>
+
+                            <!-- Ubicación -->
+                            <div class="col-md-6">
+                                <label for="{{ form.location.id_for_label }}" class="form-label">
+                                    <i class="fas fa-map-marker-alt" aria-hidden="true"></i>
+                                    Ubicación *
+                                </label>
+                                {{ form.location }}
+                                {% if form.location.errors %}
+                                    <div class="text-danger small">{{ form.location.errors }}</div>
+                                {% endif %}
+                                <div class="form-text">Ubicación física de la sala (edificio, piso, etc.)</div>
+                            </div>
+
+                            <!-- Descripción -->
+                            <div class="col-12">
+                                <label for="{{ form.description.id_for_label }}" class="form-label">
+                                    <i class="fas fa-align-left" aria-hidden="true"></i>
+                                    Descripción *
+                                </label>
+                                {{ form.description }}
+                                {% if form.description.errors %}
+                                    <div class="text-danger small">{{ form.description.errors }}</div>
+                                {% endif %}
+                                <div class="form-text">Descripción detallada de las características de la sala</div>
+                            </div>
+
+                            <!-- Capacidad -->
+                            <div class="col-md-4">
+                                <label for="{{ form.capacity.id_for_label }}" class="form-label">
+                                    <i class="fas fa-users" aria-hidden="true"></i>
+                                    Capacidad *
+                                </label>
+                                {{ form.capacity }}
+                                {% if form.capacity.errors %}
+                                    <div class="text-danger small">{{ form.capacity.errors }}</div>
+                                {% endif %}
+                                <div class="form-text">Número máximo de personas (1-100)</div>
+                            </div>
+
+                            <!-- Tarifa por hora -->
+                            <div class="col-md-4">
+                                <label for="{{ form.hourly_rate.id_for_label }}" class="form-label">
+                                    <i class="fas fa-dollar-sign" aria-hidden="true"></i>
+                                    Tarifa por Hora
+                                </label>
+                                {{ form.hourly_rate }}
+                                {% if form.hourly_rate.errors %}
+                                    <div class="text-danger small">{{ form.hourly_rate.errors }}</div>
+                                {% endif %}
+                                <div class="form-text">Costo por hora (0.00 = gratuita)</div>
+                            </div>
+
+                            <!-- Horarios -->
+                            <div class="col-md-2">
+                                <label for="{{ form.opening_time.id_for_label }}" class="form-label">
+                                    <i class="fas fa-clock" aria-hidden="true"></i>
+                                    Apertura *
+                                </label>
+                                {{ form.opening_time }}
+                                {% if form.opening_time.errors %}
+                                    <div class="text-danger small">{{ form.opening_time.errors }}</div>
+                                {% endif %}
+                            </div>
+
+                            <div class="col-md-2">
+                                <label for="{{ form.closing_time.id_for_label }}" class="form-label">
+                                    <i class="fas fa-clock" aria-hidden="true"></i>
+                                    Cierre *
+                                </label>
+                                {{ form.closing_time }}
+                                {% if form.closing_time.errors %}
+                                    <div class="text-danger small">{{ form.closing_time.errors }}</div>
+                                {% endif %}
+                            </div>
+
+                            <!-- Equipamiento -->
+                            <div class="col-12">
+                                <label for="{{ form.equipment.id_for_label }}" class="form-label">
+                                    <i class="fas fa-tools" aria-hidden="true"></i>
+                                    Equipamiento Disponible
+                                </label>
+                                {{ form.equipment }}
+                                {% if form.equipment.errors %}
+                                    <div class="text-danger small">{{ form.equipment.errors }}</div>
+                                {% endif %}
+                                <div class="form-text">Lista el equipamiento disponible separado por comas</div>
+                            </div>
+                        </div>
+
+                        <!-- Vista previa de información -->
+                        <div class="row mt-4">
+                            <div class="col-12">
+                                <div class="card bg-light" id="room-preview" style="display: none;">
+                                    <div class="card-header">
+                                        <h6 class="mb-0">
+                                            <i class="fas fa-eye" aria-hidden="true"></i>
+                                            Vista Previa de la Sala
+                                        </h6>
+                                    </div>
+                                    <div class="card-body" id="preview-content">
+                                        <!-- El contenido se generará dinámicamente -->
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Botones de acción -->
+                        <div class="row mt-4">
+                            <div class="col-12">
+                                <div class="d-flex gap-3">
+                                    <button type="submit" class="btn btn-success btn-lg">
+                                        <i class="fas fa-plus-circle" aria-hidden="true"></i>
+                                        Crear Sala
+                                    </button>
+                                    <a href="{% url 'rooms:room_list' %}" class="btn btn-secondary btn-lg">
+                                        <i class="fas fa-arrow-left" aria-hidden="true"></i>
+                                        Cancelar
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const form = document.getElementById('room-form');
+    const preview = document.getElementById('room-preview');
+    const previewContent = document.getElementById('preview-content');
+    
+    // Agregar clases Bootstrap a los campos del formulario
+    const formFields = form.querySelectorAll('input, textarea, select');
+    formFields.forEach(field => {
+        field.classList.add('form-control');
+    });
+
+    // Función para actualizar la vista previa
+    function updatePreview() {
+        const name = form.querySelector('[name="name"]').value;
+        const location = form.querySelector('[name="location"]').value;
+        const capacity = form.querySelector('[name="capacity"]').value;
+        const hourlyRate = form.querySelector('[name="hourly_rate"]').value;
+        const description = form.querySelector('[name="description"]').value;
+        const equipment = form.querySelector('[name="equipment"]').value;
+        const openingTime = form.querySelector('[name="opening_time"]').value;
+        const closingTime = form.querySelector('[name="closing_time"]').value;
+        
+        // Verificar si hay información suficiente para mostrar vista previa
+        if (name || location || capacity) {
+            preview.style.display = 'block';
+            
+            let html = '<div class="row">';
+            
+            if (name) {
+                html += `<div class="col-md-6 mb-2">
+                    <strong><i class="fas fa-tag me-1"></i> Nombre:</strong><br>
+                    <span class="text-muted">${name}</span>
+                </div>`;
+            }
+            
+            if (location) {
+                html += `<div class="col-md-6 mb-2">
+                    <strong><i class="fas fa-map-marker-alt me-1"></i> Ubicación:</strong><br>
+                    <span class="text-muted">${location}</span>
+                </div>`;
+            }
+            
+            if (capacity) {
+                html += `<div class="col-md-4 mb-2">
+                    <strong><i class="fas fa-users me-1"></i> Capacidad:</strong><br>
+                    <span class="badge bg-primary">${capacity} personas</span>
+                </div>`;
+            }
+            
+            if (hourlyRate !== '') {
+                const rate = parseFloat(hourlyRate) || 0;
+                const rateText = rate === 0 ? 'Gratuita' : `$${rate.toFixed(2)}/hora`;
+                const badgeClass = rate === 0 ? 'bg-success' : 'bg-info';
+                html += `<div class="col-md-4 mb-2">
+                    <strong><i class="fas fa-dollar-sign me-1"></i> Tarifa:</strong><br>
+                    <span class="badge ${badgeClass}">${rateText}</span>
+                </div>`;
+            }
+            
+            if (openingTime && closingTime) {
+                html += `<div class="col-md-4 mb-2">
+                    <strong><i class="fas fa-clock me-1"></i> Horario:</strong><br>
+                    <span class="text-muted">${openingTime} - ${closingTime}</span>
+                </div>`;
+            }
+            
+            if (description) {
+                html += `<div class="col-12 mb-2">
+                    <strong><i class="fas fa-align-left me-1"></i> Descripción:</strong><br>
+                    <span class="text-muted">${description}</span>
+                </div>`;
+            }
+            
+            if (equipment) {
+                const equipmentList = equipment.split(',').map(item => 
+                    `<span class="badge bg-light text-dark me-1">${item.trim()}</span>`
+                ).join('');
+                html += `<div class="col-12 mb-2">
+                    <strong><i class="fas fa-tools me-1"></i> Equipamiento:</strong><br>
+                    ${equipmentList}
+                </div>`;
+            }
+            
+            html += '</div>';
+            previewContent.innerHTML = html;
+        } else {
+            preview.style.display = 'none';
+        }
+    }
+
+    // Escuchar cambios en los campos del formulario
+    formFields.forEach(field => {
+        field.addEventListener('input', updatePreview);
+        field.addEventListener('change', updatePreview);
+    });
+
+    // Validación del formulario antes del envío
+    form.addEventListener('submit', function(e) {
+        const name = form.querySelector('[name="name"]').value.trim();
+        const capacity = form.querySelector('[name="capacity"]').value;
+        const openingTime = form.querySelector('[name="opening_time"]').value;
+        const closingTime = form.querySelector('[name="closing_time"]').value;
+        
+        if (!name) {
+            alert('Por favor, ingresa un nombre para la sala.');
+            e.preventDefault();
+            return;
+        }
+        
+        if (!capacity || capacity < 1 || capacity > 100) {
+            alert('La capacidad debe estar entre 1 y 100 personas.');
+            e.preventDefault();
+            return;
+        }
+        
+        if (!openingTime || !closingTime) {
+            alert('Por favor, especifica los horarios de apertura y cierre.');
+            e.preventDefault();
+            return;
+        }
+        
+        // Validar que la hora de apertura sea anterior a la de cierre
+        if (openingTime >= closingTime) {
+            alert('La hora de apertura debe ser anterior a la hora de cierre.');
+            e.preventDefault();
+            return;
+        }
+        
+        // Confirmación final
+        if (!confirm('¿Estás seguro de que deseas crear esta sala? Revisa que toda la información sea correcta.')) {
+            e.preventDefault();
+        }
+    });
+    
+    // Inicializar vista previa
+    updatePreview();
+});
+</script>
+{% endblock %}

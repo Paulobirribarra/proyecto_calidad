@@ -96,8 +96,10 @@ def user_register(request):
             try:
                 with transaction.atomic():
                     user = form.save(commit=False)
-                    user.role = 'basic'  # Por defecto todos son usuarios básicos
+                    user.role = 'estudiante'  # Por defecto todos son estudiantes
                     user.is_active = True
+                    user.is_staff = False  # Asegurar que no sea staff
+                    user.is_superuser = False  # Asegurar que no sea superuser
                     user.save()
                     
                     # Auto-login después del registro
@@ -169,13 +171,16 @@ def user_profile(request):
     
     Muestra información del usuario y estadísticas
     de sus reservas y actividad.
+    Esta vista es de solo lectura, para ediciones usar user_profile_edit.
     """
     user = request.user
     
     # Estadísticas del usuario
-    total_reservations = user.reservations.count()
-    completed_reservations = user.reservations.filter(status='completed').count()
-    cancelled_reservations = user.reservations.filter(status='cancelled').count()
+    reservation_count = user.reservations.count()
+    active_reservations = user.reservations.filter(
+        status__in=['confirmed', 'pending'],
+        start_time__gt=timezone.now()
+    ).count()
     
     # Reservas recientes
     recent_reservations = user.reservations.select_related('room').order_by('-created_at')[:5]
@@ -188,9 +193,8 @@ def user_profile(request):
     
     context = {
         'user': user,
-        'total_reservations': total_reservations,
-        'completed_reservations': completed_reservations,
-        'cancelled_reservations': cancelled_reservations,
+        'reservation_count': reservation_count,
+        'active_reservations': active_reservations,
         'recent_reservations': recent_reservations,
         'upcoming_reservations': upcoming_reservations,
         'title': 'Mi Perfil'

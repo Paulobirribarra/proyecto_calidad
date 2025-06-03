@@ -1,151 +1,72 @@
-# 📁 Scripts de Utilidad
+# 📚 Scripts del Sistema de Gestión de Salas
 
-Esta carpeta contiene todos los scripts de utilidad para poblar la base de datos, generar datos de prueba y ejecutar tests del sistema.
+Este directorio contiene scripts para configurar, probar y mantener el Sistema de Gestión de Salas.
 
-## 🚀 Scripts de Poblado de Datos
+## 🔧 Scripts Principales
 
-### `populate_all.py` - Script Principal
-```bash
-python scripts/populate_all.py
+### `run_setup.py`
+Script principal para configurar el sistema desde cero. Ejecuta automáticamente `setup_db.py`.
+
+**Uso:**
+```powershell
+python scripts\run_setup.py
 ```
-**Descripción**: Ejecuta automáticamente todos los scripts de poblado en el orden correcto.
-- Crea usuarios con diferentes roles
-- Crea salas de ejemplo
-- Genera reservas de prueba
 
-### Scripts Individuales
+**Acciones que realiza:**
+- Crea el directorio de logs si no existe
+- Crea superusuario y usuarios predefinidos
+- Crea salas de diferentes tipos
+- Genera reservas aleatorias de prueba
+- Genera reseñas para algunas reservas
 
-#### `populate_users.py` - Crear Usuarios
-```bash
-python manage.py shell < scripts/populate_users.py
+### `setup_db.py`
+Script interno que contiene la lógica de configuración. Es llamado por `run_setup.py`.
+
+**Funciones principales:**
+- `crear_directorio_logs()` - Crea la carpeta de logs
+- `crear_superusuario()` - Configura el usuario administrador
+- `crear_usuarios(cantidad)` - Genera usuarios variados
+- `crear_salas(cantidad)` - Configura las salas disponibles
+- `generar_reservas(cantidad_por_usuario)` - Crea reservas aleatorias
+
+### `check_db.py`
+Script para verificar la integridad de la base de datos.
+
+**Uso:**
+```powershell
+python scripts\check_db.py
 ```
-**Crea usuarios con diferentes roles:**
-- Profesores: `c.morales@colegio.cl`, `r.gomez@colegio.cl`, `c.vega@colegio.cl`
-- Estudiantes: `v.lagos@colegio.cl`, `m.fuentes@colegio.cl`, `a.valenzuela@colegio.cl`
-- Soporte: `r.paredes@colegio.cl`, `l.torres@colegio.cl`
-- Administradores: `admin@colegio.cl`
 
-**Contraseña para todos**: `password123`
+## 📁 Directorio `tests`
 
-#### `populate_rooms.py` - Crear Salas
-```bash
-python manage.py shell < scripts/populate_rooms.py
-```
-**Crea 10 salas de ejemplo:**
-- Salas de estudio individuales y grupales
-- Aulas para clases
-- Laboratorios especializados
-- Salas de reuniones
+Este subdirectorio contiene scripts para probar diferentes aspectos del sistema:
 
-#### `generate_reservations.py` - Generar Reservas
-```bash
-python manage.py shell < scripts/generate_reservations.py
-```
-**Genera reservas de prueba:**
-- Reservas para diferentes usuarios y roles
-- Estados variados (pendiente, confirmada, completada)
-- Fechas en el futuro y pasado para testing
+- `test_security_vulnerabilities.py` - Pruebas de seguridad básicas
+- `test_reservation_simulation.py` - Simulación del flujo de reservas
+- `test_review_system.py` - Pruebas del sistema de reseñas
+- `test_all_user_scenarios.py` - Pruebas de diferentes escenarios de usuario
 
-#### `create_completed_reservations.py` - Reservas Completadas
-```bash
-python manage.py shell < scripts/create_completed_reservations.py
-```
-**Crear reservas completadas específicamente para probar el sistema de valoración**
+## 🚀 Configuración Rápida
 
-## 🧪 Scripts de Testing
+Para configurar rápidamente el sistema completo:
 
-La subcarpeta `tests/` contiene varios scripts de testing:
+1. Eliminar base de datos previa (si existe)
+   ```powershell
+   if (Test-Path db.sqlite3) { Remove-Item db.sqlite3 }
+   ```
 
-### `test_review_system.py` - Test del Sistema de Valoración
-```bash
-python scripts/tests/test_review_system.py
-```
-**Prueba completa del sistema de valoración:**
-- Validación de formularios
-- Creación de reseñas
-- Integración con reservas completadas
-
-### `test_all_user_scenarios.py` - Test de Escenarios de Usuario
-```bash
-python scripts/tests/test_all_user_scenarios.py
-```
-**Prueba todos los escenarios de usuario por rol**
-
-### `test_reservation_simulation.py` - Simulación de Reservas
-```bash
-python scripts/tests/test_reservation_simulation.py
-```
-**Simula flujos completos de reserva**
-
-## 🔧 Scripts de Utilidad
-
-### `check_db.py` - Verificar Base de Datos
-```bash
-python scripts/check_db.py
-```
-**Verifica el estado de la base de datos:**
-- Número de usuarios, salas, reservas
-- Estadísticas por rol y estado
-- Integridad de datos
-
-### `create_users.py` - Crear Usuarios Adicionales
-```bash
-python scripts/create_users.py
-```
-**Crear usuarios adicionales para testing específico**
-
-## 🎯 Flujo Recomendado para Configuración Inicial
-
-1. **Aplicar migraciones** (desde la raíz del proyecto):
-   ```bash
+2. Aplicar migraciones
+   ```powershell
    python manage.py migrate
    ```
 
-2. **Poblar datos de ejemplo**:
-   ```bash
-   python scripts/populate_all.py
+3. Ejecutar script de configuración
+   ```powershell
+   python scripts\run_setup.py
    ```
 
-3. **Verificar datos**:
-   ```bash
-   python scripts/check_db.py
-   ```
+## 📝 Notas
 
-4. **Ejecutar tests** (opcional):
-   ```bash
-   python scripts/tests/test_review_system.py
-   ```
-
-5. **Iniciar servidor**:
-   ```bash
-   python manage.py runserver
-   ```
-
-## 📝 Notas Importantes
-
-- **Orden de ejecución**: Los scripts deben ejecutarse en orden (usuarios → salas → reservas)
-- **Datos de prueba**: Todos los scripts están diseñados para ser seguros de ejecutar múltiples veces
-- **Logs**: Todos los scripts generan logs informativos durante la ejecución
-- **Validación**: Los scripts incluyen validaciones para evitar datos duplicados
-
-## 🚨 Troubleshooting
-
-**Error: "No module named 'django'"**
-```bash
-# Activar entorno virtual primero
-venv\Scripts\activate  # Windows
-source venv/bin/activate  # Linux/Mac
-```
-
-**Error: "Apps aren't loaded yet"**
-```bash
-# Los scripts deben ejecutarse desde la raíz del proyecto
-cd proyecto_calidad
-python scripts/populate_all.py
-```
-
-**Error: "Database locked"**
-```bash
-# Cerrar el servidor de desarrollo antes de ejecutar scripts
-# Ctrl+C en la terminal del servidor
-```
+- Los scripts deben ejecutarse desde la raíz del proyecto Django (`proyecto_calidad/`)
+- Se recomienda activar el entorno virtual antes de ejecutar los scripts
+- Si ocurren errores, revisar los logs en `logs/debug.log`

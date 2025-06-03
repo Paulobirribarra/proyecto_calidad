@@ -83,7 +83,8 @@ def room_list(request):
     try:
         form = RoomSearchForm(request.GET or None)
         rooms_queryset = Room.objects.filter(is_active=True)
-          # Aplicar filtros de búsqueda
+        
+        # Aplicar filtros de búsqueda
         if form.is_valid():
             search_query = form.cleaned_data.get('search_query')
             min_capacity = form.cleaned_data.get('min_capacity')
@@ -98,16 +99,33 @@ def room_list(request):
                     Q(location__icontains=search_query) |
                     Q(description__icontains=search_query)
                 )
-              # Filtro por capacidad
+            
+            # Filtro por capacidad
             if min_capacity:
                 rooms_queryset = rooms_queryset.filter(capacity__gte=min_capacity)
             
-            # Nuevo: Filtro por tipo de sala
-            room_type_filter = form.cleaned_data.get('room_type_filter')
-            if room_type_filter:
-                rooms_queryset = rooms_queryset.filter(room_type=room_type_filter)
+            # Filtro por rol de usuario (seleccionado explícitamente o automático)
+            if request.user.is_authenticated:
+                # Si el usuario no ha seleccionado un filtro de rol específico,
+                # aplicamos un filtro automático basado en su rol
+                if not user_role_filter:
+                    if hasattr(request.user, 'is_estudiante') and request.user.is_estudiante():
+                        user_role = 'estudiante'
+                    elif hasattr(request.user, 'is_profesor') and request.user.is_profesor():
+                        user_role = 'profesor'
+                    elif hasattr(request.user, 'is_admin') and request.user.is_admin():
+                        user_role = 'administrador'
+                    elif hasattr(request.user, 'is_staff') and request.user.is_staff:
+                        user_role = 'administrador'
+                    else:
+                        # Rol por defecto si no se puede determinar
+                        user_role = 'estudiante'
+                    
+                    # Actualizamos el formulario para mostrar el filtro seleccionado
+                    form.initial['user_role_filter'] = user_role
+                    user_role_filter = user_role
             
-            # Nuevo: Filtro por rol de usuario
+            # Aplicar filtro por rol (seleccionado o automático)
             if user_role_filter and request.user.is_authenticated:
                 if user_role_filter == 'estudiante':
                     # Estudiantes: solo salas de estudio individuales y salas gratuitas
@@ -126,7 +144,7 @@ def room_list(request):
                 elif user_role_filter == 'soporte':
                     # Soporte: salas técnicas y de laboratorio
                     rooms_queryset = rooms_queryset.filter(
-                        room_type__in=['laboratorio_informatica', 'sala_servidor', 'aula_multimedia']
+                        room_type__in=['laboratorio', 'sala_reunion', 'auditorio']
                     )
             
             # Nuevo: Filtro por disponibilidad
@@ -166,7 +184,7 @@ def room_list(request):
                             status__in=['confirmed', 'in_progress'],
                             start_time__date=today
                         ).order_by('start_time')
-                          # Verificar si está completamente reservada
+                        # Verificar si está completamente reservada
                         current_time = room_start
                         for reservation in reservations:
                             if reservation.start_time > current_time:
@@ -188,8 +206,24 @@ def room_list(request):
                 # Solo filtrar por fecha, sin horarios específicos
                 # El usuario puede ver la disponibilidad detallada en la página de cada sala
                 pass
+          # Filtrar salas que el usuario puede reservar antes de la paginación
+        if request.user.is_authenticated:
+            # Crear una lista temporaria de salas a filtrar
+            filtered_rooms = []
+            # Almacenar solo los IDs de las salas que el usuario puede reservar
+            allowed_room_ids = []
+            
+            for room in rooms_queryset:
+                if room.can_be_reserved_by(request.user):
+                    allowed_room_ids.append(room.id)
+            
+            # Filtrar el queryset con los IDs permitidos
+            if not (request.user.is_staff or request.user.is_superuser or
+                   (hasattr(request.user, 'is_admin') and request.user.is_admin()) or
+                   (hasattr(request.user, 'is_profesor') and request.user.is_profesor())):
+                rooms_queryset = rooms_queryset.filter(id__in=allowed_room_ids)
         
-        # Paginación
+        # Paginación después del filtrado
         paginator = Paginator(rooms_queryset.order_by('name'), 12)
         page = request.GET.get('page')
         
@@ -199,15 +233,26 @@ def room_list(request):
             rooms = paginator.page(1)
         except EmptyPage:
             rooms = paginator.page(paginator.num_pages)
-        
         logger.info(
             f"Lista de salas consultada por {request.user.username if request.user.is_authenticated else 'anónimo'}"
         )
         
+        # Marcar las salas que el usuario puede reservar para mostrar/ocultar botones en la interfaz
+        if request.user.is_authenticated:
+            for room in rooms:
+                room.user_can_reserve = room.can_be_reserved_by(request.user)
         context = {
             'rooms': rooms,
             'form': form,
-            'total_rooms': rooms_queryset.count()
+            'total_rooms': rooms_queryset.count(),
+            'is_paginated': paginator.num_pages > 1,
+            'page_obj': rooms,
+            'filtered_by_role': request.user.is_authenticated and not (
+                request.user.is_staff or 
+                request.user.is_superuser or 
+                (hasattr(request.user, 'is_admin') and request.user.is_admin()) or
+                (hasattr(request.user, 'is_profesor') and request.user.is_profesor())
+            )
         }
         
         return render(request, 'rooms/room_list.html', context)
@@ -255,14 +300,21 @@ def room_detail(request, room_id):
         avg_rating = room.average_rating
         
         # Verificar si el usuario actual puede reservar basado en su rol
-        can_reserve = request.user.is_authenticated and room.can_be_reserved_by(request.user) if request.user.is_authenticated else False
-          # Determinar mensaje informativo sobre permisos
+        can_reserve = request.user.is_authenticated and room.can_be_reserved_by(request.user) if request.user.is_authenticated else False        # Determinar mensaje informativo sobre permisos
         permission_message = None
         if request.user.is_authenticated and not can_reserve:
-            if request.user.is_estudiante() and room.room_type not in ['sala_estudio', 'sala_individual']:
-                permission_message = "Esta sala no está disponible para estudiantes. Solo puedes reservar salas de estudio y salas individuales."
+            if request.user.is_estudiante():
+                if room.room_type not in ['sala_estudio', 'sala_individual']:
+                    permission_message = f"Esta sala es de tipo '{dict(Room.ROOM_TYPE_CHOICES).get(room.room_type, room.room_type)}' y no está disponible para estudiantes. Como estudiante, solo puedes reservar salas de estudio y salas individuales."
+                else:
+                    permission_message = f"Esta sala requiere permisos especiales que tu cuenta no tiene."
+            elif request.user.is_profesor():
+                if room.room_type == 'sala_servidor':
+                    permission_message = f"Esta sala es de tipo '{dict(Room.ROOM_TYPE_CHOICES).get(room.room_type, room.room_type)}' y está reservada solo para personal administrativo."
+                else:
+                    permission_message = f"Esta sala requiere permisos especiales que tu cuenta no tiene."
             else:
-                permission_message = f"No tienes permisos para reservar esta sala. Esta sala está reservada para roles específicos."
+                permission_message = f"No tienes permisos para reservar esta sala. Esta sala está reservada para roles específicos (roles permitidos: {room.allowed_roles})."
         
         logger.info(f"Sala {room.name} consultada por {request.user.username if request.user.is_authenticated else 'anónimo'}")
         context = {
@@ -372,7 +424,22 @@ def room_reserve(request, room_id):
 def reservation_list(request):
     """Vista para listar las reservas del usuario actual."""
     try:
+        # Primero obtenemos todas las reservas del usuario
         reservations_queryset = request.user.reservations.all().select_related('room')
+        
+        # Actualizar automáticamente el estado de las reservas pasadas
+        # que tengan status 'confirmed' y su end_time ya pasó
+        now = timezone.now()
+        updated_count = 0
+        for reservation in reservations_queryset:
+            if reservation.status == 'confirmed' and now > reservation.end_time:
+                reservation.status = 'completed'
+                reservation.save(update_fields=['status'])
+                updated_count += 1
+        
+        if updated_count > 0:
+            logger.info(f"Se actualizaron automáticamente {updated_count} reservas a 'completed'")
+            messages.info(request, f"Se actualizaron {updated_count} reservas completadas.")
         
         # Filtrar por estado si se especifica
         status_filter = request.GET.get('status')
@@ -491,14 +558,29 @@ def reservation_cancel(request, reservation_id):
 def room_review(request, reservation_id):
     """Vista para calificar una sala después de una reserva."""
     try:
-        # Solo permitir calificar reservas propias y completadas
+        # Primero, obtener la reserva del usuario (sin filtrar por estado)
         reservation = get_object_or_404(
             Reservation, 
             id=reservation_id, 
-            user=request.user,
-            status='completed'
+            user=request.user
         )
-          # Verificar que no exista ya una reseña
+        
+        # Actualizar automáticamente el estado de la reserva si ya ha terminado
+        now = timezone.now()
+        if reservation.status == 'confirmed' and now > reservation.end_time:
+            reservation.status = 'completed'
+            reservation.save(update_fields=['status'])
+            logger.info(f"Reserva #{reservation.id} actualizada automáticamente a 'completed' en room_review")
+        
+        # Verificar que la reserva esté completada
+        if reservation.status != 'completed':
+            messages.warning(request, 
+                "Solo puedes calificar reservas completadas. Esta reserva tiene estado: "
+                f"{dict(Reservation.STATUS_CHOICES).get(reservation.status, reservation.status)}."
+            )
+            return redirect('rooms:reservation_detail', reservation_id=reservation_id)
+        
+        # Verificar que no exista ya una reseña
         if hasattr(reservation, 'review'):
             messages.info(request, "Ya has calificado esta reserva.")
             return redirect('rooms:reservation_detail', reservation_id=reservation_id)
@@ -556,6 +638,14 @@ def room_review(request, reservation_id):
 def admin_room_create(request):
     """Vista para crear una nueva sala (solo administradores)."""
     try:
+        # Verificación adicional de seguridad para prevenir escalada de privilegios
+        if not request.user.is_admin() and not request.user.is_superuser:
+            logger.warning(
+                f"Intento de acceso no autorizado a admin_room_create: Usuario {request.user.username} "
+                f"con rol '{request.user.role}'"
+            )
+            raise PermissionDenied("No tienes permisos para crear salas.")
+            
         if request.method == 'POST':
             form = RoomForm(request.POST)
             
@@ -575,6 +665,10 @@ def admin_room_create(request):
         context = {'form': form}
         return render(request, 'rooms/admin/room_create.html', context)
     
+    except PermissionDenied as e:
+        logger.warning(f"Acceso denegado: {str(e)}")
+        messages.error(request, str(e))
+        return redirect('rooms:room_list')
     except Exception as e:
         logger.error(f"Error en admin_room_create: {str(e)}", exc_info=True)
         messages.error(request, "Error al crear la sala.")
@@ -586,6 +680,14 @@ def admin_room_create(request):
 def admin_room_edit(request, room_id):
     """Vista para editar una sala existente (solo administradores)."""
     try:
+        # Verificación adicional de seguridad para prevenir escalada de privilegios
+        if not request.user.is_admin() and not request.user.is_superuser:
+            logger.warning(
+                f"Intento de acceso no autorizado a admin_room_edit: Usuario {request.user.username} "
+                f"con rol '{request.user.role}' intentó editar sala {room_id}"
+            )
+            raise PermissionDenied("No tienes permisos para editar salas.")
+            
         room = get_object_or_404(Room, id=room_id)
         
         if request.method == 'POST':

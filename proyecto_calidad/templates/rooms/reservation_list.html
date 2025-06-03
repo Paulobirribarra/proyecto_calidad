@@ -121,8 +121,7 @@
                                             <i class="fas fa-times me-1"></i>
                                             Cancelar
                                         </button>
-                                        {% endif %}
-                                    </div>
+                                        {% endif %}                                    </div>
                                     {% elif reservation.status == 'completed' %}
                                     <div class="btn-group btn-group-sm">
                                         <a href="{% url 'rooms:reservation_detail' reservation.id %}" 
@@ -130,7 +129,7 @@
                                             <i class="fas fa-info me-1"></i>
                                             Detalles
                                         </a>
-                                        {% if reservation.can_be_reviewed %}
+                                        {% if not reservation.review %}
                                         <a href="{% url 'rooms:room_review' reservation.id %}" 
                                            class="btn btn-warning">
                                             <i class="fas fa-star me-1"></i>

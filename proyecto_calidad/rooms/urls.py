@@ -11,7 +11,8 @@ from . import views
 
 app_name = 'rooms'
 
-urlpatterns = [
+# URLs para usuarios normales
+user_urlpatterns = [
     # Listado y búsqueda de salas
     path('', views.room_list, name='room_list'),
     path('salas/', views.room_list, name='room_list_alt'),
@@ -21,7 +22,6 @@ urlpatterns = [
     
     # Reservas
     path('sala/<int:room_id>/reservar/', views.room_reserve, name='room_reserve'),
-    path('sala/<int:room_id>/reservar/', views.room_reserve, name='reservation_create'),
     path('reservas/', views.reservation_list, name='reservation_list'),
     path('mis-reservas/', views.reservation_list, name='my_reservations'),
     path('reserva/<int:reservation_id>/', views.reservation_detail, name='reservation_detail'),
@@ -29,13 +29,23 @@ urlpatterns = [
     
     # Reseñas
     path('reserva/<int:reservation_id>/calificar/', views.room_review, name='room_review'),
-    
-    # URLs para administradores
-    path('admin/sala/crear/', views.admin_room_create, name='room_create'),
+]
+
+# URLs específicas para administradores (con prefijo 'admin/' protegido por middleware)
+admin_urlpatterns = [
     path('admin/sala/crear/', views.admin_room_create, name='admin_room_create'),
     path('admin/sala/<int:room_id>/editar/', views.admin_room_edit, name='admin_room_edit'),
     path('admin/reservas/', views.reservation_list, name='reservation_admin'),
-    
-    # API endpoints
+]
+
+# URLs para API endpoints (protegidas por middleware)
+api_urlpatterns = [
     path('api/sala/<int:room_id>/disponibilidad/', views.api_room_availability, name='api_room_availability'),
 ]
+
+# Combinamos todos los patrones de URL
+urlpatterns = user_urlpatterns + admin_urlpatterns + api_urlpatterns
+
+# Alias para facilitar links en templates (mantenemos compatibilidad)
+urlpatterns.append(path('sala/<int:room_id>/reservar/', views.room_reserve, name='reservation_create'))
+urlpatterns.append(path('admin/sala/crear/', views.admin_room_create, name='room_create'))

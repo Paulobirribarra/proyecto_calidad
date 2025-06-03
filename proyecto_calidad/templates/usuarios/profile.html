@@ -8,123 +8,89 @@
         <!-- Profile Information -->
         <div class="col-md-8">
             <div class="card">
-                <div class="card-header bg-primary text-white">
+                <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
                     <h3 class="mb-0">
-                        <i class="fas fa-user-edit" aria-hidden="true"></i>
+                        <i class="fas fa-user" aria-hidden="true"></i>
                         Mi Perfil
                     </h3>
+                    {% comment %} <a href="{% url 'usuarios:profile_edit' %}" class="btn btn-light btn-sm">
+                        <i class="fas fa-edit" aria-hidden="true"></i>
+                        Editar
+                    </a> {% endcomment %}
                 </div>
                 <div class="card-body">
-                    <form method="post" novalidate>
-                        {% csrf_token %}
-                        
-                        <div class="row">
-                            <!-- First Name -->
-                            <div class="col-md-6 mb-3">
-                                <label for="{{ form.first_name.id_for_label }}" class="form-label">
-                                    <i class="fas fa-user" aria-hidden="true"></i>
-                                    Nombre
-                                    <span class="text-danger" aria-label="Campo obligatorio">*</span>
-                                </label>
-                                {{ form.first_name }}
-                                {% if form.first_name.errors %}
-                                    <div class="invalid-feedback d-block">
-                                        {% for error in form.first_name.errors %}
-                                            {{ error }}
-                                        {% endfor %}
-                                    </div>
-                                {% endif %}
-                            </div>
-
-                            <!-- Last Name -->
-                            <div class="col-md-6 mb-3">
-                                <label for="{{ form.last_name.id_for_label }}" class="form-label">
-                                    <i class="fas fa-user" aria-hidden="true"></i>
-                                    Apellido
-                                    <span class="text-danger" aria-label="Campo obligatorio">*</span>
-                                </label>
-                                {{ form.last_name }}
-                                {% if form.last_name.errors %}
-                                    <div class="invalid-feedback d-block">
-                                        {% for error in form.last_name.errors %}
-                                            {{ error }}
-                                        {% endfor %}
-                                    </div>
-                                {% endif %}
-                            </div>
+                    <div class="row">
+                        <!-- First Name -->
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label text-muted">
+                                <i class="fas fa-user" aria-hidden="true"></i>
+                                Nombre
+                            </label>
+                            <p class="form-control-plaintext">{{ user.first_name|default:"No especificado" }}</p>
                         </div>
 
-                        <!-- Email -->
-                        <div class="mb-3">
-                            <label for="{{ form.email.id_for_label }}" class="form-label">
-                                <i class="fas fa-envelope" aria-hidden="true"></i>
-                                Correo Electrónico
-                                <span class="text-danger" aria-label="Campo obligatorio">*</span>
+                        <!-- Last Name -->
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label text-muted">
+                                <i class="fas fa-user" aria-hidden="true"></i>
+                                Apellido
                             </label>
-                            {{ form.email }}
-                            {% if form.email.errors %}
-                                <div class="invalid-feedback d-block">
-                                    {% for error in form.email.errors %}
-                                        {{ error }}
-                                    {% endfor %}
-                                </div>
+                            <p class="form-control-plaintext">{{ user.last_name|default:"No especificado" }}</p>
+                        </div>
+                    </div>
+
+                    <!-- Email -->
+                    <div class="mb-3">
+                        <label class="form-label text-muted">
+                            <i class="fas fa-envelope" aria-hidden="true"></i>
+                            Correo Electrónico
+                        </label>
+                        <p class="form-control-plaintext">{{ user.email }}</p>
+                    </div>
+
+                    <!-- Phone Number -->
+                    <div class="mb-3">
+                        <label class="form-label text-muted">
+                            <i class="fas fa-phone" aria-hidden="true"></i>
+                            Número de Teléfono
+                        </label>
+                        <p class="form-control-plaintext">{{ user.phone_number|default:"No especificado" }}</p>
+                    </div>
+
+                    <!-- Email Notifications -->
+                    <div class="mb-3">
+                        <label class="form-label text-muted">
+                            <i class="fas fa-bell" aria-hidden="true"></i>
+                            Notificaciones por Email
+                        </label>
+                        <p class="form-control-plaintext">
+                            {% if user.email_notifications %}
+                                <span class="badge bg-success">
+                                    <i class="fas fa-check" aria-hidden="true"></i>
+                                    Activadas
+                                </span>
+                            {% else %}
+                                <span class="badge bg-secondary">
+                                    <i class="fas fa-times" aria-hidden="true"></i>
+                                    Desactivadas
+                                </span>
                             {% endif %}
-                        </div>
+                        </p>
+                    </div>
 
-                        <!-- Phone Number -->
-                        <div class="mb-3">
-                            <label for="{{ form.phone_number.id_for_label }}" class="form-label">
-                                <i class="fas fa-phone" aria-hidden="true"></i>
-                                Número de Teléfono
-                            </label>
-                            {{ form.phone_number }}
-                            <div class="form-text">
-                                <i class="fas fa-info-circle" aria-hidden="true"></i>
-                                Formato: +123456789 o 123-456-7890
-                            </div>
-                            {% if form.phone_number.errors %}
-                                <div class="invalid-feedback d-block">
-                                    {% for error in form.phone_number.errors %}
-                                        {{ error }}
-                                    {% endfor %}
-                                </div>
-                            {% endif %}
-                        </div>
-
-                        <!-- Email Notifications -->
-                        <div class="mb-3 form-check">
-                            {{ form.email_notifications }}
-                            <label class="form-check-label" for="{{ form.email_notifications.id_for_label }}">
-                                <i class="fas fa-bell" aria-hidden="true"></i>
-                                Recibir notificaciones por correo electrónico
-                            </label>
-                            <div class="form-text">
-                                Te notificaremos sobre confirmaciones de reserva y recordatorios.
-                            </div>
-                        </div>
-
-                        <!-- Submit button -->
-                        <div class="d-flex justify-content-between">
-                            <button type="submit" class="btn btn-primary">
-                                <i class="fas fa-save" aria-hidden="true"></i>
-                                Guardar Cambios
-                            </button>
+                    <!-- Actions -->
+                    <div class="mt-4">
+                        <div class="d-flex flex-column flex-md-row gap-2">
+                            <a href="{% url 'usuarios:profile_edit' %}" class="btn btn-primary">
+                                <i class="fas fa-edit" aria-hidden="true"></i>
+                                Editar Perfil
+                            </a>
                             <a href="{% url 'usuarios:change_password' %}" class="btn btn-warning">
                                 <i class="fas fa-key" aria-hidden="true"></i>
                                 Cambiar Contraseña
                             </a>
                         </div>
-
-                        <!-- Non-field errors -->
-                        {% if form.non_field_errors %}
-                            <div class="alert alert-danger mt-3" role="alert">
-                                {% for error in form.non_field_errors %}
-                                    {{ error }}
-                                {% endfor %}
-                            </div>
-                        {% endif %}
-                    </form>
-                </div>
+                    </div>                </div>
             </div>
         </div>
 
@@ -229,64 +195,17 @@
 {% block extra_js %}
 <script>
 document.addEventListener('DOMContentLoaded', function() {
-    // Add Bootstrap classes to form fields
-    const formFields = document.querySelectorAll('input[type="text"], input[type="email"], input[type="tel"]');
-    formFields.forEach(field => {
-        field.classList.add('form-control');
-        if (field.hasAttribute('required')) {
-            field.setAttribute('aria-required', 'true');
-        }
-    });
-
-    // Add Bootstrap classes to checkbox
-    const checkbox = document.querySelector('input[type="checkbox"]');
-    if (checkbox) {
-        checkbox.classList.add('form-check-input');
-    }
-
-    // Form validation
-    const form = document.querySelector('form');
-    form.addEventListener('submit', function(e) {
-        let isValid = true;
-        const requiredFields = form.querySelectorAll('[required]');
-
-        requiredFields.forEach(field => {
-            if (!field.value.trim()) {
-                field.classList.add('is-invalid');
-                isValid = false;
-            } else {
-                field.classList.remove('is-invalid');
-            }
+    // Aplicar efectos visuales a la página de perfil
+    const profileItems = document.querySelectorAll('.form-control-plaintext');
+    profileItems.forEach(item => {
+        item.style.transition = 'background-color 0.3s';
+        item.addEventListener('mouseover', function() {
+            this.style.backgroundColor = 'rgba(0,123,255,0.05)';
         });
-
-        if (!isValid) {
-            e.preventDefault();
-            const firstInvalid = form.querySelector('.is-invalid');
-            if (firstInvalid) {
-                firstInvalid.focus();
-            }
-        }
-    });
-
-    // Remove validation errors on input
-    document.querySelectorAll('.form-control').forEach(field => {
-        field.addEventListener('input', function() {
-            this.classList.remove('is-invalid');
+        item.addEventListener('mouseout', function() {
+            this.style.backgroundColor = '';
         });
     });
-
-    // Phone number formatting
-    const phoneField = document.querySelector('#id_phone_number');
-    if (phoneField) {
-        phoneField.addEventListener('input', function() {
-            let value = this.value.replace(/\D/g, '');
-            if (value.length >= 10) {
-                value = value.slice(0, 10);
-                value = value.replace(/(\d{3})(\d{3})(\d{4})/, '$1-$2-$3');
-            }
-            this.value = value;
-        });
-    }
 });
 </script>
 {% endblock %}
