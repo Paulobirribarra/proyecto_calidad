@@ -12,20 +12,31 @@ tzdata==2025.2
 # Base de datos (desarrollo)
 # Para producción, considerar PostgreSQL o MySQL
 
-# Utilidades adicionales (opcionales)
-# Pillow==10.4.0  # Para manejo de imágenes si se implementan fotos de salas
-# django-crispy-forms==2.3  # Para formularios más elegantes
-# django-widget-tweaks==1.5.0  # Para personalización de widgets
-# python-decouple==3.8  # Para variables de entorno
-# whitenoise==6.7.0  # Para servir archivos estáticos en producción
+# Utilidades adicionales
+Pillow==10.4.0  # Para manejo de imágenes si se implementan fotos de salas
+django-crispy-forms==2.3  # Para formularios más elegantes
+django-widget-tweaks==1.5.0  # Para personalización de widgets
+python-decouple==3.8  # Para variables de entorno
+whitenoise==6.7.0  # Para servir archivos estáticos en producción
 
 # Desarrollo y testing
-# coverage==7.6.1  # Para cobertura de tests
-# django-debug-toolbar==4.4.6  # Para debugging en desarrollo
-# flake8==7.1.1  # Para linting de código
-# black==24.8.0  # Para formateo de código
+coverage==7.6.1  # Para cobertura de tests
+django-debug-toolbar==4.4.6  # Para debugging en desarrollo
+flake8==7.1.1  # Para linting de código
+black==24.8.0  # Para formateo de código
+
+# Pruebas de seguridad
+requests==2.32.0  # Para pruebas HTTP
+beautifulsoup4==4.12.3  # Para analizar respuestas HTML
+html5lib==1.1  # Para parsing HTML más completo
+pyngrok==7.2.0  # Para exposición de la aplicación vía túnel
+
+# Herramientas de seguridad
+django-csp==3.8  # Content Security Policy
+bleach==6.1.0  # Para sanitización de HTML
+django-ratelimit==4.2.0  # Para limitar intentos de login
 
 # Producción
-# gunicorn==23.0.0  # Servidor WSGI para producción
-# psycopg2-binary==2.9.9  # Conector PostgreSQL
-# django-cors-headers==4.4.0  # Para CORS si se implementa API
+gunicorn==23.0.0  # Servidor WSGI para producción
+psycopg2-binary==2.9.9  # Conector PostgreSQL 
+django-cors-headers==4.4.0  # Para CORS si se implementa API
