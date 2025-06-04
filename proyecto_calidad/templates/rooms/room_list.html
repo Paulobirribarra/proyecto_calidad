@@ -94,9 +94,9 @@
 {% endif %}
 
 <!-- Main Content -->
-<div class="container my-5">
+<div class="container my-5 pt-3"> <!-- Aumentamos el padding superior -->
     <!-- Search and Filter Section -->
-    <div class="row mb-4">
+    <div class="row mb-5"> <!-- Aumentamos el margen inferior -->
         <div class="col-12">
             <div class="card">
                 <div class="card-header">
@@ -118,15 +118,19 @@
                             <label for="id_user_role_filter" class="form-label">Filtrar por rol</label>
                             {{ form.user_role_filter }}
                             <small class="form-text text-muted">Salas según tu tipo de usuario</small>
+                        </div>                        <div class="col-md-2">
+                            <label for="id_room_type_filter" class="form-label">Tipo de sala</label>
+                            {{ form.room_type_filter }}
                         </div>
                         <div class="col-md-3">
                             <label for="id_availability_filter" class="form-label">Disponibilidad</label>
                             {{ form.availability_filter }}
-                        </div>                        <div class="col-md-2">
+                        </div>
+                        <div class="col-md-2">
                             <label for="id_available_date" class="form-label">Fecha específica</label>
                             {{ form.available_date }}
                             <small class="form-text text-muted">Solo para horario específico</small>
-                        </div>                        <div class="col-md-4">
+                        </div><div class="col-md-4">
                             <label class="form-label">&nbsp;</label>
                             <div class="d-flex gap-2">
                                 <button type="submit" class="btn btn-primary flex-grow-1">
@@ -194,9 +198,19 @@
                     <div class="filters-applied mt-2">
                         <small class="text-muted">
                             <i class="fas fa-filter me-1"></i>
-                            Filtros aplicados:
-                            {% if request.GET.search_query %}
+                            Filtros aplicados:                            {% if request.GET.search_query %}
                                 <span class="badge bg-light text-dark me-1">Búsqueda: "{{ request.GET.search_query }}"</span>
+                            {% endif %}
+                            {% if request.GET.room_type_filter %}
+                                <span class="badge bg-light text-dark me-1">Tipo: 
+                                    {% if request.GET.room_type_filter == 'aula' %}Aula
+                                    {% elif request.GET.room_type_filter == 'sala_estudio' %}Sala de Estudio
+                                    {% elif request.GET.room_type_filter == 'sala_individual' %}Sala Individual
+                                    {% elif request.GET.room_type_filter == 'sala_reunion' %}Sala de Reuniones
+                                    {% elif request.GET.room_type_filter == 'laboratorio' %}Laboratorio
+                                    {% elif request.GET.room_type_filter == 'auditorio' %}Auditorio
+                                    {% endif %}
+                                </span>
                             {% endif %}
                             {% if request.GET.user_role_filter %}
                                 <span class="badge bg-info me-1">Rol: {{ request.GET.user_role_filter|capfirst }}</span>

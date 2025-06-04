@@ -23,18 +23,18 @@ class AdminSecurityMiddleware:
     """
     def __init__(self, get_response):
         self.get_response = get_response
-        
         # Patrones de URL administrativas que requieren protección especial
         self.admin_patterns = [
             # Formato: (regex_pattern, mensaje_rechazo)
-            (r'^/rooms/admin/', "Acceso restringido: solo administradores pueden acceder."),
-            (r'^/admin/', "Acceso restringido: panel de administración."),
+            (r'^/rooms/admin/?$', "Acceso restringido: solo administradores pueden acceder."),
+            (r'^/admin/?$', "Acceso restringido: panel de administración."),
+            (r'^/admin/.*', "Acceso restringido: panel de administración."),
             (r'.*/admin/.*', "Acceso restringido: área administrativa."),
         ]
         
         # Compilar las expresiones regulares
         self.compiled_patterns = [(re.compile(pattern), message) 
-                                 for pattern, message in self.admin_patterns]
+                                for pattern, message in self.admin_patterns]
         
     def __call__(self, request):
         """Procesar la solicitud y aplicar la lógica de seguridad."""
@@ -60,19 +60,18 @@ class AdminSecurityMiddleware:
                     
                 # Si está autenticado pero no es admin ni superusuario
                 if not (hasattr(request.user, 'role') and 
-                       (request.user.is_superuser or 
-                       (hasattr(request.user, 'is_admin') and request.user.is_admin()) or 
-                       (hasattr(request.user, 'role') and request.user.role == 'admin'))):
-                    
+                    (request.user.is_superuser or 
+                    (hasattr(request.user, 'is_admin') and request.user.is_admin()) or 
+                    (hasattr(request.user, 'role') and request.user.role == 'admin'))):
                     # Registrar el intento
                     logger.warning(
                         f"Bloqueo estricto: Usuario {request.user.username} con rol "
                         f"'{getattr(request.user, 'role', 'desconocido')}' intentó acceder a {path}"
                     )
                     
-                    # Mostrar mensaje de error y redirigir
-                    messages.error(request, admin_message)
-                    return redirect('rooms:room_list')
+                    # Lanzar PermissionDenied para mostrar la plantilla 403 personalizada
+                    from django.core.exceptions import PermissionDenied
+                    raise PermissionDenied(admin_message)
             
             # Continuar con el proceso normal si pasa todas las verificaciones
             return self.get_response(request)

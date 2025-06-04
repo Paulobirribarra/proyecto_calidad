@@ -1,9 +1,3 @@
-"""
-Configuración del panel de administración para salas.
-
-REQ-006: Panel de administración para gestión de salas y reservas
-"""
-
 from django.contrib import admin
 from django.utils.html import format_html
 from django.urls import reverse
@@ -22,14 +16,14 @@ class RoomAdmin(admin.ModelAdmin):
         'is_active',
         'average_rating_display',
         'total_reservations',
-        'hourly_rate'
-    )
+        'hourly_rate'    )
     
     list_filter = (
         'is_active', 
         'capacity', 
         'created_at',
-        'hourly_rate'
+        'hourly_rate',
+        'room_type'  # Añadimos filtro por tipo de sala
     )
     
     search_fields = ('name', 'location', 'description')
@@ -55,34 +49,47 @@ class RoomAdmin(admin.ModelAdmin):
     readonly_fields = ('created_at', 'updated_at')
     
     def save_model(self, request, obj, form, change):
-        """Asignar el usuario creador."""
-        if not change:  # Solo al crear
+        """Asignar el usuario creador si está autenticado."""
+        if not change and request.user.is_authenticated:
             obj.created_by = request.user
         super().save_model(request, obj, form, change)
-    
     def average_rating_display(self, obj):
         """Mostrar calificación promedio con estrellas."""
-        rating = obj.average_rating
-        if rating > 0:
-            stars = '★' * int(rating) + '☆' * (5 - int(rating))
-            return format_html(
-                '<span title="{} estrellas">{} ({:.1f})</span>',
-                rating, stars, rating
-            )
-        return "Sin calificaciones"
-    average_rating_display.short_description = "Calificación"
+        try:
+            rating = obj.average_rating
+            if rating is not None and rating > 0:
+                # Formatear primero el valor de rating para evitar usar .1f con SafeString
+                rating_formatted = "{:.1f}".format(rating)
+                stars = '★' * int(rating) + '☆' * (5 - int(rating))
+                return format_html(
+                    '<span title="{0} estrellas">{1} ({2})</span>',
+                    rating_formatted, stars, rating_formatted
+                )
+            return "Sin calificaciones"
+        except (AttributeError, TypeError):
+            return "Sin calificaciones"
+    average_rating_display.short_description = "Calificación promedio"
     
     def total_reservations(self, obj):
-        """Mostrar total de reservas."""
-        count = obj.reservations.count()
-        if count > 0:
-            url = reverse('admin:rooms_reservation_changelist')
-            return format_html(
-                '<a href="{}?room__id__exact={}">{} reservas</a>',
-                url, obj.id, count
-            )
-        return "0 reservas"
-    total_reservations.short_description = "Reservas"
+        """Mostrar total de reservas con enlace al listado."""
+        try:
+            count = obj.reservations.count()
+            if count > 0:
+                url = reverse('admin:rooms_reservation_changelist')
+                return format_html(
+                    '<a href="{0}?room__id__exact={1}">{2} reservas</a>',
+                    url, obj.id, count
+                )
+            return "0 reservas"
+        except Exception:
+            return "0 reservas"
+    total_reservations.short_description = "Total reservas"
+    
+    def get_queryset(self, request):
+        """Optimizar consultas."""
+        return super().get_queryset(request).select_related(
+            'created_by'
+        ).prefetch_related('reservations')
 
 
 @admin.register(Reservation)
@@ -133,26 +140,34 @@ class ReservationAdmin(admin.ModelAdmin):
     
     def duration_display(self, obj):
         """Mostrar duración de la reserva."""
-        hours = obj.duration_hours
-        if hours >= 1:
-            return f"{hours:.1f} horas"
-        else:
-            minutes = int(hours * 60)
-            return f"{minutes} min"
+        try:
+            hours = obj.duration_hours
+            if hours is None:
+                return "N/A"
+            if hours >= 1:
+                return "{:.1f} horas".format(hours)
+            else:
+                minutes = int(hours * 60)
+                return "{} min".format(minutes)
+        except (AttributeError, TypeError):
+            return "N/A"
     duration_display.short_description = "Duración"
     
     def has_review(self, obj):
         """Indicar si tiene reseña."""
-        if hasattr(obj, 'review'):
-            return format_html(
-                '<span style="color: green;">★ {}</span>',
-                obj.review.rating
-            )
-        elif obj.can_be_reviewed():
-            return format_html(
-                '<span style="color: orange;">Pendiente</span>'
-            )
-        return format_html('<span style="color: gray;">N/A</span>')
+        try:
+            if obj.review.exists():
+                return format_html(
+                    '<span style="color: green;">★ {0}</span>',
+                    obj.review.first().rating
+                )
+            elif hasattr(obj, 'can_be_reviewed') and obj.can_be_reviewed():
+                return format_html(
+                    '<span style="color: orange;">Pendiente</span>'
+                )
+            return format_html('<span style="color: gray;">N/A</span>')
+        except Exception:
+            return format_html('<span style="color: gray;">N/A</span>')
     has_review.short_description = "Reseña"
     
     def get_queryset(self, request):
@@ -202,7 +217,8 @@ class ReviewAdmin(admin.ModelAdmin):
                 'equipment_rating',
                 'comfort_rating'
             )
-        }),        ('Comentario', {
+        }),
+        ('Comentario', {
             'fields': ('comment', 'comment_type')
         }),
         ('Metadatos', {
@@ -212,23 +228,30 @@ class ReviewAdmin(admin.ModelAdmin):
     )
     
     def rating_display(self, obj):
-        """Mostrar calificación con estrellas."""
-        stars = '★' * obj.rating + '☆' * (5 - obj.rating)
-        return format_html(
-            '<span title="{} estrellas">{}</span>',
-            obj.rating, stars
-        )
-    rating_display.short_description = "Calificación General"
+        """Mostrar calificación general con estrellas."""
+        try:
+            stars = '★' * obj.rating + '☆' * (5 - obj.rating)
+            return format_html(
+                '<span title="{0} estrellas">{1}</span>',
+                obj.rating, stars
+            )
+        except (AttributeError, TypeError):
+            return "N/A"
+    rating_display.short_description = "Calificación general"
     
     def specific_ratings_display(self, obj):
         """Mostrar calificaciones específicas."""
-        return format_html(
-            'L: {} | E: {} | C: {}',
-            obj.cleanliness_rating,
-            obj.equipment_rating,
-            obj.comfort_rating
-        )
-    specific_ratings_display.short_description = "L/E/C"
+        try:
+            cleanliness = obj.cleanliness_rating if obj.cleanliness_rating is not None else "N/A"
+            equipment = obj.equipment_rating if obj.equipment_rating is not None else "N/A"
+            comfort = obj.comfort_rating if obj.comfort_rating is not None else "N/A"
+            return format_html(
+                'L: {0} | E: {1} | C: {2}',
+                cleanliness, equipment, comfort
+            )
+        except (AttributeError, TypeError):
+            return "N/A"
+    specific_ratings_display.short_description = "Limpieza/Equipo/Comodidad"
     
     def comment_type_display(self, obj):
         """Mostrar tipo de comentario con color."""
@@ -244,13 +267,16 @@ class ReviewAdmin(admin.ModelAdmin):
             'problem': '⚠️',
             'neutral': '💬'
         }
-        color = colors.get(obj.comment_type, '#6c757d')
-        icon = icons.get(obj.comment_type, '💬')
-        return format_html(
-            '<span style="color: {};">{} {}</span>',
-            color, icon, obj.get_comment_type_display()
-        )
-    comment_type_display.short_description = "Tipo"
+        try:
+            color = colors.get(obj.comment_type, '#6c757d')
+            icon = icons.get(obj.comment_type, '💬')
+            return format_html(
+                '<span style="color: {0};">{1} {2}</span>',
+                color, icon, obj.get_comment_type_display()
+            )
+        except (AttributeError, TypeError):
+            return "N/A"
+    comment_type_display.short_description = "Tipo de comentario"
     
     def get_queryset(self, request):
         """Optimizar consultas."""

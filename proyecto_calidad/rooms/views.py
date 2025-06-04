@@ -91,6 +91,7 @@ def room_list(request):
             available_date = form.cleaned_data.get('available_date')
             user_role_filter = form.cleaned_data.get('user_role_filter')
             availability_filter = form.cleaned_data.get('availability_filter')
+            room_type_filter = form.cleaned_data.get('room_type_filter')
             
             # Filtro por texto de búsqueda
             if search_query:
@@ -105,8 +106,7 @@ def room_list(request):
                 rooms_queryset = rooms_queryset.filter(capacity__gte=min_capacity)
             
             # Filtro por rol de usuario (seleccionado explícitamente o automático)
-            if request.user.is_authenticated:
-                # Si el usuario no ha seleccionado un filtro de rol específico,
+            if request.user.is_authenticated:                # Si el usuario no ha seleccionado un filtro de rol específico,
                 # aplicamos un filtro automático basado en su rol
                 if not user_role_filter:
                     if hasattr(request.user, 'is_estudiante') and request.user.is_estudiante():
@@ -145,9 +145,11 @@ def room_list(request):
                     # Soporte: salas técnicas y de laboratorio
                     rooms_queryset = rooms_queryset.filter(
                         room_type__in=['laboratorio', 'sala_reunion', 'auditorio']
-                    )
+                    )            # Filtro por tipo de sala
+            if room_type_filter:
+                rooms_queryset = rooms_queryset.filter(room_type=room_type_filter)
             
-            # Nuevo: Filtro por disponibilidad
+            # Filtro por disponibilidad
             if availability_filter:
                 from django.utils import timezone
                 now = timezone.now()
@@ -206,7 +208,8 @@ def room_list(request):
                 # Solo filtrar por fecha, sin horarios específicos
                 # El usuario puede ver la disponibilidad detallada en la página de cada sala
                 pass
-          # Filtrar salas que el usuario puede reservar antes de la paginación
+        
+        # Filtrar salas que el usuario puede reservar antes de la paginación
         if request.user.is_authenticated:
             # Crear una lista temporaria de salas a filtrar
             filtered_rooms = []
@@ -268,7 +271,7 @@ def room_detail(request, room_id):
     """Vista detallada de una sala específica."""
     try:
         room = get_object_or_404(Room, id=room_id, is_active=True)
-          # Obtener reseñas recientes a través de reservations
+        # Obtener reseñas recientes a través de reservations
         from rooms.models import Review
         recent_reviews = Review.objects.filter(
             reservation__room=room

@@ -8,6 +8,7 @@ Django==5.2.1
 asgiref==3.8.1
 sqlparse==0.5.3
 tzdata==2025.2
+pytz==2024.1  # Para soporte de zonas horarias
 
 # Base de datos (desarrollo)
 # Para producción, considerar PostgreSQL o MySQL
@@ -26,7 +27,7 @@ flake8==7.1.1  # Para linting de código
 black==24.8.0  # Para formateo de código
 
 # Pruebas de seguridad
-requests==2.32.0  # Para pruebas HTTP
+requests==2.31.0  # Para pruebas HTTP (versión con parche de seguridad)
 beautifulsoup4==4.12.3  # Para analizar respuestas HTML
 html5lib==1.1  # Para parsing HTML más completo
 pyngrok==7.2.0  # Para exposición de la aplicación vía túnel
@@ -34,7 +35,7 @@ pyngrok==7.2.0  # Para exposición de la aplicación vía túnel
 # Herramientas de seguridad
 django-csp==3.8  # Content Security Policy
 bleach==6.1.0  # Para sanitización de HTML
-django-ratelimit==4.2.0  # Para limitar intentos de login
+django-ratelimit==4.1.0  # Para limitar intentos de login
 
 # Producción
 gunicorn==23.0.0  # Servidor WSGI para producción

@@ -229,7 +229,7 @@ class Room(models.Model):
             
         if hasattr(user, 'is_profesor') and user.is_profesor():
             return True
-          # Verificar si el rol del usuario está en los roles permitidos
+        # Verificar si el rol del usuario está en los roles permitidos
         allowed = self.allowed_roles.split(',')
         
         if hasattr(user, 'role') and user.role in allowed:
@@ -408,24 +408,25 @@ class Reservation(models.Model):
                 raise ValidationError(
                     "La hora de fin debe ser posterior a la hora de inicio"
                 )
-            
             # Validar duración mínima y máxima (solo si ambas fechas están presentes)
             duration = self.end_time - self.start_time
-            if duration < timedelta(minutes=30):
+            if duration < timedelta(minutes=1):# cambiar a 1 para reducir el tiempo minimo de reserva 
                 raise ValidationError(
-                    "La duración mínima de una reserva es 30 minutos"
+                    "La duración mínima de una reserva es 1 minuto"
                 )
             
             if duration > timedelta(hours=8):
                 raise ValidationError(
                     "La duración máxima de una reserva es 8 horas"
                 )
-        
-        # Validar que la reserva no sea en el pasado (solo para nuevas reservas)
-        if self.start_time and not self.pk and self.start_time <= timezone.now():
-            raise ValidationError(
-                "No se pueden hacer reservas en el pasado"
-            )
+        # Para demostración, permitir reservas hasta 1 hora en el pasado
+        if self.start_time and not self.pk:
+            # Permitir reservas hasta 1 hora en el pasado para demostración
+            allowed_past = timezone.now() - timedelta(hours=1)
+            if self.start_time < allowed_past:
+                raise ValidationError(
+                    "Para demostraciones, solo se permiten reservas hasta 1 hora en el pasado"
+                )
         
         # Validar capacidad
         if self.room and self.attendees_count > self.room.capacity:

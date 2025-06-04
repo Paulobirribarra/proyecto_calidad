@@ -150,18 +150,19 @@ class ReservationForm(forms.ModelForm):
         # Agregar ayuda en los labels
         self.fields['start_time'].label = 'Fecha y Hora de Inicio'
         self.fields['end_time'].label = 'Fecha y Hora de Fin'
-    
     def clean_start_time(self):
         """Validar hora de inicio."""
         start_time = self.cleaned_data.get('start_time')
         
         if start_time:
-            # Muy permisivo para pruebas - solo verificar que no sea en el pasado
-            now = timezone.now()
+            # Para demostración, ser extremadamente permisivo con las fechas
+            # Esto permitirá crear reservas incluso en el pasado reciente (hasta 1 hora atrás)
+            now = timezone.now() - timedelta(hours=1)  # Permitir hasta 1 hora en el pasado para demos
+            
             if start_time < now:
-                current_time = now.strftime('%d/%m/%Y %H:%M')
+                current_time = timezone.now().strftime('%d/%m/%Y %H:%M')
                 raise ValidationError(
-                    f"Las reservas no pueden ser en el pasado. "
+                    f"Las reservas no pueden ser en el pasado lejano. "
                     f"Hora actual: {current_time}"
                 )
             
@@ -184,12 +185,11 @@ class ReservationForm(forms.ModelForm):
                 raise ValidationError(
                     "La hora de fin debe ser posterior a la hora de inicio"
                 )
-            
             # Validar duración
             duration = end_time - start_time
-            if duration < timedelta(minutes=30):
+            if duration < timedelta(minutes=1): # Cambiado a 1 minuto para demostración
                 raise ValidationError(
-                    "La duración mínima de una reserva es 30 minutos"
+                    "La duración mínima de una reserva es 1 minuto"
                 )
             
             if duration > timedelta(hours=8):
@@ -362,13 +362,23 @@ class RoomSearchForm(forms.Form):
         ('administrador', 'Todas las salas (admin)'),
         ('soporte', 'Salas de soporte técnico'),
     ]
-    
-    # Opciones para disponibilidad
+      # Opciones para disponibilidad
     AVAILABILITY_CHOICES = [
         ('', 'Todas las salas'),
         ('available_now', 'Disponibles ahora'),
         ('available_today', 'Disponibles hoy'),
         ('available_custom', 'Disponibles en horario específico'),
+    ]
+    
+    # Opciones para tipos de sala
+    ROOM_TYPE_CHOICES = [
+        ('', 'Todos los tipos'),
+        ('aula', 'Aula'),
+        ('sala_estudio', 'Sala de Estudio'),
+        ('sala_individual', 'Sala Individual'),
+        ('sala_reunion', 'Sala de Reuniones'),
+        ('laboratorio', 'Laboratorio'),
+        ('auditorio', 'Auditorio'),
     ]
     
     search_query = forms.CharField(
@@ -400,14 +410,24 @@ class RoomSearchForm(forms.Form):
         }),
         label='Filtrar por acceso de rol'
     )
-    
-    # Nuevo: Filtro por disponibilidad
+      # Filtro por disponibilidad
     availability_filter = forms.ChoiceField(
         choices=AVAILABILITY_CHOICES,
         required=False,
         widget=forms.Select(attrs={
             'class': 'form-select'
-        }),        label='Filtrar por disponibilidad'
+        }),        
+        label='Filtrar por disponibilidad'
+    )
+    
+    # Nuevo: Filtro por tipo de sala
+    room_type_filter = forms.ChoiceField(
+        choices=ROOM_TYPE_CHOICES,
+        required=False,
+        widget=forms.Select(attrs={
+            'class': 'form-select'
+        }),
+        label='Tipo de sala'
     )
     
     available_date = forms.DateField(

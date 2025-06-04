@@ -26,7 +26,7 @@ import os
 # Configurar manejadores de errores personalizados
 handler404 = 'usuarios.views.custom_404'
 handler500 = 'usuarios.views.custom_500' 
-handler403 = 'usuarios.views.custom_403'
+handler403 = 'core.views.error_403'  # Usar nuestra nueva función para el error 403
 
 @require_GET
 def robots_txt(request):
@@ -45,9 +45,31 @@ Allow: /
 """
         return HttpResponse(basic_robots, content_type='text/plain')
 
+# Función para manejar acceso denegado
+def admin_redirect(request):
+    """Redirige a la página de error 403 cuando se intenta acceder a /admin sin barra"""
+    from django.core.exceptions import PermissionDenied
+    raise PermissionDenied("No tienes permisos para acceder al panel de administración")
+
+# Función para probar el error 404
+def test_404(request):
+    """Función para probar el error 404"""
+    from django.http import Http404
+    raise Http404("Esta es una página de prueba para el error 404")
+
+# Función para probar el error 500
+def test_500(request):
+    """Función para probar el error 500"""
+    raise Exception("Esta es una excepción de prueba para el error 500")
+
 urlpatterns = [
-    # Admin
+    # Admin - asegurarnos de capturar tanto /admin/ como /admin
     path('admin/', admin.site.urls),
+    path('admin', admin_redirect),  # Capturar acceso sin barra final
+    
+    # Rutas de prueba para errores
+    path('test-404/', test_404),
+    path('test-500/', test_500),
     
     # SEO y Seguridad
     path('robots.txt', robots_txt, name='robots_txt'),
