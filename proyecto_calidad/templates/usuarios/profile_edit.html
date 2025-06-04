@@ -69,9 +69,7 @@
                                     {% endfor %}
                                 </div>
                             {% endif %}
-                        </div>
-
-                        <!-- Phone Number -->
+                        </div>                        <!-- Phone Number -->
                         <div class="mb-3">
                             <label for="{{ form.phone_number.id_for_label }}" class="form-label">
                                 <i class="fas fa-phone" aria-hidden="true"></i>
@@ -80,7 +78,7 @@
                             {{ form.phone_number }}
                             <div class="form-text">
                                 <i class="fas fa-info-circle" aria-hidden="true"></i>
-                                Formato: +56 949 377 625
+                                Formato: 949377625 (9 dígitos comenzando con 9)
                             </div>
                             {% if form.phone_number.errors %}
                                 <div class="invalid-feedback d-block">
@@ -178,17 +176,23 @@ document.addEventListener('DOMContentLoaded', function() {
         field.addEventListener('input', function() {
             this.classList.remove('is-invalid');
         });
-    });
-
-    // Phone number formatting
+    });    // Phone number formatting para formato chileno
     const phoneField = document.querySelector('#id_phone_number');
     if (phoneField) {
         phoneField.addEventListener('input', function() {
+            // Eliminar caracteres no numéricos
             let value = this.value.replace(/\D/g, '');
-            if (value.length >= 10) {
-                value = value.slice(0, 10);
-                value = value.replace(/(\d{3})(\d{3})(\d{4})/, '$1-$2-$3');
+            
+            // Limitar a 9 dígitos (formato chileno)
+            if (value.length > 9) {
+                value = value.slice(0, 9);
             }
+            
+            // Si el primer dígito no es 9, ajustarlo
+            if (value.length > 0 && value.charAt(0) !== '9') {
+                value = '9' + value.slice(1);
+            }
+            
             this.value = value;
         });
     }

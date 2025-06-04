@@ -25,7 +25,7 @@ SECRET_KEY = 'django-insecure-sl1xbq-s6(j_oy#6q59c%9jk(b=c1w-su*72lqge#&tw0(*_!x
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ['localhost', '127.0.0.1', 'testserver']
+ALLOWED_HOSTS = ['localhost', '127.0.0.1', 'testserver', '*']
 
 
 # Application definition
@@ -190,6 +190,13 @@ SESSION_COOKIE_SECURE = not DEBUG
 CSRF_COOKIE_SECURE = not DEBUG
 SECURE_BROWSER_XSS_FILTER = True
 SECURE_CONTENT_TYPE_NOSNIFF = True
+
+# CSRF Settings (para permitir acceso vía Ngrok)
+CSRF_TRUSTED_ORIGINS = ['https://*.ngrok-free.app', 'https://*.ngrok.io', 'http://localhost:8000', 'http://127.0.0.1:8000']
+CSRF_COOKIE_DOMAIN = None
+CSRF_USE_SESSIONS = True
+SESSION_COOKIE_SAMESITE = 'None' if not DEBUG else 'Lax'
+CSRF_COOKIE_SAMESITE = 'None' if not DEBUG else 'Lax'
 
 # Login URLs
 LOGIN_URL = '/usuarios/login/'

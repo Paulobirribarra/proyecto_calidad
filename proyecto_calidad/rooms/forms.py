@@ -130,21 +130,33 @@ class ReservationForm(forms.ModelForm):
                 'rows': 3,
                 'placeholder': 'Información adicional sobre la reserva...',
                 'class': 'form-control'
-            }),
-            'attendees_count': forms.NumberInput(attrs={
+            }),            'attendees_count': forms.NumberInput(attrs={
                 'min': '1',
-                'class': 'form-control'
+                'class': 'form-control',
+                'maxlength': '4',  # Máximo 4 dígitos (hasta 9999)
+                'pattern': '[0-9]{1,4}',  # Solo números de 1 a 4 dígitos
+                'title': 'Ingrese un número entre 1 y la capacidad de la sala (máximo 4 dígitos)',
+                'oninput': 'this.value = this.value.slice(0, 4)'  # Limitar a 4 caracteres
             })
         }
-    
     def __init__(self, *args, **kwargs):
         self.user = kwargs.pop('user', None)
+        self.room = kwargs.pop('room', None)  # Para poder establecer límites específicos por sala
         super().__init__(*args, **kwargs)
         
         # Filtrar solo salas activas
         self.fields['room'].queryset = Room.objects.filter(is_active=True)
+          # Si tenemos una sala específica, establecer el límite máximo de asistentes
+        if self.room:
+            self.fields['attendees_count'].widget.attrs.update({
+                'max': str(self.room.capacity),
+                'data-capacity': str(self.room.capacity),
+                'maxlength': '3',  # Máximo 3 dígitos
+                'pattern': f'[0-9]{{1,{len(str(self.room.capacity))}}}',  # Patrón dinámico según capacidad
+                'title': f'Ingrese un número entre 1 y {self.room.capacity}'
+            })
         
-        # NO establecer límites HTML5 - solo usar validación del servidor
+        # NO establecer límites HTML5 para datetime - solo usar validación del servidor
         # Esto evita problemas de zona horaria con datetime-local
         
         # Agregar ayuda en los labels

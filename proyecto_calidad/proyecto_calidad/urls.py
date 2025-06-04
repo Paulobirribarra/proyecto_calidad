@@ -73,12 +73,11 @@ urlpatterns = [
     
     # SEO y Seguridad
     path('robots.txt', robots_txt, name='robots_txt'),
-    
-    # Aplicaciones
+      # Aplicaciones
     path('usuarios/', include('usuarios.urls')),
     path('salas/', include('rooms.urls')),
     
-    # Redirigir la raíz a la lista de salas
+    # Redirigir la raíz a la lista de salas de manera específica
     path('', RedirectView.as_view(url='/salas/', permanent=False), name='home'),
 ]
 

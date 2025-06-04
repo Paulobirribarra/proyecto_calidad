@@ -68,35 +68,124 @@
             border-radius: 25px;
             padding: 10px 25px;
             transition: all 0.3s ease;
+        }        /* MEJORAS WCAG 2.1 - CONTRASTE Y ACCESIBILIDAD */
+        
+        /* Mejores colores con contraste suficiente */
+        .text-muted {
+            color: #495057 !important; /* Contraste mejorado de 4.5:1 */
+        }
+        
+        .text-secondary {
+            color: #495057 !important;
+        }
+        
+        /* Botones con mejor contraste */
+        .btn-primary {
+            background: linear-gradient(135deg, #0056b3, #004085); /* Azul más oscuro */
+            border: 2px solid #004085;
+            color: #ffffff;
+            font-weight: 600;
+            border-radius: 25px;
+            transition: all 0.3s ease;
         }
 
-        .btn-primary:hover {
+        .btn-primary:hover, .btn-primary:focus {
+            background: linear-gradient(135deg, #004085, #003366);
+            border-color: #003366;
             transform: translateY(-2px);
-            box-shadow: 0 5px 15px rgba(52, 152, 219, 0.4);
+            box-shadow: 0 5px 15px rgba(0, 64, 133, 0.4);
+            outline: 3px solid #80bdff;
+            outline-offset: 2px;
         }
 
         .btn-success {
-            background: linear-gradient(135deg, var(--success-color), #229954);
-            border: none;
+            background: linear-gradient(135deg, #155724, #0e4419); /* Verde más oscuro */
+            border: 2px solid #0e4419;
+            color: #ffffff;
+            font-weight: 600;
             border-radius: 25px;
+        }
+
+        .btn-success:hover, .btn-success:focus {
+            background: linear-gradient(135deg, #0e4419, #0a3015);
+            border-color: #0a3015;
+            outline: 3px solid #7bc97b;
+            outline-offset: 2px;
         }
 
         .btn-warning {
-            background: linear-gradient(135deg, var(--warning-color), #e67e22);
-            border: none;
+            background: linear-gradient(135deg, #e67700, #cc6600); /* Naranja más oscuro */
+            border: 2px solid #cc6600;
+            color: #ffffff;
+            font-weight: 600;
             border-radius: 25px;
+        }
+
+        .btn-warning:hover, .btn-warning:focus {
+            background: linear-gradient(135deg, #cc6600, #b35900);
+            border-color: #b35900;
+            outline: 3px solid #ffcc80;
+            outline-offset: 2px;
         }
 
         .btn-danger {
-            background: linear-gradient(135deg, var(--danger-color), #c0392b);
-            border: none;
+            background: linear-gradient(135deg, #721c24, #5a161b); /* Rojo más oscuro */
+            border: 2px solid #5a161b;
+            color: #ffffff;
+            font-weight: 600;
             border-radius: 25px;
         }
 
+        .btn-danger:hover, .btn-danger:focus {
+            background: linear-gradient(135deg, #5a161b, #420f13);
+            border-color: #420f13;
+            outline: 3px solid #ff8a95;
+            outline-offset: 2px;
+        }
+
+        .btn-outline-primary {
+            border: 2px solid #0056b3;
+            color: #0056b3;
+            font-weight: 600;
+        }
+
+        .btn-outline-primary:hover, .btn-outline-primary:focus {
+            background-color: #0056b3;
+            border-color: #004085;
+            outline: 3px solid #80bdff;
+            outline-offset: 2px;
+        }
+
+        /* Alertas con mejor contraste */
         .alert {
-            border: none;
+            border: 2px solid;
             border-radius: 10px;
             box-shadow: var(--shadow);
+            font-weight: 500;
+        }
+
+        .alert-success {
+            background-color: #d1f2d1;
+            border-color: #155724;
+            color: #155724;
+        }
+
+        .alert-warning {
+            background-color: #fff3cd;
+            border-color: #e67700;
+            color: #856404;
+        }
+
+        .alert-danger {
+            background-color: #f8d7da;
+            border-color: #721c24;
+            color: #721c24;
+        }
+
+        .alert-info {
+            background-color: #d1ecf1;
+            border-color: #0c5460;
+            color: #0c5460;
         }
 
         .form-control, .form-select {
@@ -138,9 +227,7 @@
             font-size: 3rem;
             color: var(--secondary-color);
             margin-bottom: 20px;
-        }
-
-        /* Accessibility improvements */
+        }        /* ACCESIBILIDAD MEJORADA - WCAG 2.1 AA */
         .sr-only {
             position: absolute !important;
             width: 1px !important;
@@ -151,62 +238,1667 @@
             clip: rect(0, 0, 0, 0) !important;
             white-space: nowrap !important;
             border: 0 !important;
-        }        .skip-link {
+        }
+
+        /* Skip Links Mejorados */
+        .skip-links {
+            position: absolute;
+            top: 0;
+            left: 0;
+            z-index: 9999;
+        }
+
+        .skip-link {
             position: absolute;
             top: -40px;
             left: 6px;
-            background: var(--primary-color);
-            color: white;
-            padding: 8px;
+            background: #000 !important;
+            color: #fff !important;
+            padding: 12px 16px;
             text-decoration: none;
             border-radius: 4px;
-            z-index: 1000;
-            height: 1px;
-            width: 1px;
-            overflow: hidden;
-            clip: rect(0, 0, 0, 0);
-            white-space: nowrap;
+            font-weight: bold;
+            font-size: 16px;
+            border: 2px solid #fff;
+            z-index: 10000;
+            opacity: 0;
+            transform: translateY(-100%);
+            transition: all 0.3s ease;
         }
 
         .skip-link:focus {
-            top: 6px;
-            height: auto;
-            width: auto;
-            overflow: visible;
-            clip: auto;
-            white-space: normal;
+            top: 10px;
+            opacity: 1;
+            transform: translateY(0);
+            outline: 2px solid #fff;
+            outline-offset: 2px;
+        }
+
+        .skip-link:hover {
+            background: #333 !important;
+        }
+
+        /* Indicadores de Foco Mejorados */
+        .btn:focus, 
+        .form-control:focus, 
+        .form-select:focus,
+        .form-check-input:focus,
+        a:focus,
+        button:focus,
+        [tabindex]:focus {
+            outline: 3px solid #0066cc !important;
+            outline-offset: 2px !important;
+            box-shadow: 0 0 0 2px rgba(0, 102, 204, 0.3) !important;
+        }
+
+        /* Mejoras de Contraste */
+        .text-muted {
+            color: #6c757d !important; /* Mejora contraste a 4.5:1 */
+        }
+
+        .text-light {
+            color: #f8f9fa !important;
+        }
+
+        /* Estados ARIA Visuales */
+        [aria-expanded="true"] .collapse-icon::before {
+            content: "▼";
+        }
+
+        [aria-expanded="false"] .collapse-icon::before {
+            content: "▶";
+        }
+
+        /* Indicadores para lectores de pantalla */
+        .loading[aria-busy="true"]::after {
+            content: "Cargando...";
+            position: absolute;
+            left: -9999px;
         }
 
         /* High contrast mode support */
         @media (prefers-contrast: high) {
-            .card {
-                border: 2px solid #000;
+            :root {
+                --primary-color: #000000;
+                --secondary-color: #ffffff;
+                --accent-color: #0000ff;
+                --text-color: #000000;
+                --bg-color: #ffffff;
+                --border-color: #000000;
             }
             
-            .btn {
-                border: 2px solid #000;
+            body {
+                background-color: #ffffff !important;
+                color: #000000 !important;
+            }
+            
+            .card {
+                border: 3px solid #000000 !important;
+                background-color: #ffffff !important;
+            }
+            
+            .btn-primary, .btn-success, .btn-warning, .btn-danger {
+                background: #000000 !important;
+                border: 3px solid #000000 !important;
+                color: #ffffff !important;
+            }
+            
+            .btn-outline-primary, .btn-outline-secondary {
+                border: 3px solid #000000 !important;
+                color: #000000 !important;
+                background: #ffffff !important;
+            }
+            
+            .navbar {
+                background: #000000 !important;
+                border-bottom: 3px solid #000000 !important;
+            }
+            
+            .navbar-brand, .nav-link {
+                color: #ffffff !important;
+            }
+            
+            .text-muted {
+                color: #000000 !important;
+            }
+            
+            .alert {
+                border: 3px solid #000000 !important;
+                background: #ffffff !important;
+                color: #000000 !important;
             }
         }
 
-        /* Reduced motion support */
-        @media (prefers-reduced-motion: reduce) {
-            * {
-                animation-duration: 0.01ms !important;
-                animation-iteration-count: 1 !important;
-                transition-duration: 0.01ms !important;
+        /* MEJORAS DE NAVEGACIÓN POR TECLADO */
+        .form-control:focus, .form-select:focus {
+            border-color: #0056b3;
+            box-shadow: 0 0 0 3px rgba(0, 86, 179, 0.3);
+            outline: 3px solid #80bdff;
+            outline-offset: 2px;
+        }
+
+        /* Enlaces con mejor contraste en focus */
+        a:focus {
+            outline: 3px solid #80bdff;
+            outline-offset: 2px;
+            background-color: rgba(0, 86, 179, 0.1);
+            border-radius: 3px;
+        }
+
+        /* Botones de navegación más accesibles */
+        .navbar-nav .nav-link:focus {
+            outline: 3px solid #80bdff;
+            outline-offset: 2px;
+            background-color: rgba(255, 255, 255, 0.1);
+            border-radius: 5px;
+        }
+
+        /* Mejoras para dropdowns */
+        .dropdown-menu {
+            border: 2px solid #0056b3;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        .dropdown-item:focus {
+            outline: 3px solid #80bdff;
+            outline-offset: 2px;
+            background-color: #e3f2fd;
+        }
+
+        /* Estados de validación mejorados */
+        .is-valid {
+            border-color: #155724 !important;
+        }
+
+        .is-invalid {
+            border-color: #721c24 !important;
+        }
+
+        .valid-feedback {
+            color: #155724;
+            font-weight: 500;
+        }
+
+        .invalid-feedback {
+            color: #721c24;
+            font-weight: 500;
+        }
+
+        /* Indicadores de carga accesibles */
+        .spinner-border {
+            color: #0056b3;
+        }
+
+        /* Badges con mejor contraste */
+        .badge {
+            font-weight: 600;
+            border: 1px solid;
+        }
+
+        .badge.bg-primary {
+            background-color: #0056b3 !important;
+            border-color: #004085;
+        }
+
+        .badge.bg-success {
+            background-color: #155724 !important;
+            border-color: #0e4419;
+        }
+
+        .badge.bg-warning {
+            background-color: #e67700 !important;
+            border-color: #cc6600;
+            color: #ffffff !important;
+        }
+
+        .badge.bg-light {
+            background-color: #f8f9fa !important;
+            color: #212529 !important;
+            border-color: #495057;
+        }
+
+        /* Mejoras para tablas */
+        .table th {
+            border-bottom: 2px solid #495057;
+            font-weight: 600;
+        }
+
+        .table td, .table th {
+            border-top: 1px solid #495057;
+        }
+
+        /* Paginación accesible */
+        .page-link {
+            color: #0056b3;
+            border: 2px solid #dee2e6;
+        }
+
+        .page-link:hover, .page-link:focus {
+            color: #004085;
+            background-color: #e3f2fd;
+            border-color: #0056b3;
+            outline: 3px solid #80bdff;
+            outline-offset: 2px;
+        }
+
+        .page-item.active .page-link {
+            background-color: #0056b3;
+            border-color: #004085;
+            color: #ffffff;
+        }
+
+        /* Eliminar márgenes superior */
+        html, body {
+            margin-top: 0 !important;
+            padding-top: 0 !important;
+        }
+        
+        /* Eliminar cualquier espacio superior en la navegación */
+        nav.navbar {
+            margin-top: 0 !important;
+            padding-top: 0.5rem !important;
+        }body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--light-bg);
+            line-height: 1.6;
+            padding-top: 0; /* Eliminamos el padding superior */
+            margin-top: 0; /* Aseguramos que no haya margen superior */
+        }.navbar {
+            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+            box-shadow: var(--shadow);
+            margin-bottom: 20px; /* Reducimos el margen inferior del navbar */
+        }
+
+        .navbar-brand {
+            font-weight: bold;
+            font-size: 1.5rem;
+        }
+
+        .card {
+            border: none;
+            border-radius: 15px;
+            box-shadow: var(--shadow);
+            transition: transform 0.3s ease;
+        }
+
+        .card:hover {
+            transform: translateY(-5px);
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, var(--secondary-color), #2980b9);
+            border: none;
+            border-radius: 25px;
+            padding: 10px 25px;
+            transition: all 0.3s ease;
+        }        /* MEJORAS WCAG 2.1 - CONTRASTE Y ACCESIBILIDAD */
+        
+        /* Mejores colores con contraste suficiente */
+        .text-muted {
+            color: #495057 !important; /* Contraste mejorado de 4.5:1 */
+        }
+        
+        .text-secondary {
+            color: #495057 !important;
+        }
+        
+        /* Botones con mejor contraste */
+        .btn-primary {
+            background: linear-gradient(135deg, #0056b3, #004085); /* Azul más oscuro */
+            border: 2px solid #004085;
+            color: #ffffff;
+            font-weight: 600;
+            border-radius: 25px;
+            transition: all 0.3s ease;
+        }
+
+        .btn-primary:hover, .btn-primary:focus {
+            background: linear-gradient(135deg, #004085, #003366);
+            border-color: #003366;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0, 64, 133, 0.4);
+            outline: 3px solid #80bdff;
+            outline-offset: 2px;
+        }
+
+        .btn-success {
+            background: linear-gradient(135deg, #155724, #0e4419); /* Verde más oscuro */
+            border: 2px solid #0e4419;
+            color: #ffffff;
+            font-weight: 600;
+            border-radius: 25px;
+        }
+
+        .btn-success:hover, .btn-success:focus {
+            background: linear-gradient(135deg, #0e4419, #0a3015);
+            border-color: #0a3015;
+            outline: 3px solid #7bc97b;
+            outline-offset: 2px;
+        }
+
+        .btn-warning {
+            background: linear-gradient(135deg, #e67700, #cc6600); /* Naranja más oscuro */
+            border: 2px solid #cc6600;
+            color: #ffffff;
+            font-weight: 600;
+            border-radius: 25px;
+        }
+
+        .btn-warning:hover, .btn-warning:focus {
+            background: linear-gradient(135deg, #cc6600, #b35900);
+            border-color: #b35900;
+            outline: 3px solid #ffcc80;
+            outline-offset: 2px;
+        }
+
+        .btn-danger {
+            background: linear-gradient(135deg, #721c24, #5a161b); /* Rojo más oscuro */
+            border: 2px solid #5a161b;
+            color: #ffffff;
+            font-weight: 600;
+            border-radius: 25px;
+        }
+
+        .btn-danger:hover, .btn-danger:focus {
+            background: linear-gradient(135deg, #5a161b, #420f13);
+            border-color: #420f13;
+            outline: 3px solid #ff8a95;
+            outline-offset: 2px;
+        }
+
+        .btn-outline-primary {
+            border: 2px solid #0056b3;
+            color: #0056b3;
+            font-weight: 600;
+        }
+
+        .btn-outline-primary:hover, .btn-outline-primary:focus {
+            background-color: #0056b3;
+            border-color: #004085;
+            outline: 3px solid #80bdff;
+            outline-offset: 2px;
+        }
+
+        /* Alertas con mejor contraste */
+        .alert {
+            border: 2px solid;
+            border-radius: 10px;
+            box-shadow: var(--shadow);
+            font-weight: 500;
+        }
+
+        .alert-success {
+            background-color: #d1f2d1;
+            border-color: #155724;
+            color: #155724;
+        }
+
+        .alert-warning {
+            background-color: #fff3cd;
+            border-color: #e67700;
+            color: #856404;
+        }
+
+        .alert-danger {
+            background-color: #f8d7da;
+            border-color: #721c24;
+            color: #721c24;
+        }
+
+        .alert-info {
+            background-color: #d1ecf1;
+            border-color: #0c5460;
+            color: #0c5460;
+        }
+
+        .form-control, .form-select {
+            border-radius: 10px;
+            border: 2px solid #e9ecef;
+            transition: border-color 0.3s ease;
+        }
+
+        .form-control:focus, .form-select:focus {
+            border-color: var(--secondary-color);
+            box-shadow: 0 0 0 0.2rem rgba(52, 152, 219, 0.25);
+        }
+
+        .table {
+            border-radius: 10px;
+            overflow: hidden;
+            box-shadow: var(--shadow);
+        }
+
+        .table thead {
+            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+            color: white;
+        }
+
+        .footer {
+            background: var(--primary-color);
+            color: white;
+            margin-top: 50px;
+        }
+
+        .hero-section {
+            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+            color: white;
+            padding: 60px 0;
+            text-align: center;
+        }
+
+        .feature-icon {
+            font-size: 3rem;
+            color: var(--secondary-color);
+            margin-bottom: 20px;
+        }        /* ACCESIBILIDAD MEJORADA - WCAG 2.1 AA */
+        .sr-only {
+            position: absolute !important;
+            width: 1px !important;
+            height: 1px !important;
+            padding: 0 !important;
+            margin: -1px !important;
+            overflow: hidden !important;
+            clip: rect(0, 0, 0, 0) !important;
+            white-space: nowrap !important;
+            border: 0 !important;
+        }
+
+        /* Skip Links Mejorados */
+        .skip-links {
+            position: absolute;
+            top: 0;
+            left: 0;
+            z-index: 9999;
+        }
+
+        .skip-link {
+            position: absolute;
+            top: -40px;
+            left: 6px;
+            background: #000 !important;
+            color: #fff !important;
+            padding: 12px 16px;
+            text-decoration: none;
+            border-radius: 4px;
+            font-weight: bold;
+            font-size: 16px;
+            border: 2px solid #fff;
+            z-index: 10000;
+            opacity: 0;
+            transform: translateY(-100%);
+            transition: all 0.3s ease;
+        }
+
+        .skip-link:focus {
+            top: 10px;
+            opacity: 1;
+            transform: translateY(0);
+            outline: 2px solid #fff;
+            outline-offset: 2px;
+        }
+
+        .skip-link:hover {
+            background: #333 !important;
+        }
+
+        /* Indicadores de Foco Mejorados */
+        .btn:focus, 
+        .form-control:focus, 
+        .form-select:focus,
+        .form-check-input:focus,
+        a:focus,
+        button:focus,
+        [tabindex]:focus {
+            outline: 3px solid #0066cc !important;
+            outline-offset: 2px !important;
+            box-shadow: 0 0 0 2px rgba(0, 102, 204, 0.3) !important;
+        }
+
+        /* Mejoras de Contraste */
+        .text-muted {
+            color: #6c757d !important; /* Mejora contraste a 4.5:1 */
+        }
+
+        .text-light {
+            color: #f8f9fa !important;
+        }
+
+        /* Estados ARIA Visuales */
+        [aria-expanded="true"] .collapse-icon::before {
+            content: "▼";
+        }
+
+        [aria-expanded="false"] .collapse-icon::before {
+            content: "▶";
+        }
+
+        /* Indicadores para lectores de pantalla */
+        .loading[aria-busy="true"]::after {
+            content: "Cargando...";
+            position: absolute;
+            left: -9999px;
+        }
+
+        /* High contrast mode support */
+        @media (prefers-contrast: high) {
+            :root {
+                --primary-color: #000000;
+                --secondary-color: #ffffff;
+                --accent-color: #0000ff;
+                --text-color: #000000;
+                --bg-color: #ffffff;
+                --border-color: #000000;
             }
+            
+            body {
+                background-color: #ffffff !important;
+                color: #000000 !important;
+            }
+            
+            .card {
+                border: 3px solid #000000 !important;
+                background-color: #ffffff !important;
+            }
+            
+            .btn-primary, .btn-success, .btn-warning, .btn-danger {
+                background: #000000 !important;
+                border: 3px solid #000000 !important;
+                color: #ffffff !important;
+            }
+            
+            .btn-outline-primary, .btn-outline-secondary {
+                border: 3px solid #000000 !important;
+                color: #000000 !important;
+                background: #ffffff !important;
+            }
+            
+            .navbar {
+                background: #000000 !important;
+                border-bottom: 3px solid #000000 !important;
+            }
+            
+            .navbar-brand, .nav-link {
+                color: #ffffff !important;
+            }
+            
+            .text-muted {
+                color: #000000 !important;
+            }
+            
+            .alert {
+                border: 3px solid #000000 !important;
+                background: #ffffff !important;
+                color: #000000 !important;
+            }
+        }
+
+        /* MEJORAS DE NAVEGACIÓN POR TECLADO */
+        .form-control:focus, .form-select:focus {
+            border-color: #0056b3;
+            box-shadow: 0 0 0 3px rgba(0, 86, 179, 0.3);
+            outline: 3px solid #80bdff;
+            outline-offset: 2px;
+        }
+
+        /* Enlaces con mejor contraste en focus */
+        a:focus {
+            outline: 3px solid #80bdff;
+            outline-offset: 2px;
+            background-color: rgba(0, 86, 179, 0.1);
+            border-radius: 3px;
+        }
+
+        /* Botones de navegación más accesibles */
+        .navbar-nav .nav-link:focus {
+            outline: 3px solid #80bdff;
+            outline-offset: 2px;
+            background-color: rgba(255, 255, 255, 0.1);
+            border-radius: 5px;
+        }
+
+        /* Mejoras para dropdowns */
+        .dropdown-menu {
+            border: 2px solid #0056b3;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        .dropdown-item:focus {
+            outline: 3px solid #80bdff;
+            outline-offset: 2px;
+            background-color: #e3f2fd;
+        }
+
+        /* Estados de validación mejorados */
+        .is-valid {
+            border-color: #155724 !important;
+        }
+
+        .is-invalid {
+            border-color: #721c24 !important;
+        }
+
+        .valid-feedback {
+            color: #155724;
+            font-weight: 500;
+        }
+
+        .invalid-feedback {
+            color: #721c24;
+            font-weight: 500;
+        }
+
+        /* Indicadores de carga accesibles */
+        .spinner-border {
+            color: #0056b3;
+        }
+
+        /* Badges con mejor contraste */
+        .badge {
+            font-weight: 600;
+            border: 1px solid;
+        }
+
+        .badge.bg-primary {
+            background-color: #0056b3 !important;
+            border-color: #004085;
+        }
+
+        .badge.bg-success {
+            background-color: #155724 !important;
+            border-color: #0e4419;
+        }
+
+        .badge.bg-warning {
+            background-color: #e67700 !important;
+            border-color: #cc6600;
+            color: #ffffff !important;
+        }
+
+        .badge.bg-light {
+            background-color: #f8f9fa !important;
+            color: #212529 !important;
+            border-color: #495057;
+        }
+
+        /* Mejoras para tablas */
+        .table th {
+            border-bottom: 2px solid #495057;
+            font-weight: 600;
+        }
+
+        .table td, .table th {
+            border-top: 1px solid #495057;
+        }
+
+        /* Paginación accesible */
+        .page-link {
+            color: #0056b3;
+            border: 2px solid #dee2e6;
+        }
+
+        .page-link:hover, .page-link:focus {
+            color: #004085;
+            background-color: #e3f2fd;
+            border-color: #0056b3;
+            outline: 3px solid #80bdff;
+            outline-offset: 2px;
+        }
+
+        .page-item.active .page-link {
+            background-color: #0056b3;
+            border-color: #004085;
+            color: #ffffff;
+        }
+
+        /* Eliminar márgenes superior */
+        html, body {
+            margin-top: 0 !important;
+            padding-top: 0 !important;
+        }
+        
+        /* Eliminar cualquier espacio superior en la navegación */
+        nav.navbar {
+            margin-top: 0 !important;
+            padding-top: 0.5rem !important;
+        }body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--light-bg);
+            line-height: 1.6;
+            padding-top: 0; /* Eliminamos el padding superior */
+            margin-top: 0; /* Aseguramos que no haya margen superior */
+        }.navbar {
+            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+            box-shadow: var(--shadow);
+            margin-bottom: 20px; /* Reducimos el margen inferior del navbar */
+        }
+
+        .navbar-brand {
+            font-weight: bold;
+            font-size: 1.5rem;
+        }
+
+        .card {
+            border: none;
+            border-radius: 15px;
+            box-shadow: var(--shadow);
+            transition: transform 0.3s ease;
+        }
+
+        .card:hover {
+            transform: translateY(-5px);
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, var(--secondary-color), #2980b9);
+            border: none;
+            border-radius: 25px;
+            padding: 10px 25px;
+            transition: all 0.3s ease;
+        }        /* MEJORAS WCAG 2.1 - CONTRASTE Y ACCESIBILIDAD */
+        
+        /* Mejores colores con contraste suficiente */
+        .text-muted {
+            color: #495057 !important; /* Contraste mejorado de 4.5:1 */
+        }
+        
+        .text-secondary {
+            color: #495057 !important;
+        }
+        
+        /* Botones con mejor contraste */
+        .btn-primary {
+            background: linear-gradient(135deg, #0056b3, #004085); /* Azul más oscuro */
+            border: 2px solid #004085;
+            color: #ffffff;
+            font-weight: 600;
+            border-radius: 25px;
+            transition: all 0.3s ease;
+        }
+
+        .btn-primary:hover, .btn-primary:focus {
+            background: linear-gradient(135deg, #004085, #003366);
+            border-color: #003366;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0, 64, 133, 0.4);
+            outline: 3px solid #80bdff;
+            outline-offset: 2px;
+        }
+
+        .btn-success {
+            background: linear-gradient(135deg, #155724, #0e4419); /* Verde más oscuro */
+            border: 2px solid #0e4419;
+            color: #ffffff;
+            font-weight: 600;
+            border-radius: 25px;
+        }
+
+        .btn-success:hover, .btn-success:focus {
+            background: linear-gradient(135deg, #0e4419, #0a3015);
+            border-color: #0a3015;
+            outline: 3px solid #7bc97b;
+            outline-offset: 2px;
+        }
+
+        .btn-warning {
+            background: linear-gradient(135deg, #e67700, #cc6600); /* Naranja más oscuro */
+            border: 2px solid #cc6600;
+            color: #ffffff;
+            font-weight: 600;
+            border-radius: 25px;
+        }
+
+        .btn-warning:hover, .btn-warning:focus {
+            background: linear-gradient(135deg, #cc6600, #b35900);
+            border-color: #b35900;
+            outline: 3px solid #ffcc80;
+            outline-offset: 2px;
+        }
+
+        .btn-danger {
+            background: linear-gradient(135deg, #721c24, #5a161b); /* Rojo más oscuro */
+            border: 2px solid #5a161b;
+            color: #ffffff;
+            font-weight: 600;
+            border-radius: 25px;
+        }
+
+        .btn-danger:hover, .btn-danger:focus {
+            background: linear-gradient(135deg, #5a161b, #420f13);
+            border-color: #420f13;
+            outline: 3px solid #ff8a95;
+            outline-offset: 2px;
+        }
+
+        .btn-outline-primary {
+            border: 2px solid #0056b3;
+            color: #0056b3;
+            font-weight: 600;
+        }
+
+        .btn-outline-primary:hover, .btn-outline-primary:focus {
+            background-color: #0056b3;
+            border-color: #004085;
+            outline: 3px solid #80bdff;
+            outline-offset: 2px;
+        }
+
+        /* Alertas con mejor contraste */
+        .alert {
+            border: 2px solid;
+            border-radius: 10px;
+            box-shadow: var(--shadow);
+            font-weight: 500;
+        }
+
+        .alert-success {
+            background-color: #d1f2d1;
+            border-color: #155724;
+            color: #155724;
+        }
+
+        .alert-warning {
+            background-color: #fff3cd;
+            border-color: #e67700;
+            color: #856404;
+        }
+
+        .alert-danger {
+            background-color: #f8d7da;
+            border-color: #721c24;
+            color: #721c24;
+        }
+
+        .alert-info {
+            background-color: #d1ecf1;
+            border-color: #0c5460;
+            color: #0c5460;
+        }
+
+        .form-control, .form-select {
+            border-radius: 10px;
+            border: 2px solid #e9ecef;
+            transition: border-color 0.3s ease;
+        }
+
+        .form-control:focus, .form-select:focus {
+            border-color: var(--secondary-color);
+            box-shadow: 0 0 0 0.2rem rgba(52, 152, 219, 0.25);
+        }
+
+        .table {
+            border-radius: 10px;
+            overflow: hidden;
+            box-shadow: var(--shadow);
+        }
+
+        .table thead {
+            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+            color: white;
+        }
+
+        .footer {
+            background: var(--primary-color);
+            color: white;
+            margin-top: 50px;
+        }
+
+        .hero-section {
+            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+            color: white;
+            padding: 60px 0;
+            text-align: center;
+        }
+
+        .feature-icon {
+            font-size: 3rem;
+            color: var(--secondary-color);
+            margin-bottom: 20px;
+        }        /* ACCESIBILIDAD MEJORADA - WCAG 2.1 AA */
+        .sr-only {
+            position: absolute !important;
+            width: 1px !important;
+            height: 1px !important;
+            padding: 0 !important;
+            margin: -1px !important;
+            overflow: hidden !important;
+            clip: rect(0, 0, 0, 0) !important;
+            white-space: nowrap !important;
+            border: 0 !important;
+        }
+
+        /* Skip Links Mejorados */
+        .skip-links {
+            position: absolute;
+            top: 0;
+            left: 0;
+            z-index: 9999;
+        }
+
+        .skip-link {
+            position: absolute;
+            top: -40px;
+            left: 6px;
+            background: #000 !important;
+            color: #fff !important;
+            padding: 12px 16px;
+            text-decoration: none;
+            border-radius: 4px;
+            font-weight: bold;
+            font-size: 16px;
+            border: 2px solid #fff;
+            z-index: 10000;
+            opacity: 0;
+            transform: translateY(-100%);
+            transition: all 0.3s ease;
+        }
+
+        .skip-link:focus {
+            top: 10px;
+            opacity: 1;
+            transform: translateY(0);
+            outline: 2px solid #fff;
+            outline-offset: 2px;
+        }
+
+        .skip-link:hover {
+            background: #333 !important;
+        }
+
+        /* Indicadores de Foco Mejorados */
+        .btn:focus, 
+        .form-control:focus, 
+        .form-select:focus,
+        .form-check-input:focus,
+        a:focus,
+        button:focus,
+        [tabindex]:focus {
+            outline: 3px solid #0066cc !important;
+            outline-offset: 2px !important;
+            box-shadow: 0 0 0 2px rgba(0, 102, 204, 0.3) !important;
+        }
+
+        /* Mejoras de Contraste */
+        .text-muted {
+            color: #6c757d !important; /* Mejora contraste a 4.5:1 */
+        }
+
+        .text-light {
+            color: #f8f9fa !important;
+        }
+
+        /* Estados ARIA Visuales */
+        [aria-expanded="true"] .collapse-icon::before {
+            content: "▼";
+        }
+
+        [aria-expanded="false"] .collapse-icon::before {
+            content: "▶";
+        }
+
+        /* Indicadores para lectores de pantalla */
+        .loading[aria-busy="true"]::after {
+            content: "Cargando...";
+            position: absolute;
+            left: -9999px;
+        }
+
+        /* High contrast mode support */
+        @media (prefers-contrast: high) {
+            :root {
+                --primary-color: #000000;
+                --secondary-color: #ffffff;
+                --accent-color: #0000ff;
+                --text-color: #000000;
+                --bg-color: #ffffff;
+                --border-color: #000000;
+            }
+            
+            body {
+                background-color: #ffffff !important;
+                color: #000000 !important;
+            }
+            
+            .card {
+                border: 3px solid #000000 !important;
+                background-color: #ffffff !important;
+            }
+            
+            .btn-primary, .btn-success, .btn-warning, .btn-danger {
+                background: #000000 !important;
+                border: 3px solid #000000 !important;
+                color: #ffffff !important;
+            }
+            
+            .btn-outline-primary, .btn-outline-secondary {
+                border: 3px solid #000000 !important;
+                color: #000000 !important;
+                background: #ffffff !important;
+            }
+            
+            .navbar {
+                background: #000000 !important;
+                border-bottom: 3px solid #000000 !important;
+            }
+            
+            .navbar-brand, .nav-link {
+                color: #ffffff !important;
+            }
+            
+            .text-muted {
+                color: #000000 !important;
+            }
+            
+            .alert {
+                border: 3px solid #000000 !important;
+                background: #ffffff !important;
+                color: #000000 !important;
+            }
+        }
+
+        /* MEJORAS DE NAVEGACIÓN POR TECLADO */
+        .form-control:focus, .form-select:focus {
+            border-color: #0056b3;
+            box-shadow: 0 0 0 3px rgba(0, 86, 179, 0.3);
+            outline: 3px solid #80bdff;
+            outline-offset: 2px;
+        }
+
+        /* Enlaces con mejor contraste en focus */
+        a:focus {
+            outline: 3px solid #80bdff;
+            outline-offset: 2px;
+            background-color: rgba(0, 86, 179, 0.1);
+            border-radius: 3px;
+        }
+
+        /* Botones de navegación más accesibles */
+        .navbar-nav .nav-link:focus {
+            outline: 3px solid #80bdff;
+            outline-offset: 2px;
+            background-color: rgba(255, 255, 255, 0.1);
+            border-radius: 5px;
+        }
+
+        /* Mejoras para dropdowns */
+        .dropdown-menu {
+            border: 2px solid #0056b3;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        .dropdown-item:focus {
+            outline: 3px solid #80bdff;
+            outline-offset: 2px;
+            background-color: #e3f2fd;
+        }
+
+        /* Estados de validación mejorados */
+        .is-valid {
+            border-color: #155724 !important;
+        }
+
+        .is-invalid {
+            border-color: #721c24 !important;
+        }
+
+        .valid-feedback {
+            color: #155724;
+            font-weight: 500;
+        }
+
+        .invalid-feedback {
+            color: #721c24;
+            font-weight: 500;
+        }
+
+        /* Indicadores de carga accesibles */
+        .spinner-border {
+            color: #0056b3;
+        }
+
+        /* Badges con mejor contraste */
+        .badge {
+            font-weight: 600;
+            border: 1px solid;
+        }
+
+        .badge.bg-primary {
+            background-color: #0056b3 !important;
+            border-color: #004085;
+        }
+
+        .badge.bg-success {
+            background-color: #155724 !important;
+            border-color: #0e4419;
+        }
+
+        .badge.bg-warning {
+            background-color: #e67700 !important;
+            border-color: #cc6600;
+            color: #ffffff !important;
+        }
+
+        .badge.bg-light {
+            background-color: #f8f9fa !important;
+            color: #212529 !important;
+            border-color: #495057;
+        }
+
+        /* Mejoras para tablas */
+        .table th {
+            border-bottom: 2px solid #495057;
+            font-weight: 600;
+        }
+
+        .table td, .table th {
+            border-top: 1px solid #495057;
+        }
+
+        /* Paginación accesible */
+        .page-link {
+            color: #0056b3;
+            border: 2px solid #dee2e6;
+        }
+
+        .page-link:hover, .page-link:focus {
+            color: #004085;
+            background-color: #e3f2fd;
+            border-color: #0056b3;
+            outline: 3px solid #80bdff;
+            outline-offset: 2px;
+        }
+
+        .page-item.active .page-link {
+            background-color: #0056b3;
+            border-color: #004085;
+            color: #ffffff;
+        }
+
+        /* Eliminar márgenes superior */
+        html, body {
+            margin-top: 0 !important;
+            padding-top: 0 !important;
+        }
+        
+        /* Eliminar cualquier espacio superior en la navegación */
+        nav.navbar {
+            margin-top: 0 !important;
+            padding-top: 0.5rem !important;
+        }body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--light-bg);
+            line-height: 1.6;
+            padding-top: 0; /* Eliminamos el padding superior */
+            margin-top: 0; /* Aseguramos que no haya margen superior */
+        }.navbar {
+            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+            box-shadow: var(--shadow);
+            margin-bottom: 20px; /* Reducimos el margen inferior del navbar */
+        }
+
+        .navbar-brand {
+            font-weight: bold;
+            font-size: 1.5rem;
+        }
+
+        .card {
+            border: none;
+            border-radius: 15px;
+            box-shadow: var(--shadow);
+            transition: transform 0.3s ease;
+        }
+
+        .card:hover {
+            transform: translateY(-5px);
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, var(--secondary-color), #2980b9);
+            border: none;
+            border-radius: 25px;
+            padding: 10px 25px;
+            transition: all 0.3s ease;
+        }        /* MEJORAS WCAG 2.1 - CONTRASTE Y ACCESIBILIDAD */
+        
+        /* Mejores colores con contraste suficiente */
+        .text-muted {
+            color: #495057 !important; /* Contraste mejorado de 4.5:1 */
+        }
+        
+        .text-secondary {
+            color: #495057 !important;
+        }
+        
+        /* Botones con mejor contraste */
+        .btn-primary {
+            background: linear-gradient(135deg, #0056b3, #004085); /* Azul más oscuro */
+            border: 2px solid #004085;
+            color: #ffffff;
+            font-weight: 600;
+            border-radius: 25px;
+            transition: all 0.3s ease;
+        }
+
+        .btn-primary:hover, .btn-primary:focus {
+            background: linear-gradient(135deg, #004085, #003366);
+            border-color: #003366;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0, 64, 133, 0.4);
+            outline: 3px solid #80bdff;
+            outline-offset: 2px;
+        }
+
+        .btn-success {
+            background: linear-gradient(135deg, #155724, #0e4419); /* Verde más oscuro */
+            border: 2px solid #0e4419;
+            color: #ffffff;
+            font-weight: 600;
+            border-radius: 25px;
+        }
+
+        .btn-success:hover, .btn-success:focus {
+            background: linear-gradient(135deg, #0e4419, #0a3015);
+            border-color: #0a3015;
+            outline: 3px solid #7bc97b;
+            outline-offset: 2px;
+        }
+
+        .btn-warning {
+            background: linear-gradient(135deg, #e67700, #cc6600); /* Naranja más oscuro */
+            border: 2px solid #cc6600;
+            color: #ffffff;
+            font-weight: 600;
+            border-radius: 25px;
+        }
+
+        .btn-warning:hover, .btn-warning:focus {
+            background: linear-gradient(135deg, #cc6600, #b35900);
+            border-color: #b35900;
+            outline: 3px solid #ffcc80;
+            outline-offset: 2px;
+        }
+
+        .btn-danger {
+            background: linear-gradient(135deg, #721c24, #5a161b); /* Rojo más oscuro */
+            border: 2px solid #5a161b;
+            color: #ffffff;
+            font-weight: 600;
+            border-radius: 25px;
+        }
+
+        .btn-danger:hover, .btn-danger:focus {
+            background: linear-gradient(135deg, #5a161b, #420f13);
+            border-color: #420f13;
+            outline: 3px solid #ff8a95;
+            outline-offset: 2px;
+        }
+
+        .btn-outline-primary {
+            border: 2px solid #0056b3;
+            color: #0056b3;
+            font-weight: 600;
+        }
+
+        .btn-outline-primary:hover, .btn-outline-primary:focus {
+            background-color: #0056b3;
+            border-color: #004085;
+            outline: 3px solid #80bdff;
+            outline-offset: 2px;
+        }
+
+        /* Alertas con mejor contraste */
+        .alert {
+            border: 2px solid;
+            border-radius: 10px;
+            box-shadow: var(--shadow);
+            font-weight: 500;
+        }
+
+        .alert-success {
+            background-color: #d1f2d1;
+            border-color: #155724;
+            color: #155724;
+        }
+
+        .alert-warning {
+            background-color: #fff3cd;
+            border-color: #e67700;
+            color: #856404;
+        }
+
+        .alert-danger {
+            background-color: #f8d7da;
+            border-color: #721c24;
+            color: #721c24;
+        }
+
+        .alert-info {
+            background-color: #d1ecf1;
+            border-color: #0c5460;
+            color: #0c5460;
+        }
+
+        .form-control, .form-select {
+            border-radius: 10px;
+            border: 2px solid #e9ecef;
+            transition: border-color 0.3s ease;
+        }
+
+        .form-control:focus, .form-select:focus {
+            border-color: var(--secondary-color);
+            box-shadow: 0 0 0 0.2rem rgba(52, 152, 219, 0.25);
+        }
+
+        .table {
+            border-radius: 10px;
+            overflow: hidden;
+            box-shadow: var(--shadow);
+        }
+
+        .table thead {
+            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+            color: white;
+        }
+
+        .footer {
+            background: var(--primary-color);
+            color: white;
+            margin-top: 50px;
+        }
+
+        .hero-section {
+            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+            color: white;
+            padding: 60px 0;
+            text-align: center;
+        }
+
+        .feature-icon {
+            font-size: 3rem;
+            color: var(--secondary-color);
+            margin-bottom: 20px;
+        }        /* ACCESIBILIDAD MEJORADA - WCAG 2.1 AA */
+        .sr-only {
+            position: absolute !important;
+            width: 1px !important;
+            height: 1px !important;
+            padding: 0 !important;
+            margin: -1px !important;
+            overflow: hidden !important;
+            clip: rect(0, 0, 0, 0) !important;
+            white-space: nowrap !important;
+            border: 0 !important;
+        }
+
+        /* Skip Links Mejorados */
+        .skip-links {
+            position: absolute;
+            top: 0;
+            left: 0;
+            z-index: 9999;
+        }
+
+        .skip-link {
+            position: absolute;
+            top: -40px;
+            left: 6px;
+            background: #000 !important;
+            color: #fff !important;
+            padding: 12px 16px;
+            text-decoration: none;
+            border-radius: 4px;
+            font-weight: bold;
+            font-size: 16px;
+            border: 2px solid #fff;
+            z-index: 10000;
+            opacity: 0;
+            transform: translateY(-100%);
+            transition: all 0.3s ease;
+        }
+
+        .skip-link:focus {
+            top: 10px;
+            opacity: 1;
+            transform: translateY(0);
+            outline: 2px solid #fff;
+            outline-offset: 2px;
+        }
+
+        .skip-link:hover {
+            background: #333 !important;
+        }
+
+        /* Indicadores de Foco Mejorados */
+        .btn:focus, 
+        .form-control:focus, 
+        .form-select:focus,
+        .form-check-input:focus,
+        a:focus,
+        button:focus,
+        [tabindex]:focus {
+            outline: 3px solid #0066cc !important;
+            outline-offset: 2px !important;
+            box-shadow: 0 0 0 2px rgba(0, 102, 204, 0.3) !important;
+        }
+
+        /* Mejoras de Contraste */
+        .text-muted {
+            color: #6c757d !important; /* Mejora contraste a 4.5:1 */
+        }
+
+        .text-light {
+            color: #f8f9fa !important;
+        }
+
+        /* Estados ARIA Visuales */
+        [aria-expanded="true"] .collapse-icon::before {
+            content: "▼";
+        }
+
+        [aria-expanded="false"] .collapse-icon::before {
+            content: "▶";
+        }
+
+        /* Indicadores para lectores de pantalla */
+        .loading[aria-busy="true"]::after {
+            content: "Cargando...";
+            position: absolute;
+            left: -9999px;
+        }
+
+        /* High contrast mode support */
+        @media (prefers-contrast: high) {
+            :root {
+                --primary-color: #000000;
+                --secondary-color: #ffffff;
+                --accent-color: #0000ff;
+                --text-color: #000000;
+                --bg-color: #ffffff;
+                --border-color: #000000;
+            }
+            
+            body {
+                background-color: #ffffff !important;
+                color: #000000 !important;
+            }
+            
+            .card {
+                border: 3px solid #000000 !important;
+                background-color: #ffffff !important;
+            }
+            
+            .btn-primary, .btn-success, .btn-warning, .btn-danger {
+                background: #000000 !important;
+                border: 3px solid #000000 !important;
+                color: #ffffff !important;
+            }
+            
+            .btn-outline-primary, .btn-outline-secondary {
+                border: 3px solid #000000 !important;
+                color: #000000 !important;
+                background: #ffffff !important;
+            }
+            
+            .navbar {
+                background: #000000 !important;
+                border-bottom: 3px solid #000000 !important;
+            }
+            
+            .navbar-brand, .nav-link {
+                color: #ffffff !important;
+            }
+            
+            .text-muted {
+                color: #000000 !important;
+            }
+            
+            .alert {
+                border: 3px solid #000000 !important;
+                background: #ffffff !important;
+                color: #000000 !important;
+            }
+        }
+
+        /* MEJORAS DE NAVEGACIÓN POR TECLADO */
+        .form-control:focus, .form-select:focus {
+            border-color: #0056b3;
+            box-shadow: 0 0 0 3px rgba(0, 86, 179, 0.3);
+            outline: 3px solid #80bdff;
+            outline-offset: 2px;
+        }
+
+        /* Enlaces con mejor contraste en focus */
+        a:focus {
+            outline: 3px solid #80bdff;
+            outline-offset: 2px;
+            background-color: rgba(0, 86, 179, 0.1);
+            border-radius: 3px;
+        }
+
+        /* Botones de navegación más accesibles */
+        .navbar-nav .nav-link:focus {
+            outline: 3px solid #80bdff;
+            outline-offset: 2px;
+            background-color: rgba(255, 255, 255, 0.1);
+            border-radius: 5px;
+        }
+
+        /* Mejoras para dropdowns */
+        .dropdown-menu {
+            border: 2px solid #0056b3;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        .dropdown-item:focus {
+            outline: 3px solid #80bdff;
+            outline-offset: 2px;
+            background-color: #e3f2fd;
+        }
+
+        /* Estados de validación mejorados */
+        .is-valid {
+            border-color: #155724 !important;
+        }
+
+        .is-invalid {
+            border-color: #721c24 !important;
+        }
+
+        .valid-feedback {
+            color: #155724;
+            font-weight: 500;
+        }
+
+        .invalid-feedback {
+            color: #721c24;
+            font-weight: 500;
+        }
+
+        /* Indicadores de carga accesibles */
+        .spinner-border {
+            color: #0056b3;
+        }
+
+        /* Badges con mejor contraste */
+        .badge {
+            font-weight: 600;
+            border: 1px solid;
+        }
+
+        .badge.bg-primary {
+            background-color: #0056b3 !important;
+            border-color: #004085;
+        }
+
+        .badge.bg-success {
+            background-color: #155724 !important;
+            border-color: #0e4419;
+        }
+
+        .badge.bg-warning {
+            background-color: #e67700 !important;
+            border-color: #cc6600;
+            color: #ffffff !important;
+        }
+
+        .badge.bg-light {
+            background-color: #f8f9fa !important;
+            color: #212529 !important;
+            border-color: #495057;
+        }
+
+        /* Mejoras para tablas */
+        .table th {
+            border-bottom: 2px solid #495057;
+            font-weight: 600;
+        }
+
+        .table td, .table th {
+            border-top: 1px solid #495057;
+        }
+
+        /* Paginación accesible */
+        .page-link {
+            color: #0056b3;
+            border: 2px solid #dee2e6;
+        }
+
+        .page-link:hover, .page-link:focus {
+            color: #004085;
+            background-color: #e3f2fd;
+            border-color: #0056b3;
+            outline: 3px solid #80bdff;
+            outline-offset: 2px;
+        }
+
+        .page-item.active .page-link {
+            background-color: #0056b3;
+            border-color: #004085;
+            color: #ffffff;
         }
     </style>
     
     {% block extra_head %}{% endblock %}
 </head>
-<body>    <!-- Skip to main content link for accessibility -->
-    <a class="skip-link" href="#main-content">Saltar al contenido principal</a>
+<body>
+    <!-- Skip Links Mejorados para WCAG 2.1 -->
+    <div class="skip-links" role="navigation" aria-label="Enlaces de navegación rápida">
+        <a class="skip-link" href="#main-content">Saltar al contenido principal</a>
+        <a class="skip-link" href="#main-navigation">Saltar a la navegación</a>
+        <a class="skip-link" href="#search-form">Saltar al formulario de búsqueda</a>
+        <a class="skip-link" href="#footer-content">Saltar al pie de página</a>
+    </div>
+
+    <!-- Anuncio de página para lectores de pantalla -->
+    <div id="page-announcement" class="sr-only" aria-live="polite" aria-atomic="true">
+        Página cargada: {% block page_title %}{{ title|default:"Sistema de Salas de Estudio" }}{% endblock %}
+    </div>
 
     <!-- Navigation -->
-    <nav class="navbar navbar-expand-lg navbar-dark mt-0 pt-0" role="navigation" aria-label="Navegación principal">
+    <nav id="main-navigation" class="navbar navbar-expand-lg navbar-dark mt-0 pt-0" 
+         role="navigation" aria-label="Navegación principal">
         <div class="container">
-            <a class="navbar-brand" href="{% url 'rooms:room_list' %}">
+            <a class="navbar-brand" href="{% url 'rooms:room_list' %}" 
+               aria-label="Ir a página principal - Salas Inteligentes">
                 <i class="fas fa-building" aria-hidden="true"></i>
                 Salas Inteligentes
             </a>

@@ -359,9 +359,8 @@ def room_reserve(request, room_id):
                 f"Esta sala solo está disponible para ciertos roles de usuario."
             )
             return redirect('rooms:room_detail', room_id=room_id)
-        
         if request.method == 'POST':
-            form = ReservationForm(request.POST, user=request.user)
+            form = ReservationForm(request.POST, user=request.user, room=room)
             # Asignar la sala antes de validar
             form.instance.room = room
             
@@ -407,7 +406,7 @@ def room_reserve(request, room_id):
                 'attendees_count': 1
             })
             
-            form = ReservationForm(initial=initial_data, user=request.user)
+            form = ReservationForm(initial=initial_data, user=request.user, room=room)
         
         context = {
             'room': room,

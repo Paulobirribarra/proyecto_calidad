@@ -3,21 +3,34 @@
 {% block title %}Registro - Salas de Estudio{% endblock %}
 
 {% block content %}
-<div class="container">
-    <div class="row justify-content-center">
+<!-- Skip Links para accesibilidad -->
+<div class="skip-links" role="navigation" aria-label="Enlaces de navegación rápida">
+    <a href="#main-content" class="skip-link">Saltar al contenido principal</a>
+    <a href="#registration-form" class="skip-link">Saltar al formulario de registro</a>
+    <a href="#login-link" class="skip-link">Saltar al enlace de inicio de sesión</a>
+    <a href="#footer" class="skip-link">Saltar al pie de página</a>
+</div>
+
+<div class="container">    <div class="row justify-content-center">
         <div class="col-md-8 col-lg-6">
-            <div class="card mt-4">
-                <div class="card-header text-center bg-success text-white">
-                    <h2 class="mb-0">
-                        <i class="fas fa-user-plus" aria-hidden="true"></i>
-                        Crear Nueva Cuenta
-                    </h2>
-                </div>
-                <div class="card-body p-4">
-                    <form method="post" novalidate>
-                        {% csrf_token %}
-                        
-                        <div class="row">
+            <main id="main-content" role="main" aria-labelledby="registration-title">
+                <div class="card mt-4">
+                    <div class="card-header text-center bg-success text-white">
+                        <h1 id="registration-title" class="h2 mb-0">
+                            <i class="fas fa-user-plus" aria-hidden="true"></i>
+                            Crear Nueva Cuenta
+                        </h1>
+                    </div>
+                    <div class="card-body p-4">
+                        <form id="registration-form" method="post" novalidate aria-labelledby="registration-title" 
+                              aria-describedby="form-instructions">
+                            {% csrf_token %}
+                            
+                            <div id="form-instructions" class="sr-only">
+                                Complete este formulario para crear una nueva cuenta. Los campos marcados con asterisco son obligatorios.
+                            </div>
+                          <fieldset class="row" aria-label="Información personal">
+                            <legend class="sr-only">Datos personales</legend>
                             <!-- First Name -->
                             <div class="col-md-6 mb-3">
                                 <label for="{{ form.first_name.id_for_label }}" class="form-label">
@@ -26,8 +39,9 @@
                                     <span class="text-danger" aria-label="Campo obligatorio">*</span>
                                 </label>
                                 {{ form.first_name }}
+                                <div id="first-name-help" class="form-text">Ingrese su nombre real</div>
                                 {% if form.first_name.errors %}
-                                    <div class="invalid-feedback d-block">
+                                    <div class="invalid-feedback d-block" role="alert" aria-live="polite">
                                         {% for error in form.first_name.errors %}
                                             {{ error }}
                                         {% endfor %}
@@ -43,17 +57,16 @@
                                     <span class="text-danger" aria-label="Campo obligatorio">*</span>
                                 </label>
                                 {{ form.last_name }}
+                                <div id="last-name-help" class="form-text">Ingrese su apellido real</div>
                                 {% if form.last_name.errors %}
-                                    <div class="invalid-feedback d-block">
+                                    <div class="invalid-feedback d-block" role="alert" aria-live="polite">
                                         {% for error in form.last_name.errors %}
                                             {{ error }}
                                         {% endfor %}
                                     </div>
                                 {% endif %}
                             </div>
-                        </div>
-
-                        <!-- Username -->
+                        </fieldset>                        <!-- Username -->
                         <div class="mb-3">
                             <label for="{{ form.username.id_for_label }}" class="form-label">
                                 <i class="fas fa-at" aria-hidden="true"></i>
@@ -61,20 +74,18 @@
                                 <span class="text-danger" aria-label="Campo obligatorio">*</span>
                             </label>
                             {{ form.username }}
-                            <div class="form-text">
+                            <div id="username-help" class="form-text" aria-describedby="username-help">
                                 <i class="fas fa-info-circle" aria-hidden="true"></i>
                                 Mínimo 3 caracteres. Solo letras, números y @/./+/-/_ permitidos.
                             </div>
                             {% if form.username.errors %}
-                                <div class="invalid-feedback d-block">
+                                <div class="invalid-feedback d-block" role="alert" aria-live="polite">
                                     {% for error in form.username.errors %}
                                         {{ error }}
                                     {% endfor %}
                                 </div>
                             {% endif %}
-                        </div>
-
-                        <!-- Email -->
+                        </div>                        <!-- Email -->
                         <div class="mb-3">
                             <label for="{{ form.email.id_for_label }}" class="form-label">
                                 <i class="fas fa-envelope" aria-hidden="true"></i>
@@ -82,36 +93,34 @@
                                 <span class="text-danger" aria-label="Campo obligatorio">*</span>
                             </label>
                             {{ form.email }}
+                            <div id="email-help" class="form-text">Ingrese un correo electrónico válido</div>
                             {% if form.email.errors %}
-                                <div class="invalid-feedback d-block">
+                                <div class="invalid-feedback d-block" role="alert" aria-live="polite">
                                     {% for error in form.email.errors %}
                                         {{ error }}
                                     {% endfor %}
                                 </div>
                             {% endif %}
-                        </div>
-
-                        <!-- Phone Number -->
+                        </div>                        <!-- Phone Number -->
                         <div class="mb-3">
                             <label for="{{ form.phone_number.id_for_label }}" class="form-label">
                                 <i class="fas fa-phone" aria-hidden="true"></i>
                                 Número de Teléfono
                             </label>
                             {{ form.phone_number }}
-                            <div class="form-text">
+                            <div id="phone-help" class="form-text">
                                 <i class="fas fa-info-circle" aria-hidden="true"></i>
-                                Formato: +569 49377625 (formato chileno)
+                                Formato: 949377625 (opcional)
                             </div>
                             {% if form.phone_number.errors %}
-                                <div class="invalid-feedback d-block">
+                                <div class="invalid-feedback d-block" role="alert" aria-live="polite">
                                     {% for error in form.phone_number.errors %}
                                         {{ error }}
                                     {% endfor %}
                                 </div>
                             {% endif %}
-                        </div>
-
-                        <div class="row">
+                        </div>                        <fieldset class="row" aria-label="Información de seguridad">
+                            <legend class="sr-only">Contraseñas</legend>
                             <!-- Password -->
                             <div class="col-md-6 mb-3">
                                 <label for="{{ form.password1.id_for_label }}" class="form-label">
@@ -120,12 +129,12 @@
                                     <span class="text-danger" aria-label="Campo obligatorio">*</span>
                                 </label>
                                 {{ form.password1 }}
-                                <div class="form-text">
+                                <div id="password-help" class="form-text">
                                     <i class="fas fa-shield-alt" aria-hidden="true"></i>
                                     Mínimo 8 caracteres, debe incluir números y letras.
                                 </div>
                                 {% if form.password1.errors %}
-                                    <div class="invalid-feedback d-block">
+                                    <div class="invalid-feedback d-block" role="alert" aria-live="polite">
                                         {% for error in form.password1.errors %}
                                             {{ error }}
                                         {% endfor %}
@@ -141,54 +150,61 @@
                                     <span class="text-danger" aria-label="Campo obligatorio">*</span>
                                 </label>
                                 {{ form.password2 }}
+                                <div id="password2-help" class="form-text">Repita la contraseña anterior</div>
                                 {% if form.password2.errors %}
-                                    <div class="invalid-feedback d-block">
+                                    <div class="invalid-feedback d-block" role="alert" aria-live="polite">
                                         {% for error in form.password2.errors %}
                                             {{ error }}
                                         {% endfor %}
                                     </div>
                                 {% endif %}
                             </div>
-                        </div>
-
-                        <!-- Email Notifications -->
-                        <div class="mb-3 form-check">
-                            {{ form.email_notifications }}
-                            <label class="form-check-label" for="{{ form.email_notifications.id_for_label }}">
-                                <i class="fas fa-bell" aria-hidden="true"></i>
-                                Recibir notificaciones por correo electrónico
-                            </label>
-                            <div class="form-text">
-                                Te notificaremos sobre confirmaciones de reserva y recordatorios.
+                        </fieldset>                        <fieldset aria-label="Preferencias y términos">
+                            <legend class="sr-only">Opciones adicionales</legend>
+                            
+                            <!-- Email Notifications -->
+                            <div class="mb-3 form-check">
+                                {{ form.email_notifications }}
+                                <label class="form-check-label" for="{{ form.email_notifications.id_for_label }}">
+                                    <i class="fas fa-bell" aria-hidden="true"></i>
+                                    Recibir notificaciones por correo electrónico
+                                </label>
+                                <div id="notifications-help" class="form-text">
+                                    Te notificaremos sobre confirmaciones de reserva y recordatorios.
+                                </div>
+                                {% if form.email_notifications.errors %}
+                                    <div class="invalid-feedback d-block" role="alert" aria-live="polite">
+                                        {% for error in form.email_notifications.errors %}
+                                            {{ error }}
+                                        {% endfor %}
+                                    </div>
+                                {% endif %}                        
                             </div>
-                            {% if form.email_notifications.errors %}
-                                <div class="invalid-feedback d-block">
-                                    {% for error in form.email_notifications.errors %}
-                                        {{ error }}
-                                    {% endfor %}
-                                </div>
-                            {% endif %}                        </div>
 
-                        <!-- Terms and Conditions -->
-                        <div class="mb-3 form-check">
-                            {{ form.terms_accepted }}
-                            <label class="form-check-label" for="{{ form.terms_accepted.id_for_label }}">
-                                <i class="fas fa-file-contract" aria-hidden="true"></i>
-                                Acepto los <a href="#" data-bs-toggle="modal" data-bs-target="#termsModal">términos y condiciones</a>
-                                <span class="text-danger" aria-label="Campo obligatorio">*</span>
-                            </label>
-                            {% if form.terms_accepted.errors %}
-                                <div class="invalid-feedback d-block">
-                                    {% for error in form.terms_accepted.errors %}
-                                        {{ error }}
-                                    {% endfor %}
+                            <!-- Terms and Conditions -->
+                            <div class="mb-3 form-check">
+                                {{ form.terms_accepted }}
+                                <label class="form-check-label" for="{{ form.terms_accepted.id_for_label }}">
+                                    <i class="fas fa-file-contract" aria-hidden="true"></i>
+                                    Acepto los <a href="#" data-bs-toggle="modal" data-bs-target="#termsModal" 
+                                                 aria-describedby="terms-help">términos y condiciones</a>
+                                    <span class="text-danger" aria-label="Campo obligatorio">*</span>
+                                </label>
+                                <div id="terms-help" class="form-text">
+                                    Es obligatorio aceptar los términos y condiciones para crear una cuenta.
                                 </div>
-                            {% endif %}
-                        </div>
-
-                        <!-- Submit button -->
+                                {% if form.terms_accepted.errors %}
+                                    <div class="invalid-feedback d-block" role="alert" aria-live="polite">
+                                        {% for error in form.terms_accepted.errors %}
+                                            {{ error }}
+                                        {% endfor %}
+                                    </div>
+                                {% endif %}
+                            </div>
+                        </fieldset>                        <!-- Submit button -->
                         <div class="d-grid">
-                            <button type="submit" class="btn btn-success btn-lg">
+                            <button type="submit" class="btn btn-success btn-lg" 
+                                    aria-describedby="form-instructions">
                                 <i class="fas fa-user-plus" aria-hidden="true"></i>
                                 Crear Cuenta
                             </button>
@@ -196,7 +212,7 @@
 
                         <!-- Non-field errors -->
                         {% if form.non_field_errors %}
-                            <div class="alert alert-danger mt-3" role="alert">
+                            <div class="alert alert-danger mt-3" role="alert" aria-live="polite">
                                 {% for error in form.non_field_errors %}
                                     {{ error }}
                                 {% endfor %}
@@ -207,31 +223,33 @@
                 <div class="card-footer text-center">
                     <p class="mb-0">
                         ¿Ya tienes una cuenta? 
-                        <a href="{% url 'usuarios:login' %}" class="text-decoration-none">
+                        <a id="login-link" href="{% url 'usuarios:login' %}" class="text-decoration-none">
                             Inicia sesión aquí
                         </a>
                     </p>
                 </div>
-            </div>        </div>
+            </main>        
+        </div>
     </div>
 </div>
 
 <!-- Terms and Conditions Modal -->
-<div class="modal fade" id="termsModal" tabindex="-1" aria-labelledby="termsModalLabel" aria-hidden="true">
-    <div class="modal-dialog modal-lg">
+<div class="modal fade" id="termsModal" tabindex="-1" aria-labelledby="termsModalLabel" aria-hidden="true" role="dialog">
+    <div class="modal-dialog modal-lg" role="document">
         <div class="modal-content">
             <div class="modal-header">
-                <h5 class="modal-title" id="termsModalLabel">
+                <h2 class="modal-title h5" id="termsModalLabel">
                     <i class="fas fa-file-contract" aria-hidden="true"></i>
                     Términos y Condiciones
-                </h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+                </h2>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar modal de términos y condiciones"></button>
             </div>
-            <div class="modal-body">
-                <h6>1. Uso del Sistema</h6>
-                <p>Al utilizar este sistema de reservas de salas de estudio, aceptas usar los servicios de manera responsable y conforme a las normas establecidas.</p>
-                
-                <h6>2. Reservas</h6>
+            <div class="modal-body" role="document">
+                <div aria-live="polite">
+                    <h3 class="h6">1. Uso del Sistema</h3>
+                    <p>Al utilizar este sistema de reservas de salas de estudio, aceptas usar los servicios de manera responsable y conforme a las normas establecidas.</p>
+                    
+                    <h3 class="h6">2. Reservas</h3>
                 <p>Las reservas deben realizarse con veracidad en la información proporcionada. El mal uso o cancelaciones recurrentes pueden resultar en la suspensión de la cuenta.</p>
                 
                 <h6>3. Privacidad</h6>

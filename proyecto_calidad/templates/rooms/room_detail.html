@@ -3,25 +3,35 @@
 {% block title %}{{ room.name }} - Salas de Estudio{% endblock %}
 
 {% block content %}
-<div class="container my-5">
-    <!-- Breadcrumb -->
+<!-- Skip Links para Accesibilidad -->
+<div class="skip-links">
+    <a href="#main-content" class="skip-link">Saltar al contenido principal</a>
+    <a href="#room-details" class="skip-link">Saltar a detalles de la sala</a>
+    <a href="#reservation-panel" class="skip-link">Saltar al panel de reserva</a>
+    <a href="#navigation" class="skip-link">Saltar a navegación</a>
+</div>
+
+<main id="main-content" tabindex="-1" role="main">
+<div class="container my-5">    <!-- Breadcrumb -->
     <div class="row mb-4">
         <div class="col-12">
             <nav aria-label="breadcrumb">
                 <ol class="breadcrumb">
-                    <li class="breadcrumb-item"><a href="{% url 'rooms:room_list' %}">Salas</a></li>
+                    <li class="breadcrumb-item">
+                        <a href="{% url 'rooms:room_list' %}" aria-label="Volver a la lista de salas">Salas</a>
+                    </li>
                     <li class="breadcrumb-item active" aria-current="page">{{ room.name }}</li>
                 </ol>
             </nav>
         </div>
-    </div>
-
-    <div class="row">
-        <!-- Room Details -->
-        <div class="col-lg-8 mb-4">
+    </div>    <div class="row">        <!-- Room Details -->
+        <div class="col-lg-8 mb-4" id="room-details">
             <div class="card">
                 <!-- Room Image Placeholder -->
-                <div class="card-img-top bg-light d-flex align-items-center justify-content-center" style="height: 300px;">
+                <div class="card-img-top bg-light d-flex align-items-center justify-content-center" 
+                     style="height: 300px;"
+                     role="img" 
+                     aria-label="Imagen representativa de la sala {{ room.name }}">
                     <i class="fas fa-building fa-4x text-muted" aria-hidden="true"></i>
                 </div>
                 
@@ -31,29 +41,34 @@
                             <h1 class="card-title h2 mb-2">{{ room.name }}</h1>
                             <p class="text-muted mb-2">
                                 <i class="fas fa-map-marker-alt" aria-hidden="true"></i>
-                                {{ room.location }}
+                                <span aria-label="Ubicación">{{ room.location }}</span>
                             </p>
                         </div>
                         <div class="text-end">
                             {% if room.is_available_now %}
-                                <span class="badge bg-success fs-6">
+                                <span class="badge bg-success fs-6" 
+                                      role="status" 
+                                      aria-label="Estado: Sala disponible">
                                     <i class="fas fa-circle" aria-hidden="true"></i>
                                     Disponible
                                 </span>
                             {% else %}
-                                <span class="badge bg-warning fs-6">
+                                <span class="badge bg-warning fs-6" 
+                                      role="status" 
+                                      aria-label="Estado: Sala ocupada">
                                     <i class="fas fa-circle" aria-hidden="true"></i>
                                     Ocupada
                                 </span>
                             {% endif %}
                         </div>
-                    </div>
-
-                    <!-- Rating and Reviews -->
+                    </div>                    <!-- Rating and Reviews -->
                     {% if avg_rating %}
-                    <div class="mb-3">
+                    <div class="mb-3" role="region" aria-labelledby="rating-heading">
+                        <h5 id="rating-heading" class="sr-only">Calificación de la sala</h5>
                         <div class="d-flex align-items-center">
-                            <div class="text-warning me-2">
+                            <div class="text-warning me-2" 
+                                 role="img" 
+                                 aria-label="Calificación: {{ avg_rating|floatformat:1 }} de 5 estrellas">
                                 {% for i in "12345" %}
                                     {% if forloop.counter <= avg_rating %}
                                         <i class="fas fa-star" aria-hidden="true"></i>
@@ -62,37 +77,43 @@
                                     {% endif %}
                                 {% endfor %}
                             </div>
-                            <span class="fw-bold">{{ avg_rating|floatformat:1 }}</span>
-                            <span class="text-muted ms-2">({{ total_reviews }} reseña{{ total_reviews|pluralize:"s" }})</span>
+                            <span class="fw-bold" aria-label="Puntuación promedio">{{ avg_rating|floatformat:1 }}</span>
+                            <span class="text-muted ms-2" aria-label="Número de reseñas">({{ total_reviews }} reseña{{ total_reviews|pluralize:"s" }})</span>
                         </div>
                     </div>
                     {% endif %}                    <!-- Description -->
-                    <div class="mb-4">
-                        <h5>Descripción</h5>
+                    <div class="mb-4" role="region" aria-labelledby="description-heading">
+                        <h5 id="description-heading">Descripción</h5>
                         <p class="text-muted">{{ room.description }}</p>
                     </div>
 
                     <!-- Availability Status -->
-                    <div class="mb-4">
-                        <h5>Estado de Disponibilidad</h5>
+                    <div class="mb-4" role="region" aria-labelledby="availability-heading">
+                        <h5 id="availability-heading">Estado de Disponibilidad</h5>
                         
                         {% if has_current_reservation %}
-                            <div class="alert alert-warning d-flex align-items-center" role="alert">
+                            <div class="alert alert-warning d-flex align-items-center" 
+                                 role="alert" 
+                                 aria-live="polite"
+                                 aria-labelledby="occupied-status">
                                 <i class="fas fa-exclamation-triangle me-2" aria-hidden="true"></i>
                                 <div>
-                                    <strong>Sala Ocupada Actualmente</strong><br>
+                                    <strong id="occupied-status">Sala Ocupada Actualmente</strong><br>
                                     {% for reservation in current_reservations %}
-                                        Reservada de {{ reservation.start_time|date:"H:i" }} a {{ reservation.end_time|date:"H:i" }} ({{ reservation.start_time|date:"d/m/Y" }})
+                                        <span aria-label="Reserva activa">Reservada de {{ reservation.start_time|date:"H:i" }} a {{ reservation.end_time|date:"H:i" }} ({{ reservation.start_time|date:"d/m/Y" }})</span>
                                         {% if not forloop.last %}<br>{% endif %}
                                     {% endfor %}
                                 </div>
                             </div>
                         {% else %}
-                            <div class="alert alert-success d-flex align-items-center" role="alert">
+                            <div class="alert alert-success d-flex align-items-center" 
+                                 role="status" 
+                                 aria-live="polite"
+                                 aria-labelledby="available-status">
                                 <i class="fas fa-check-circle me-2" aria-hidden="true"></i>
                                 <div>
-                                    <strong>Sala Disponible Ahora</strong><br>
-                                    <small class="text-muted">Horario de operación: {{ room.opening_time|time:"H:i" }} - {{ room.closing_time|time:"H:i" }}</small>
+                                    <strong id="available-status">Sala Disponible Ahora</strong><br>
+                                    <small class="text-muted" aria-label="Horario de funcionamiento">Horario de operación: {{ room.opening_time|time:"H:i" }} - {{ room.closing_time|time:"H:i" }}</small>
                                 </div>
                             </div>
                         {% endif %}
@@ -185,12 +206,10 @@
                     {% endif %}
                 </div>
             </div>
-        </div>
-
-        <!-- Sidebar -->
+        </div>        <!-- Sidebar -->
         <div class="col-lg-4">
             <!-- Booking Card -->
-            <div class="card mb-4">
+            <div class="card mb-4" id="reservation-panel">
                 <div class="card-body">                    <h5 class="card-title">
                         <i class="fas fa-calendar-plus" aria-hidden="true"></i>
                         Información de Reserva
@@ -256,10 +275,10 @@
                         </div>
                     </div>
                 </div>
-            </div>
-        </div>
+            </div>        </div>
     </div>
 </div>
+</main>
 {% endblock %}
 
 {% block extra_css %}

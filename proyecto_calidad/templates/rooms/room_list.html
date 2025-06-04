@@ -1,4 +1,5 @@
 {% extends 'base.html' %}
+{% load form_tags %}
 
 {% block title %}Salas Disponibles - Salas de Estudio{% endblock %}
 
@@ -34,6 +35,14 @@
 {% endblock %}
 
 {% block content %}
+<!-- Skip Links para Accesibilidad -->
+<div class="skip-links">
+    <a href="#main-content" class="skip-link">Saltar al contenido principal</a>
+    <a href="#search-form" class="skip-link">Saltar al formulario de búsqueda</a>
+    <a href="#rooms-container" class="skip-link">Saltar a la lista de salas</a>
+    <a href="#navigation" class="skip-link">Saltar a navegación</a>
+</div>
+
 <!-- Hero Section -->
 {% if not user.is_authenticated %}
 <section class="hero-section">
@@ -94,6 +103,7 @@
 {% endif %}
 
 <!-- Main Content -->
+<main id="main-content" tabindex="-1" role="main">
 <div class="container my-5 pt-3"> <!-- Aumentamos el padding superior -->
     <!-- Search and Filter Section -->
     <div class="row mb-5"> <!-- Aumentamos el margen inferior -->
@@ -105,73 +115,136 @@
                         Buscar Salas
                     </h4>
                 </div>                <div class="card-body">
-                    <form method="get" class="row g-3" id="search-form">
+                    <form method="get" 
+                          class="row g-3" 
+                          id="search-form" 
+                          role="search"
+                          aria-labelledby="search-heading"
+                          aria-describedby="search-description">
+                        
+                        <!-- Descripción del formulario para lectores de pantalla -->
+                        <div id="search-description" class="sr-only">
+                            Formulario de búsqueda y filtrado de salas. 
+                            Use los filtros para encontrar salas que cumplan sus necesidades.
+                        </div>
+                        
                         <!-- Primera fila de filtros -->
                         <div class="col-md-4">
-                            <label for="id_search_query" class="form-label">Buscar por nombre</label>
-                            {{ form.search_query }}
-                        </div>                        <div class="col-md-2">
-                            <label for="id_min_capacity" class="form-label">Capacidad mínima</label>
-                            {{ form.min_capacity }}
+                            <label for="id_search_query" class="form-label">
+                                <i class="fas fa-search" aria-hidden="true"></i>
+                                Buscar por nombre
+                            </label>
+                            {{ form.search_query|add_class:"form-control" }}
+                            <div class="form-text">Escriba parte del nombre de la sala</div>
                         </div>
-                        <div class="col-md-3">
-                            <label for="id_user_role_filter" class="form-label">Filtrar por rol</label>
-                            {{ form.user_role_filter }}
-                            <small class="form-text text-muted">Salas según tu tipo de usuario</small>
-                        </div>                        <div class="col-md-2">
-                            <label for="id_room_type_filter" class="form-label">Tipo de sala</label>
-                            {{ form.room_type_filter }}
-                        </div>
-                        <div class="col-md-3">
-                            <label for="id_availability_filter" class="form-label">Disponibilidad</label>
-                            {{ form.availability_filter }}
-                        </div>
+
                         <div class="col-md-2">
-                            <label for="id_available_date" class="form-label">Fecha específica</label>
-                            {{ form.available_date }}
-                            <small class="form-text text-muted">Solo para horario específico</small>
-                        </div><div class="col-md-4">
-                            <label class="form-label">&nbsp;</label>
-                            <div class="d-flex gap-2">
-                                <button type="submit" class="btn btn-primary flex-grow-1">
+                            <label for="id_min_capacity" class="form-label">
+                                <i class="fas fa-users" aria-hidden="true"></i>
+                                Capacidad mínima
+                            </label>
+                            {{ form.min_capacity|add_class:"form-control" }}
+                            <div class="form-text">Número mínimo de personas</div>
+                        </div>
+                        
+                        <div class="col-md-3">
+                            <label for="id_user_role_filter" class="form-label">
+                                <i class="fas fa-user-tag" aria-hidden="true"></i>
+                                Filtrar por rol
+                            </label>
+                            {{ form.user_role_filter|add_class:"form-select" }}
+                            <div id="role-filter-help" class="form-text">Salas según tu tipo de usuario</div>
+                        </div>                        <div class="col-md-2">
+                            <label for="id_room_type_filter" class="form-label">
+                                <i class="fas fa-door-open" aria-hidden="true"></i>
+                                Tipo de sala
+                            </label>
+                            {{ form.room_type_filter|add_class:"form-select" }}
+                            <div class="form-text">Filtrar por tipo de espacio</div>
+                        </div>
+                        
+                        <div class="col-md-3">
+                            <label for="id_availability_filter" class="form-label">
+                                <i class="fas fa-calendar-check" aria-hidden="true"></i>
+                                Disponibilidad
+                            </label>
+                            {{ form.availability_filter|add_class:"form-select" }}
+                            <div class="form-text">Estado de disponibilidad</div>
+                        </div>
+                        
+                        <div class="col-md-2">
+                            <label for="id_available_date" class="form-label">
+                                <i class="fas fa-calendar-day" aria-hidden="true"></i>
+                                Fecha específica
+                            </label>
+                            {{ form.available_date|add_class:"form-control" }}
+                            <div class="form-text">Solo para horario específico</div>
+                        </div>                        <div class="col-md-4">
+                            <label class="form-label" for="search-actions">
+                                <i class="fas fa-cog" aria-hidden="true"></i>
+                                Acciones de búsqueda
+                            </label>
+                            <div class="d-flex gap-2" id="search-actions" role="group" aria-label="Acciones de búsqueda">
+                                <button type="submit" 
+                                        class="btn btn-primary flex-grow-1"
+                                        aria-describedby="search-btn-help">
                                     <i class="fas fa-search" aria-hidden="true"></i>
                                     Buscar
                                 </button>
-                                <a href="{% url 'rooms:room_list' %}" class="btn btn-outline-secondary">
+                                <a href="{% url 'rooms:room_list' %}" 
+                                   class="btn btn-outline-secondary"
+                                   aria-describedby="clear-btn-help">
                                     <i class="fas fa-times" aria-hidden="true"></i>
                                     Limpiar filtros
                                 </a>
+                            </div>
+                            <div class="sr-only">
+                                <div id="search-btn-help">Aplicar filtros de búsqueda</div>
+                                <div id="clear-btn-help">Eliminar todos los filtros aplicados</div>
                             </div>
                         </div>
                     </form>
                 </div>
             </div>
         </div>
-    </div>
-
-    <!-- Admin Actions -->
+    </div>    <!-- Admin Actions -->
     {% if user.is_authenticated and user.is_admin %}
     <div class="row mb-4">
         <div class="col-12">
-            <div class="card border-success">
+            <div class="card border-success" role="region" aria-labelledby="admin-panel-heading">
                 <div class="card-body">
-                    <h5 class="card-title text-success">
+                    <h5 class="card-title text-success" id="admin-panel-heading">
                         <i class="fas fa-cog" aria-hidden="true"></i>
                         Panel de Administración
                     </h5>
-                    <div class="d-flex gap-2 flex-wrap">
-                        <a href="{% url 'rooms:room_create' %}" class="btn btn-success">
+                    <div class="d-flex gap-2 flex-wrap" role="group" aria-label="Acciones de administración">
+                        <a href="{% url 'rooms:room_create' %}" 
+                           class="btn btn-success"
+                           aria-describedby="create-room-help">
                             <i class="fas fa-plus" aria-hidden="true"></i>
                             Crear Nueva Sala
                         </a>
-                        <a href="{% url 'rooms:reservation_admin' %}" class="btn btn-outline-success">
+                        <a href="{% url 'rooms:reservation_admin' %}" 
+                           class="btn btn-outline-success"
+                           aria-describedby="manage-reservations-help">
                             <i class="fas fa-calendar-alt" aria-hidden="true"></i>
                             Gestionar Reservas
                         </a>
-                        <a href="/admin/" class="btn btn-outline-success">
+                        <a href="/admin/" 
+                           class="btn btn-outline-success"
+                           aria-describedby="django-admin-help"
+                           target="_blank">
                             <i class="fas fa-tools" aria-hidden="true"></i>
                             Panel Admin Django
+                            <i class="fas fa-external-link-alt" aria-hidden="true"></i>
                         </a>
+                    </div>
+                    
+                    <!-- Ayuda contextual para lectores de pantalla -->
+                    <div class="sr-only">
+                        <div id="create-room-help">Crear una nueva sala en el sistema</div>
+                        <div id="manage-reservations-help">Ver y gestionar todas las reservas</div>
+                        <div id="django-admin-help">Acceder al panel de administración completo (se abre en nueva pestaña)</div>
                     </div>
                 </div>
             </div>
@@ -242,11 +315,15 @@
                         <i class="fas fa-list" aria-hidden="true"></i>
                     </button>
                 </div>
-                {% endif %}
-            </div>
+                {% endif %}            </div>
         </div>
-    </div>    <!-- Rooms Grid/List -->
-    <div class="row" id="rooms-container">
+    </div>
+
+    <!-- Elemento para anuncios de búsqueda -->
+    <div id="rooms-list" class="d-none" aria-live="polite" aria-label="Anuncio de resultados de búsqueda"></div>
+    
+    <!-- Rooms Grid/List -->
+    <div class="row" id="rooms-container" aria-label="Lista de salas disponibles">
         {% if rooms %}
             {% for room in rooms %}
             <div class="col-lg-4 col-md-6 mb-4 room-card">
@@ -388,8 +465,7 @@
                                 {% endif %}
                             {% endif %}
                         </p>
-                    </div>
-                </div>
+                    </div>                </div>
             </div>
         {% endif %}
     </div>
@@ -439,10 +515,10 @@
                     {% endif %}
                 </ul>
             </nav>
-        </div>
-    </div>
+        </div>    </div>
     {% endif %}
 </div>
+</main>
 {% endblock %}
 
 {% block extra_js %}
@@ -506,23 +582,56 @@ document.addEventListener('DOMContentLoaded', function() {
             }
             this.value = value;
         });
-    }    // Capacity filter validation with improved limits
+    }    // Capacity filter validation with improved limits and accessibility
     const capacityField = document.querySelector('#id_min_capacity');
     if (capacityField) {
+        // Enhanced capacity validation with accessibility
         capacityField.addEventListener('input', function() {
-            let value = parseInt(this.value);
-            if (value < 1) this.value = '';
-            if (value > 500) {
-                this.value = '500';
-                // Mostrar mensaje de advertencia
-                const warningMsg = this.parentNode.querySelector('.capacity-warning');
-                if (!warningMsg) {
-                    const warning = document.createElement('small');
-                    warning.className = 'form-text text-danger capacity-warning';
-                    warning.textContent = 'La capacidad máxima permitida es de 500 personas';
-                    this.parentNode.appendChild(warning);
-                    setTimeout(() => warning.remove(), 3000);
+            let value = this.value.replace(/[^0-9]/g, '');
+            
+            // Limit to 3 digits
+            if (value.length > 3) {
+                value = value.slice(0, 3);
+            }
+            
+            this.value = value;
+            
+            // Remove existing warning
+            const existingWarning = this.parentNode.querySelector('.capacity-warning');
+            if (existingWarning) {
+                existingWarning.remove();
+            }
+            
+            // Validate range
+            const numValue = parseInt(value);
+            if (numValue > 500) {
+                this.classList.add('is-invalid');
+                this.setAttribute('aria-invalid', 'true');
+                
+                const warning = document.createElement('div');
+                warning.className = 'invalid-feedback capacity-warning';
+                warning.setAttribute('role', 'alert');
+                warning.setAttribute('aria-live', 'polite');
+                warning.innerHTML = '<i class="fas fa-exclamation-triangle" aria-hidden="true"></i> La capacidad máxima permitida es de 500 personas';
+                this.parentNode.appendChild(warning);
+                
+                // Update aria-describedby
+                const existingDescribedBy = this.getAttribute('aria-describedby') || '';
+                if (!existingDescribedBy.includes('capacity-warning')) {
+                    this.setAttribute('aria-describedby', 
+                        existingDescribedBy ? `${existingDescribedBy} capacity-warning` : 'capacity-warning');
                 }
+                
+                announceToScreenReader('Error: La capacidad no puede exceder 500 personas');
+                
+            } else if (numValue >= 1) {
+                this.classList.remove('is-invalid');
+                this.classList.add('is-valid');
+                this.setAttribute('aria-invalid', 'false');
+                
+            } else {
+                this.classList.remove('is-invalid', 'is-valid');
+                this.setAttribute('aria-invalid', 'false');
             }
         });
     }
@@ -577,16 +686,79 @@ document.addEventListener('DOMContentLoaded', function() {
                 helpText.textContent = text;
             }
         });
+    }    // Accessibility: Announce search results
+    function announceSearchResults() {
+        const resultsCount = document.querySelectorAll('.room-card').length;
+        const availableCount = document.querySelectorAll('.room-card:not(.room-unavailable)').length;
+        const unavailableCount = resultsCount - availableCount;
+        
+        let message = '';
+        if (resultsCount === 0) {
+            message = 'No se encontraron salas que coincidan con los criterios de búsqueda';
+        } else {
+            message = `Se encontraron ${resultsCount} salas: ${availableCount} disponibles`;
+            if (unavailableCount > 0) {
+                message += ` y ${unavailableCount} no disponibles`;
+            }
+        }
+        
+        announceToScreenReader(message);
     }
-
-    // Accessibility: Announce search results
-    const resultsCount = document.querySelectorAll('.room-card').length;
-    if (resultsCount > 0) {
-        const announcement = document.createElement('div');
-        announcement.textContent = `Se encontraron ${resultsCount} salas`;
-        announcement.className = 'sr-only';
-        announcement.setAttribute('aria-live', 'polite');
-        document.body.appendChild(announcement);
+    
+    // Función para anunciar a lectores de pantalla
+    function announceToScreenReader(message) {
+        // Crear contenedor para anuncios si no existe
+        let announcements = document.getElementById('sr-announcements');
+        if (!announcements) {
+            announcements = document.createElement('div');
+            announcements.id = 'sr-announcements';
+            announcements.className = 'sr-only';
+            announcements.setAttribute('aria-live', 'polite');
+            announcements.setAttribute('aria-atomic', 'true');
+            document.body.appendChild(announcements);
+        }
+        
+        announcements.textContent = message;
+        
+        // Limpiar después de 3 segundos
+        setTimeout(() => {
+            announcements.textContent = '';
+        }, 3000);
+    }
+    
+    // Mejorar accesibilidad de formulario de búsqueda
+    function setupSearchFormAccessibility() {
+        const searchForm = document.getElementById('search-form');
+        if (!searchForm) return;
+        
+        // Agregar aria-describedby a campos con ayuda
+        const fieldsWithHelp = searchForm.querySelectorAll('.form-text');
+        fieldsWithHelp.forEach(helpElement => {
+            const fieldContainer = helpElement.closest('.col-md-2, .col-md-3, .col-md-4');
+            const field = fieldContainer?.querySelector('input, select');
+            
+            if (field && !helpElement.id) {
+                const helpId = field.id + '-help';
+                helpElement.id = helpId;
+                
+                const existingDescribedBy = field.getAttribute('aria-describedby') || '';
+                field.setAttribute('aria-describedby', 
+                    existingDescribedBy ? `${existingDescribedBy} ${helpId}` : helpId);
+            }
+        });
+        
+        // Mejorar feedback de búsqueda
+        searchForm.addEventListener('submit', function(e) {
+            announceToScreenReader('Buscando salas con los criterios especificados...');
+        });
+    }
+    
+    // Configurar accesibilidad inicial
+    setupSearchFormAccessibility();
+    
+    // Anunciar resultados si hay salas visibles
+    if (document.querySelectorAll('.room-card').length > 0) {
+        announceSearchResults();
     }
 });
 </script>

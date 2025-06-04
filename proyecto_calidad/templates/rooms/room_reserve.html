@@ -1,8 +1,18 @@
 {% extends 'base.html' %}
+{% load form_tags %}
 
 {% block title %}Reservar {{ room.name }} - Salas de Estudio{% endblock %}
 
 {% block content %}
+<!-- Skip Links para Accesibilidad -->
+<div class="skip-links">
+    <a href="#main-content" class="skip-link">Saltar al contenido principal</a>
+    <a href="#reservation-form" class="skip-link">Saltar al formulario de reserva</a>
+    <a href="#room-info" class="skip-link">Saltar a información de la sala</a>
+    <a href="#navigation" class="skip-link">Saltar a navegación</a>
+</div>
+
+<main id="main-content" tabindex="-1" role="main">
 <div class="container my-5">
     <!-- Room Header -->
     <div class="row mb-4">
@@ -15,11 +25,9 @@
                 </ol>
             </nav>
         </div>
-    </div>
-
-    <div class="row">
+    </div>    <div class="row">
         <!-- Room Info -->
-        <div class="col-lg-4 mb-4">
+        <div class="col-lg-4 mb-4" id="room-info">
             <div class="card">
                 <div class="card-header">
                     <h5 class="mb-0">
@@ -79,8 +87,17 @@
                                 <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
                             </div>
                         {% endfor %}
-                    {% endif %}                    <form method="post" id="reservation-form">
+                    {% endif %}                    <form method="post" id="reservation-form" 
+                          aria-labelledby="form-heading" 
+                          aria-describedby="form-description" 
+                          novalidate>
                         {% csrf_token %}
+                        
+                        <!-- Descripción del formulario para lectores de pantalla -->
+                        <div id="form-description" class="sr-only">
+                            Formulario para reservar la sala {{ room.name }}. 
+                            Todos los campos marcados con asterisco son obligatorios.
+                        </div>
                         
                         <!-- Campo oculto para la sala -->
                         <input type="hidden" name="room" value="{{ room.id }}">
@@ -90,35 +107,63 @@
                             <div class="col-md-6">
                                 <label for="{{ form.start_time.id_for_label }}" class="form-label">
                                     <i class="fas fa-calendar" aria-hidden="true"></i>
-                                    Fecha y Hora de Inicio *
+                                    Fecha y Hora de Inicio
+                                    <span class="text-danger" aria-label="obligatorio">*</span>
                                 </label>
-                                {{ form.start_time }}
+                                {{ form.start_time|add_class:"form-control" }}
+                                <div id="{{ form.start_time.id_for_label }}-help" class="form-text">
+                                    Seleccione la fecha y hora de inicio de su reserva
+                                </div>
                                 {% if form.start_time.errors %}
-                                    <div class="text-danger small">{{ form.start_time.errors }}</div>
+                                    <div id="{{ form.start_time.id_for_label }}-error" 
+                                         class="invalid-feedback d-block" 
+                                         role="alert" 
+                                         aria-live="polite">
+                                        <i class="fas fa-exclamation-triangle" aria-hidden="true"></i>
+                                        {{ form.start_time.errors.0 }}
+                                    </div>
                                 {% endif %}
-                            </div>
-
-                            <!-- Hora fin -->
+                            </div>                            <!-- Hora fin -->
                             <div class="col-md-6">
                                 <label for="{{ form.end_time.id_for_label }}" class="form-label">
                                     <i class="fas fa-clock" aria-hidden="true"></i>
-                                    Fecha y Hora de Fin *
+                                    Fecha y Hora de Fin
+                                    <span class="text-danger" aria-label="obligatorio">*</span>
                                 </label>
-                                {{ form.end_time }}
+                                {{ form.end_time|add_class:"form-control" }}
+                                <div id="{{ form.end_time.id_for_label }}-help" class="form-text">
+                                    Seleccione la fecha y hora de finalización de su reserva
+                                </div>
                                 {% if form.end_time.errors %}
-                                    <div class="text-danger small">{{ form.end_time.errors }}</div>
+                                    <div id="{{ form.end_time.id_for_label }}-error" 
+                                         class="invalid-feedback d-block" 
+                                         role="alert" 
+                                         aria-live="polite">
+                                        <i class="fas fa-exclamation-triangle" aria-hidden="true"></i>
+                                        {{ form.end_time.errors.0 }}
+                                    </div>
                                 {% endif %}
                             </div>
 
-                            <!-- Propósito -->
+                            <!-- Propósito -->                            <!-- Propósito -->
                             <div class="col-12">
                                 <label for="{{ form.purpose.id_for_label }}" class="form-label">
                                     <i class="fas fa-bullseye" aria-hidden="true"></i>
-                                    Propósito de la Reserva *
+                                    Propósito de la Reserva
+                                    <span class="text-danger" aria-label="obligatorio">*</span>
                                 </label>
-                                {{ form.purpose }}
+                                {{ form.purpose|add_class:"form-control" }}
+                                <div id="{{ form.purpose.id_for_label }}-help" class="form-text">
+                                    Describa brevemente el uso que dará a la sala
+                                </div>
                                 {% if form.purpose.errors %}
-                                    <div class="text-danger small">{{ form.purpose.errors }}</div>
+                                    <div id="{{ form.purpose.id_for_label }}-error" 
+                                         class="invalid-feedback d-block" 
+                                         role="alert" 
+                                         aria-live="polite">
+                                        <i class="fas fa-exclamation-triangle" aria-hidden="true"></i>
+                                        {{ form.purpose.errors.0 }}
+                                    </div>
                                 {% endif %}
                             </div>
 
@@ -126,16 +171,23 @@
                             <div class="col-md-6">
                                 <label for="{{ form.attendees_count.id_for_label }}" class="form-label">
                                     <i class="fas fa-users" aria-hidden="true"></i>
-                                    Número de Asistentes *
+                                    Número de Asistentes
+                                    <span class="text-danger" aria-label="obligatorio">*</span>
                                 </label>
-                                {{ form.attendees_count }}
-                                <small class="form-text text-muted">
-                                    Máximo: {{ room.capacity }} personas
-                                </small>
-                                {% if form.attendees_count.errors %}
-                                    <div class="text-danger small">{{ form.attendees_count.errors }}</div>
+                                {{ form.attendees_count|add_class:"form-control" }}
+                                <div id="{{ form.attendees_count.id_for_label }}-help" class="form-text">
+                                    Máximo: {{ room.capacity }} personas (capacidad de la sala). 
+                                    Ingrese solo números entre 1 y {{ room.capacity }}.
+                                </div>
+                                {% if form.attendees_count.errors %}                                <div id="{{ form.attendees_count.id_for_label }}-error" 
+                                         class="invalid-feedback d-block" 
+                                         role="alert" 
+                                         aria-live="polite">
+                                        <i class="fas fa-exclamation-triangle" aria-hidden="true"></i>
+                                        {{ form.attendees_count.errors.0 }}
+                                    </div>
                                 {% endif %}
-                            </div>                            <!-- Duración y costo estimado -->
+                            </div><!-- Duración y costo estimado -->
                             <div class="col-md-6">
                                 <label class="form-label">Información de la Reserva</label>
                                 <div class="p-3 bg-light rounded" id="reservation-info">
@@ -206,97 +258,389 @@
                     </div>
                     <p class="mt-2">Verificando disponibilidad de la sala...</p>
                 </div>
-            </div>
-        </div>
+            </div>        </div>
     </div>
 </div>
+</main>
 {% endblock %}
 
 {% block extra_js %}
 <script>
 document.addEventListener('DOMContentLoaded', function() {
-    const form = document.getElementById('reservation-form');
-    const startTimeField = document.getElementById('{{ form.start_time.id_for_label }}');
-    const endTimeField = document.getElementById('{{ form.end_time.id_for_label }}');
-    const durationDisplay = document.getElementById('duration-display');
-    const costDisplay = document.getElementById('cost-display');
-    const hourlyRate = {{ room.hourly_rate }};
-
-    // Add Bootstrap classes
-    const formFields = form.querySelectorAll('input, textarea, select');
-    formFields.forEach(field => {
-        field.classList.add('form-control');
-    });
-
-    // Calculate duration and cost
-    function updateReservationInfo() {
-        const startTime = new Date(startTimeField.value);
-        const endTime = new Date(endTimeField.value);
-
-        if (startTime && endTime && endTime > startTime) {
-            const duration = (endTime - startTime) / (1000 * 60 * 60); // hours
-            const cost = duration * hourlyRate;
-
-            durationDisplay.textContent = duration.toFixed(1) + ' horas';
-            costDisplay.textContent = '$' + cost.toFixed(0);
-        } else {
-            durationDisplay.textContent = '-- horas';
-            costDisplay.textContent = '$--';
+    // MEJORAS DE ACCESIBILIDAD WCAG 2.1
+    
+    // Configurar ARIA attributes para campos del formulario
+    setupFormAccessibility();
+    
+    // Validación accesible en tiempo real
+    setupAccessibleValidation();
+    
+    // Anunciar cambios importantes para lectores de pantalla
+    setupScreenReaderAnnouncements();
+    
+    // Funciones específicas del formulario original
+    setupRoomCapacityValidation();
+    
+    function setupFormAccessibility() {
+        const form = document.getElementById('reservation-form');
+        if (!form) return;
+        
+        // Agregar aria-describedby a campos con ayuda
+        const fieldsWithHelp = form.querySelectorAll('[id$="-help"]');
+        fieldsWithHelp.forEach(helpElement => {
+            const fieldId = helpElement.id.replace('-help', '');
+            const field = form.querySelector(`#${fieldId}`);
+            if (field) {
+                const existingDescribedBy = field.getAttribute('aria-describedby') || '';
+                const newDescribedBy = existingDescribedBy ? 
+                    `${existingDescribedBy} ${helpElement.id}` : 
+                    helpElement.id;
+                field.setAttribute('aria-describedby', newDescribedBy);
+                field.setAttribute('aria-required', 'true');
+            }
+        });
+        
+        // Focus en primer campo al cargar
+        const firstField = form.querySelector('input[type="datetime-local"], input[type="text"], select, textarea');
+        if (firstField && !firstField.disabled) {
+            firstField.focus();
         }
     }
-
-    // Event listeners
-    startTimeField.addEventListener('change', updateReservationInfo);
-    endTimeField.addEventListener('change', updateReservationInfo);
-
-    // Set minimum datetime to now
-    const now = new Date();
-    const minDateTime = new Date(now.getTime() + 60000).toISOString().slice(0, 16);
-    startTimeField.setAttribute('min', minDateTime);
-    endTimeField.setAttribute('min', minDateTime);
-
-    // Update end time minimum when start time changes
-    startTimeField.addEventListener('change', function() {
-        if (this.value) {
-            const startTime = new Date(this.value);
-            const minEndTime = new Date(startTime.getTime() + 30 * 60000); // 30 minutes later
-            endTimeField.setAttribute('min', minEndTime.toISOString().slice(0, 16));
+    
+    function setupAccessibleValidation() {
+        const form = document.getElementById('reservation-form');
+        if (!form) return;
+        
+        // Validación en tiempo real accesible
+        form.addEventListener('submit', function(e) {
+            let hasErrors = false;
+            const requiredFields = form.querySelectorAll('[required], [aria-required="true"]');
+            
+            requiredFields.forEach(field => {
+                if (!field.value.trim()) {
+                    showFieldError(field, 'Este campo es obligatorio');
+                    hasErrors = true;
+                } else {
+                    clearFieldError(field);
+                }
+            });
+            
+            if (hasErrors) {
+                e.preventDefault();
+                announceToScreenReader('Se encontraron errores en el formulario. Por favor, revise los campos marcados.');
+                
+                // Focus en primer campo con error
+                const firstError = form.querySelector('.is-invalid');
+                if (firstError) {
+                    firstError.focus();
+                }
+            }
+        });
+    }
+    
+    function showFieldError(field, message) {
+        field.classList.add('is-invalid');
+        field.setAttribute('aria-invalid', 'true');
+        
+        // Crear o actualizar mensaje de error
+        let errorElement = document.getElementById(field.id + '-error');
+        if (!errorElement) {
+            errorElement = document.createElement('div');
+            errorElement.id = field.id + '-error';
+            errorElement.className = 'invalid-feedback d-block';
+            errorElement.setAttribute('role', 'alert');
+            errorElement.setAttribute('aria-live', 'polite');
+            field.parentNode.appendChild(errorElement);
         }
-    });
-
-    // Form validation
-    form.addEventListener('submit', function(e) {
-        const startTime = new Date(startTimeField.value);
-        const endTime = new Date(endTimeField.value);
-
-        if (!startTime || !endTime) {
-            e.preventDefault();
-            alert('Por favor, completa las fechas de inicio y fin.');
-            return;
+        
+        errorElement.innerHTML = `<i class="fas fa-exclamation-triangle" aria-hidden="true"></i> ${message}`;
+        
+        // Actualizar aria-describedby
+        const existingDescribedBy = field.getAttribute('aria-describedby') || '';
+        if (!existingDescribedBy.includes(errorElement.id)) {
+            field.setAttribute('aria-describedby', 
+                existingDescribedBy ? `${existingDescribedBy} ${errorElement.id}` : errorElement.id);
         }
-
-        if (endTime <= startTime) {
-            e.preventDefault();
-            alert('La hora de fin debe ser posterior a la hora de inicio.');
-            return;
+    }
+    
+    function clearFieldError(field) {
+        field.classList.remove('is-invalid');
+        field.setAttribute('aria-invalid', 'false');
+        
+        const errorElement = document.getElementById(field.id + '-error');
+        if (errorElement && !errorElement.textContent.includes('{{ form.')) {
+            errorElement.remove();
         }
-
-        const duration = (endTime - startTime) / (1000 * 60 * 60);
-        if (duration < 0.5) {
-            e.preventDefault();
-            alert('La duración mínima de una reserva es 30 minutos.');
-            return;
+    }
+    
+    function setupScreenReaderAnnouncements() {
+        // Crear contenedor para anuncios
+        if (!document.getElementById('sr-announcements')) {
+            const announcements = document.createElement('div');
+            announcements.id = 'sr-announcements';
+            announcements.className = 'sr-only';
+            announcements.setAttribute('aria-live', 'polite');
+            announcements.setAttribute('aria-atomic', 'true');
+            document.body.appendChild(announcements);
         }
-
-        if (duration > 8) {
-            e.preventDefault();
-            alert('La duración máxima de una reserva es 8 horas.');
-            return;
+    }
+    
+    function announceToScreenReader(message) {
+        const announcements = document.getElementById('sr-announcements');
+        if (announcements) {
+            announcements.textContent = message;
+            
+            // Limpiar después de 3 segundos
+            setTimeout(() => {
+                announcements.textContent = '';
+            }, 3000);
         }
-    });
+    }
+      function setupRoomCapacityValidation() {
+        // Código original del campo de asistentes con mejoras de accesibilidad
+        const form = document.getElementById('reservation-form');
+        const startTimeField = document.getElementById('{{ form.start_time.id_for_label }}');
+        const endTimeField = document.getElementById('{{ form.end_time.id_for_label }}');
+        const attendeesField = document.getElementById('{{ form.attendees_count.id_for_label }}');
+        const durationDisplay = document.getElementById('duration-display');
+        const costDisplay = document.getElementById('cost-display');
+        const hourlyRate = {{ room.hourly_rate }};
+        const roomCapacity = {{ room.capacity }};
 
-    // Initial calculation
-    updateReservationInfo();
+        // Configurar limitación de asistentes con atributos ARIA
+        attendeesField.setAttribute('max', roomCapacity);
+        attendeesField.setAttribute('min', '1');
+        attendeesField.setAttribute('data-capacity', roomCapacity);
+        attendeesField.setAttribute('aria-valuemin', '1');
+        attendeesField.setAttribute('aria-valuemax', roomCapacity);
+        attendeesField.setAttribute('inputmode', 'numeric');
+        attendeesField.setAttribute('pattern', '[0-9]*');        // Agregar clases Bootstrap a campos del formulario
+        const formFields = form.querySelectorAll('input, textarea, select');
+        formFields.forEach(field => {
+            if (!field.classList.contains('form-control')) {
+                field.classList.add('form-control');
+            }
+        });
+
+        // Validación en tiempo real para asistentes con anuncios accesibles
+        attendeesField.addEventListener('input', function() {
+            // Limpiar caracteres no numéricos y limitar longitud
+            let inputValue = this.value.replace(/[^0-9]/g, '');
+            
+            // Limitar a máximo 4 dígitos
+            if (inputValue.length > 4) {
+                inputValue = inputValue.slice(0, 4);
+            }
+            
+            // Actualizar el valor del campo
+            this.value = inputValue;
+            
+            const value = parseInt(inputValue);
+            const helpText = this.parentElement.querySelector('.form-text');
+            
+            if (value > roomCapacity) {
+                this.classList.add('is-invalid');
+                this.classList.remove('is-valid');
+                this.setAttribute('aria-invalid', 'true');
+                
+                if (helpText) {
+                    helpText.textContent = `¡Error! Máximo permitido: ${roomCapacity} personas`;
+                    helpText.classList.add('text-danger');
+                    helpText.classList.remove('text-muted');
+                    helpText.setAttribute('role', 'alert');
+                }
+                
+                // Anunciar error para lectores de pantalla
+                announceToScreenReader(`Error: El número de asistentes excede la capacidad máxima de ${roomCapacity} personas`);
+                
+            } else if (value >= 1) {
+                this.classList.add('is-valid');
+                this.classList.remove('is-invalid');
+                this.setAttribute('aria-invalid', 'false');
+                
+                if (helpText) {
+                    helpText.textContent = `Válido: ${value} de ${roomCapacity} personas máximo`;
+                    helpText.classList.add('text-muted');
+                    helpText.classList.remove('text-danger');
+                    helpText.removeAttribute('role');
+                }
+                
+                // Actualizar aria-valuenow
+                this.setAttribute('aria-valuenow', value);
+                
+            } else {
+                this.classList.remove('is-valid', 'is-invalid');
+                this.setAttribute('aria-invalid', 'false');
+                this.removeAttribute('aria-valuenow');
+                
+                if (helpText) {
+                    helpText.textContent = `Máximo: ${roomCapacity} personas (capacidad de la sala). Ingrese solo números entre 1 y ${roomCapacity}.`;
+                    helpText.classList.add('text-muted');
+                    helpText.classList.remove('text-danger');
+                    helpText.removeAttribute('role');
+                }
+            }
+        });        // Validación al perder el foco para corregir valores extremos
+        attendeesField.addEventListener('blur', function() {
+            let value = parseInt(this.value);
+            
+            if (isNaN(value) || value < 1) {
+                this.value = '1';
+                this.setAttribute('aria-valuenow', '1');
+                announceToScreenReader('Se ha establecido el valor mínimo de 1 asistente');
+            } else if (value > roomCapacity) {
+                this.value = roomCapacity.toString();
+                this.setAttribute('aria-valuenow', roomCapacity);
+                announceToScreenReader(`Se ha limitado a ${roomCapacity} asistentes (capacidad máxima)`);
+            }
+        });
+
+        // Prevenir entrada de caracteres no numéricos con mejor feedback
+        attendeesField.addEventListener('keydown', function(e) {
+            // Permitir: backspace, delete, tab, escape, enter, arrows
+            if ([8, 9, 27, 13, 46, 37, 38, 39, 40].indexOf(e.keyCode) !== -1 ||
+                // Permitir: Ctrl+A, Ctrl+C, Ctrl+V, Ctrl+X
+                (e.keyCode === 65 && e.ctrlKey === true) ||
+                (e.keyCode === 67 && e.ctrlKey === true) ||
+                (e.keyCode === 86 && e.ctrlKey === true) ||
+                (e.keyCode === 88 && e.ctrlKey === true) ||
+                // Permitir: home, end
+                (e.keyCode >= 35 && e.keyCode <= 36)) {
+                return;
+            }
+            // Asegurar que sea un número y no exceda 4 dígitos
+            if ((e.shiftKey || (e.keyCode < 48 || e.keyCode > 57)) && (e.keyCode < 96 || e.keyCode > 105)) {
+                e.preventDefault();
+                announceToScreenReader('Solo se permiten números en este campo');
+            }
+            // Prevenir si ya tiene 4 dígitos
+            if (this.value.length >= 4 && ![8, 9, 46, 37, 38, 39, 40].includes(e.keyCode)) {
+                e.preventDefault();
+                announceToScreenReader('Máximo 4 dígitos permitidos');
+            }
+        });        // Calcular duración y costo con anuncios accesibles
+        function updateReservationInfo() {
+            const startTime = new Date(startTimeField.value);
+            const endTime = new Date(endTimeField.value);
+
+            if (startTime && endTime && endTime > startTime) {
+                const duration = (endTime - startTime) / (1000 * 60 * 60); // hours
+                const cost = duration * hourlyRate;
+
+                const durationText = duration.toFixed(1) + ' horas';
+                const costText = hourlyRate === 0 ? 'Gratuita' : '$' + cost.toFixed(0);
+                
+                durationDisplay.textContent = durationText;
+                costDisplay.textContent = costText;
+                
+                // Anunciar cambios para lectores de pantalla
+                announceToScreenReader(`Duración actualizada: ${durationText}. Costo: ${costText}`);
+                
+                // Actualizar ARIA labels
+                durationDisplay.setAttribute('aria-label', `Duración de la reserva: ${durationText}`);
+                costDisplay.setAttribute('aria-label', `Costo total: ${costText}`);
+                
+            } else {
+                durationDisplay.textContent = '-- horas';
+                costDisplay.textContent = hourlyRate === 0 ? 'Gratuita' : '$--';
+                durationDisplay.removeAttribute('aria-label');
+                costDisplay.removeAttribute('aria-label');
+            }
+        }        // Event listeners con mejor accesibilidad
+        startTimeField.addEventListener('change', function() {
+            updateReservationInfo();
+            announceToScreenReader('Hora de inicio actualizada');
+        });
+        
+        endTimeField.addEventListener('change', function() {
+            updateReservationInfo();
+            announceToScreenReader('Hora de fin actualizada');
+        });
+
+        // Establecer fecha y hora mínima a ahora
+        const now = new Date();
+        const minDateTime = new Date(now.getTime() + 60000).toISOString().slice(0, 16);
+        startTimeField.setAttribute('min', minDateTime);
+        endTimeField.setAttribute('min', minDateTime);
+
+        // Actualizar hora mínima de fin cuando cambia inicio
+        startTimeField.addEventListener('change', function() {
+            if (this.value) {
+                const startTime = new Date(this.value);
+                const minEndTime = new Date(startTime.getTime() + 30 * 60000); // 30 minutos después
+                endTimeField.setAttribute('min', minEndTime.toISOString().slice(0, 16));
+                
+                // Si la hora de fin es menor que la nueva mínima, actualizarla
+                if (endTimeField.value && new Date(endTimeField.value) < minEndTime) {
+                    endTimeField.value = minEndTime.toISOString().slice(0, 16);
+                    announceToScreenReader('Hora de fin ajustada automáticamente para cumplir duración mínima');
+                }
+            }
+        });        // Validación de formulario con mejor accesibilidad
+        form.addEventListener('submit', function(e) {
+            const startTime = new Date(startTimeField.value);
+            const endTime = new Date(endTimeField.value);
+            const attendeesCount = parseInt(attendeesField.value);
+            let hasErrors = false;
+            let errorMessage = '';
+
+            // Validar fechas
+            if (!startTime || !endTime) {
+                hasErrors = true;
+                errorMessage = 'Por favor, completa las fechas de inicio y fin.';
+                const missingField = !startTime ? startTimeField : endTimeField;
+                showFieldError(missingField, 'Este campo es obligatorio');
+            } else if (endTime <= startTime) {
+                hasErrors = true;
+                errorMessage = 'La hora de fin debe ser posterior a la hora de inicio.';
+                showFieldError(endTimeField, 'La hora de fin debe ser posterior a la hora de inicio');
+            }
+
+            // Validar número de asistentes
+            if (!attendeesCount || attendeesCount < 1) {
+                hasErrors = true;
+                errorMessage = 'Por favor, ingresa un número válido de asistentes (mínimo 1).';
+                showFieldError(attendeesField, 'Ingrese un número válido entre 1 y ' + roomCapacity);
+            } else if (attendeesCount > 9999) {
+                hasErrors = true;
+                errorMessage = 'El número de asistentes no puede tener más de 4 dígitos (máximo 9999).';
+                showFieldError(attendeesField, 'Máximo 4 dígitos permitidos');
+            } else if (attendeesCount > roomCapacity) {
+                hasErrors = true;
+                errorMessage = `El número de asistentes no puede exceder la capacidad de la sala (${roomCapacity} personas).`;
+                showFieldError(attendeesField, `Máximo permitido: ${roomCapacity} personas`);
+            }
+
+            // Validar duración si las fechas son válidas
+            if (!hasErrors && startTime && endTime) {
+                const duration = (endTime - startTime) / (1000 * 60 * 60);
+                
+                if (duration < 0.5) {
+                    hasErrors = true;
+                    errorMessage = 'La duración mínima de una reserva es 30 minutos.';
+                    showFieldError(endTimeField, 'Duración mínima: 30 minutos');
+                } else if (duration > 8) {
+                    hasErrors = true;
+                    errorMessage = 'La duración máxima de una reserva es 8 horas.';
+                    showFieldError(endTimeField, 'Duración máxima: 8 horas');
+                }
+            }
+
+            if (hasErrors) {
+                e.preventDefault();
+                announceToScreenReader('Error en el formulario: ' + errorMessage);
+                
+                // Focus en primer campo con error
+                const firstError = form.querySelector('.is-invalid');
+                if (firstError) {
+                    firstError.focus();
+                }
+            }
+        });
+
+        // Cálculo inicial
+        updateReservationInfo();
+    }
 });
 </script>
 {% endblock %}

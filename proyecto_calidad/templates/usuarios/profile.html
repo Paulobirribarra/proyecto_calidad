@@ -3,50 +3,65 @@
 {% block title %}Mi Perfil - Salas de Estudio{% endblock %}
 
 {% block content %}
+<!-- Skip Links para accesibilidad -->
+<div class="skip-links" role="navigation" aria-label="Enlaces de navegación rápida">
+    <a href="#main-content" class="skip-link">Saltar al contenido principal</a>
+    <a href="#profile-info" class="skip-link">Saltar a información de perfil</a>
+    <a href="#user-stats" class="skip-link">Saltar a estadísticas de usuario</a>
+    <a href="#footer" class="skip-link">Saltar al pie de página</a>
+</div>
+
 <div class="container">
-    <div class="row">
-        <!-- Profile Information -->
-        <div class="col-md-8">
-            <div class="card">
-                <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
-                    <h3 class="mb-0">
-                        <i class="fas fa-user" aria-hidden="true"></i>
-                        Mi Perfil
-                    </h3>
-                    {% comment %} <a href="{% url 'usuarios:profile_edit' %}" class="btn btn-light btn-sm">
-                        <i class="fas fa-edit" aria-hidden="true"></i>
-                        Editar
-                    </a> {% endcomment %}
-                </div>
-                <div class="card-body">
-                    <div class="row">
-                        <!-- First Name -->
-                        <div class="col-md-6 mb-3">
-                            <label class="form-label text-muted">
-                                <i class="fas fa-user" aria-hidden="true"></i>
-                                Nombre
-                            </label>
-                            <p class="form-control-plaintext">{{ user.first_name|default:"No especificado" }}</p>
-                        </div>
-
-                        <!-- Last Name -->
-                        <div class="col-md-6 mb-3">
-                            <label class="form-label text-muted">
-                                <i class="fas fa-user" aria-hidden="true"></i>
-                                Apellido
-                            </label>
-                            <p class="form-control-plaintext">{{ user.last_name|default:"No especificado" }}</p>
-                        </div>
+    <main id="main-content" role="main" aria-labelledby="profile-title">
+        <div class="row">
+            <!-- Profile Information -->
+            <div class="col-md-8">
+                <section id="profile-info" class="card" aria-labelledby="profile-title">
+                    <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+                        <h1 id="profile-title" class="h3 mb-0">
+                            <i class="fas fa-user" aria-hidden="true"></i>
+                            Mi Perfil
+                        </h1>
+                        {% comment %} <a href="{% url 'usuarios:profile_edit' %}" class="btn btn-light btn-sm">
+                            <i class="fas fa-edit" aria-hidden="true"></i>
+                            Editar
+                        </a> {% endcomment %}
                     </div>
+                    <div class="card-body">
+                        <fieldset>
+                            <legend class="sr-only">Información personal</legend>
+                            <div class="row">
+                                <!-- First Name -->
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label text-muted">
+                                        <i class="fas fa-user" aria-hidden="true"></i>
+                                        Nombre
+                                    </label>
+                                    <p class="form-control-plaintext" aria-describedby="first-name-desc">{{ user.first_name|default:"No especificado" }}</p>
+                                    <div id="first-name-desc" class="sr-only">Nombre de pila del usuario</div>
+                                </div>
 
-                    <!-- Email -->
-                    <div class="mb-3">
-                        <label class="form-label text-muted">
-                            <i class="fas fa-envelope" aria-hidden="true"></i>
-                            Correo Electrónico
-                        </label>
-                        <p class="form-control-plaintext">{{ user.email }}</p>
-                    </div>
+                                <!-- Last Name -->
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label text-muted">
+                                        <i class="fas fa-user" aria-hidden="true"></i>
+                                        Apellido
+                                    </label>
+                                    <p class="form-control-plaintext" aria-describedby="last-name-desc">{{ user.last_name|default:"No especificado" }}</p>
+                                    <div id="last-name-desc" class="sr-only">Apellido del usuario</div>
+                                </div>
+                            </div>
+
+                            <!-- Email -->
+                            <div class="mb-3">
+                                <label class="form-label text-muted">
+                                    <i class="fas fa-envelope" aria-hidden="true"></i>
+                                    Correo Electrónico
+                                </label>
+                                <p class="form-control-plaintext" aria-describedby="email-desc">{{ user.email }}</p>
+                                <div id="email-desc" class="sr-only">Dirección de correo electrónico registrada</div>
+                            </div>
+                        </fieldset>
 
                     <!-- Phone Number -->
                     <div class="mb-3">
@@ -88,17 +103,14 @@
                             <a href="{% url 'usuarios:change_password' %}" class="btn btn-warning">
                                 <i class="fas fa-key" aria-hidden="true"></i>
                                 Cambiar Contraseña
-                            </a>
-                        </div>
-                    </div>                </div>
-            </div>
-        </div>
-
-        <!-- Profile Summary -->
-        <div class="col-md-4">
-            <div class="card">
-                <div class="card-header bg-info text-white">
-                    <h5 class="mb-0">
+                            </a>                        </div>
+                    </div>
+                </div>
+            </div>            <!-- Profile Summary -->
+            <div class="col-md-4">
+                <section id="user-stats" class="card" aria-labelledby="account-summary-title">
+                    <div class="card-header bg-info text-white">
+                    <h5 id="account-summary-title" class="mb-0">
                         <i class="fas fa-info-circle" aria-hidden="true"></i>
                         Resumen de Cuenta
                     </h5>
@@ -149,10 +161,9 @@
                         <a href="{% url 'rooms:room_list' %}" class="btn btn-outline-success btn-sm">
                             <i class="fas fa-plus" aria-hidden="true"></i>
                             Nueva Reserva
-                        </a>
-                    </div>
+                        </a>                    </div>
                 </div>
-            </div>
+            </section>
 
             <!-- Account Security -->
             <div class="card mt-4">
@@ -183,12 +194,11 @@
                         <a href="{% url 'usuarios:change_password' %}" class="btn btn-warning btn-sm">
                             <i class="fas fa-key" aria-hidden="true"></i>
                             Cambiar Contraseña
-                        </a>
-                    </div>
+                        </a>                    </div>
                 </div>
             </div>
         </div>
-    </div>
+    </main>
 </div>
 {% endblock %}
 

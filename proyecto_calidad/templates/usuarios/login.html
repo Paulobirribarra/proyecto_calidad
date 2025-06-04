@@ -1,32 +1,57 @@
 {% extends 'base.html' %}
+{% load form_tags %}
 
 {% block title %}Iniciar Sesión - Salas de Estudio{% endblock %}
 
 {% block content %}
+<!-- Skip Links para Accesibilidad -->
+<div class="skip-links">
+    <a href="#main-content" class="skip-link">Saltar al contenido principal</a>
+    <a href="#login-form" class="skip-link">Saltar al formulario de inicio de sesión</a>
+    <a href="#register-link" class="skip-link">Saltar al enlace de registro</a>
+    <a href="#navigation" class="skip-link">Saltar a navegación</a>
+</div>
+
+<main id="main-content" tabindex="-1" role="main">
 <div class="container">
     <div class="row justify-content-center">
         <div class="col-md-6 col-lg-5">
-            <div class="card mt-5">
+            <div class="card mt-5" id="login-form">
                 <div class="card-header text-center bg-primary text-white">
                     <h2 class="mb-0">
                         <i class="fas fa-sign-in-alt" aria-hidden="true"></i>
                         Iniciar Sesión
                     </h2>
-                </div>
-                <div class="card-body p-4">
-                    <form method="post" novalidate>
+                </div>                <div class="card-body p-4">
+                    <form method="post" 
+                          aria-labelledby="login-heading" 
+                          aria-describedby="login-description"
+                          novalidate>
                         {% csrf_token %}
+                        
+                        <!-- Descripción del formulario para lectores de pantalla -->
+                        <div id="login-description" class="sr-only">
+                            Formulario de inicio de sesión. Ingrese su nombre de usuario y contraseña.
+                            Ambos campos son obligatorios.
+                        </div>
                         
                         <!-- Username field -->
                         <div class="mb-3">
                             <label for="{{ form.username.id_for_label }}" class="form-label">
                                 <i class="fas fa-user" aria-hidden="true"></i>
                                 Nombre de Usuario
-                                <span class="text-danger" aria-label="Campo obligatorio">*</span>
+                                <span class="text-danger" aria-label="obligatorio">*</span>
                             </label>
-                            {{ form.username }}
+                            {{ form.username|add_class:"form-control" }}
+                            <div id="{{ form.username.id_for_label }}-help" class="form-text">
+                                Ingrese el nombre de usuario proporcionado por el sistema
+                            </div>
                             {% if form.username.errors %}
-                                <div class="invalid-feedback d-block">
+                                <div id="{{ form.username.id_for_label }}-error" 
+                                     class="invalid-feedback d-block" 
+                                     role="alert" 
+                                     aria-live="polite">
+                                    <i class="fas fa-exclamation-triangle" aria-hidden="true"></i>
                                     {% for error in form.username.errors %}
                                         {{ error }}
                                     {% endfor %}
@@ -39,11 +64,18 @@
                             <label for="{{ form.password.id_for_label }}" class="form-label">
                                 <i class="fas fa-lock" aria-hidden="true"></i>
                                 Contraseña
-                                <span class="text-danger" aria-label="Campo obligatorio">*</span>
+                                <span class="text-danger" aria-label="obligatorio">*</span>
                             </label>
-                            {{ form.password }}
+                            {{ form.password|add_class:"form-control" }}
+                            <div id="{{ form.password.id_for_label }}-help" class="form-text">
+                                Ingrese su contraseña. No se mostrarán los caracteres por seguridad
+                            </div>
                             {% if form.password.errors %}
-                                <div class="invalid-feedback d-block">
+                                <div id="{{ form.password.id_for_label }}-error" 
+                                     class="invalid-feedback d-block" 
+                                     role="alert" 
+                                     aria-live="polite">
+                                    <i class="fas fa-exclamation-triangle" aria-hidden="true"></i>
                                     {% for error in form.password.errors %}
                                         {{ error }}
                                     {% endfor %}
@@ -76,9 +108,8 @@
                             </div>
                         {% endif %}
                     </form>
-                </div>
-                <div class="card-footer text-center">
-                    <p class="mb-0">
+                </div>                <div class="card-footer text-center">
+                    <p class="mb-0" id="register-link">
                         ¿No tienes una cuenta? 
                         <a href="{% url 'usuarios:register' %}" class="text-decoration-none">
                             Regístrate aquí
@@ -110,10 +141,10 @@
                         Proyecto desarrollado en Django para la asignatura de Aseguramiento de la Calidad.
                     </small>
                 </p>
-            </div>
-        </div>
+            </div>        </div>
     </div>
 </div>
+</main>
 {% endblock %}
 
 {% block extra_js %}

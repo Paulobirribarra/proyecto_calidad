@@ -32,21 +32,146 @@
 {% endblock %}
 
 {% block content %}
-<div class="container-fluid py-4">
+<!-- Skip Links para navegación accesible -->
+<div class="skip-links">
+    <a href="#main-content" class="skip-link">Ir al contenido principal</a>
+    <a href="#filter-form" class="skip-link">Ir al formulario de filtros</a>
+    <a href="#reservations-list" class="skip-link">Ir a la lista de reservas</a>
+    <a href="#footer" class="skip-link">Ir al pie de página</a>
+</div>
+
+<main id="main-content" tabindex="-1">
+<div class="container py-4">
     <div class="row">
         <div class="col-12">
             <div class="d-flex justify-content-between align-items-center mb-4">
-                <h2 class="mb-0">
-                    <i class="fas fa-calendar-check me-2"></i>
+                <h1 class="mb-0">
+                    <i class="fas fa-calendar-check me-2" aria-hidden="true"></i>
                     Mis Reservas
-                </h2>
-                <a href="{% url 'rooms:room_list' %}" class="btn btn-outline-primary">
-                    <i class="fas fa-plus me-2"></i>
+                </h1>
+                <a href="{% url 'rooms:room_list' %}" 
+                   class="btn btn-outline-primary"
+                   aria-describedby="new-reservation-help">
+                    <i class="fas fa-plus me-2" aria-hidden="true"></i>
                     Nueva Reserva
                 </a>
+                <div id="new-reservation-help" class="sr-only">
+                    Ir a la lista de salas para hacer una nueva reserva
+                </div>
             </div>
 
             {% if reservations %}
+                <!-- Formulario de filtros -->
+                <div id="filter-form" class="card mb-4" role="region" aria-labelledby="filter-heading">
+                    <div class="card-header">
+                        <h2 id="filter-heading" class="h5 mb-0">
+                            <i class="fas fa-filter me-2" aria-hidden="true"></i>
+                            Filtrar Reservas
+                        </h2>
+                    </div>
+                    <div class="card-body">
+                        <form method="get" 
+                              class="row g-3" 
+                              role="search"
+                              aria-labelledby="filter-heading"
+                              aria-describedby="filter-description">
+                            
+                            <div id="filter-description" class="sr-only">
+                                Utilice estos filtros para encontrar reservas específicas por estado o fecha
+                            </div>
+                            
+                            <div class="col-md-4">
+                                <label for="status-filter" class="form-label">
+                                    <i class="fas fa-info-circle me-1" aria-hidden="true"></i>
+                                    Estado de la Reserva
+                                </label>
+                                <select id="status-filter" 
+                                        name="status" 
+                                        class="form-select"
+                                        aria-describedby="status-help">
+                                    <option value="">Todos los estados</option>
+                                    <option value="confirmed" {% if request.GET.status == 'confirmed' %}selected{% endif %}>Confirmadas</option>
+                                    <option value="pending" {% if request.GET.status == 'pending' %}selected{% endif %}>Pendientes</option>
+                                    <option value="cancelled" {% if request.GET.status == 'cancelled' %}selected{% endif %}>Canceladas</option>
+                                    <option value="completed" {% if request.GET.status == 'completed' %}selected{% endif %}>Completadas</option>
+                                </select>
+                                <div id="status-help" class="form-text">
+                                    Filtrar por el estado actual de las reservas
+                                </div>
+                            </div>
+                            
+                            <div class="col-md-3">
+                                <label for="date-from" class="form-label">
+                                    <i class="fas fa-calendar-day me-1" aria-hidden="true"></i>
+                                    Desde
+                                </label>
+                                <input type="date" 
+                                       id="date-from" 
+                                       name="date_from" 
+                                       class="form-control"
+                                       value="{{ request.GET.date_from }}"
+                                       aria-describedby="date-from-help">
+                                <div id="date-from-help" class="form-text">
+                                    Fecha de inicio del rango
+                                </div>
+                            </div>
+                            
+                            <div class="col-md-3">
+                                <label for="date-to" class="form-label">
+                                    <i class="fas fa-calendar-day me-1" aria-hidden="true"></i>
+                                    Hasta
+                                </label>
+                                <input type="date" 
+                                       id="date-to" 
+                                       name="date_to" 
+                                       class="form-control"
+                                       value="{{ request.GET.date_to }}"
+                                       aria-describedby="date-to-help">
+                                <div id="date-to-help" class="form-text">
+                                    Fecha de fin del rango
+                                </div>
+                            </div>
+                            
+                            <div class="col-md-2">
+                                <label class="form-label" for="filter-actions">
+                                    <i class="fas fa-cog me-1" aria-hidden="true"></i>
+                                    Acciones
+                                </label>
+                                <div class="d-grid gap-1" id="filter-actions">
+                                    <button type="submit" 
+                                            class="btn btn-primary btn-sm"
+                                            aria-describedby="apply-filter-help">
+                                        <i class="fas fa-search me-1" aria-hidden="true"></i>
+                                        Filtrar
+                                    </button>
+                                    <a href="{% url 'rooms:reservation_list' %}" 
+                                       class="btn btn-outline-secondary btn-sm"
+                                       aria-describedby="clear-filter-help">
+                                        <i class="fas fa-times me-1" aria-hidden="true"></i>
+                                        Limpiar
+                                    </a>
+                                </div>
+                                <div class="sr-only">
+                                    <div id="apply-filter-help">Aplicar filtros seleccionados</div>
+                                    <div id="clear-filter-help">Eliminar todos los filtros</div>
+                                </div>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+
+                <!-- Lista de reservas -->
+                <div id="reservations-list" 
+                     role="region" 
+                     aria-labelledby="reservations-heading"
+                     aria-describedby="reservations-description">
+                    
+                    <h2 id="reservations-heading" class="sr-only">Lista de Reservas</h2>
+                    <div id="reservations-description" class="sr-only">
+                        Lista de {{ reservations|length }} reserva{{ reservations|length|pluralize:"s" }} 
+                        {% if request.GET.status %}filtrada{{ reservations|length|pluralize:"s" }} por estado {{ request.GET.status }}{% endif %}
+                    </div>
+                    
                 <div class="row">
                     {% for reservation in reservations %}
                     <div class="col-md-6 col-lg-4 mb-4">
@@ -238,6 +363,7 @@
         </div>
     </div>
 </div>
+</main>
 {% endblock %}
 
 {% block extra_js %}

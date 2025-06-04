@@ -47,201 +47,209 @@
 {% endblock %}
 
 {% block content %}
-<div class="container-fluid py-4">
-    <div class="row justify-content-center">
-        <div class="col-lg-8">
-            <!-- Breadcrumb -->
-            <nav aria-label="breadcrumb" class="mb-4">
-                <ol class="breadcrumb">
-                    <li class="breadcrumb-item"><a href="{% url 'rooms:room_list' %}">Salas</a></li>
-                    <li class="breadcrumb-item"><a href="{% url 'rooms:reservation_list' %}">Mis Reservas</a></li>
-                    <li class="breadcrumb-item"><a href="{% url 'rooms:reservation_detail' reservation.id %}">Reserva #{{ reservation.id }}</a></li>
-                    <li class="breadcrumb-item active">Calificar</li>
-                </ol>
-            </nav>
+<!-- Skip Links para Accesibilidad -->
+<div class="skip-links">
+    <a href="#main-content" class="skip-link">Saltar al contenido principal</a>
+    <a href="#review-form" class="skip-link">Saltar al formulario de calificación</a>
+    <a href="#existing-reviews" class="skip-link">Saltar a reseñas existentes</a>
+    <a href="#navigation" class="skip-link">Saltar a navegación</a>
+</div>
 
-            <!-- Header Section -->
-            <div class="rating-section text-center">
-                <h2 class="mb-3">
-                    <i class="fas fa-star me-2"></i>
-                    Califica tu experiencia
-                </h2>
-                <h4 class="mb-2">{{ room.name }}</h4>
-                <p class="mb-0 opacity-75">
-                    <i class="fas fa-calendar me-2"></i>
-                    {{ reservation.start_time|date:"l, d \d\e F \d\e Y" }}
-                    <span class="mx-2">•</span>
-                    <i class="fas fa-clock me-2"></i>
-                    {{ reservation.start_time|date:"H:i" }} - {{ reservation.end_time|date:"H:i" }}
-                </p>
+<!-- Main Content -->
+<main id="main-content" tabindex="-1" role="main" aria-labelledby="review-title">
+    <!-- Breadcrumb -->
+    <nav aria-label="Ruta de navegación" class="mb-4">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="{% url 'rooms:room_list' %}">Salas</a></li>
+            <li class="breadcrumb-item"><a href="{% url 'rooms:reservation_list' %}">Mis Reservas</a></li>
+            <li class="breadcrumb-item"><a href="{% url 'rooms:reservation_detail' reservation.id %}">Reserva #{{ reservation.id }}</a></li>
+            <li class="breadcrumb-item active" aria-current="page">Calificar</li>
+        </ol>
+    </nav>
+
+    <!-- Header Section -->
+    <header class="rating-section text-center" role="banner">
+        <h1 id="review-title" class="h2 mb-3">
+            <i class="fas fa-star me-2" aria-hidden="true"></i>
+            Califica tu experiencia
+        </h1>
+        <h2 class="h4 mb-2">{{ room.name }}</h2>
+        <p class="mb-0 opacity-75">
+            <i class="fas fa-calendar me-2" aria-hidden="true"></i>
+            <span aria-label="Fecha de reserva">{{ reservation.start_time|date:"l, d \d\e F \d\e Y" }}</span>
+            <span class="mx-2">•</span>
+            <i class="fas fa-clock me-2" aria-hidden="true"></i>
+            <span aria-label="Horario de reserva">{{ reservation.start_time|date:"H:i" }} - {{ reservation.end_time|date:"H:i" }}</span>
+        </p>
+    </header>
+
+    <!-- Messages -->
+    {% if messages %}
+        {% for message in messages %}
+            <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert" aria-live="polite">
+                {{ message }}
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Cerrar mensaje"></button>
             </div>
+        {% endfor %}
+    {% endif %}
 
-            <!-- Messages -->
-            {% if messages %}
-                {% for message in messages %}
-                    <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
-                        {{ message }}
-                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    <!-- Rating Form -->
+    <section class="card shadow-sm" aria-labelledby="form-title">
+        <div class="card-header">
+            <h3 id="form-title" class="h5 mb-0">
+                <i class="fas fa-clipboard-list me-2" aria-hidden="true"></i>                        Formulario de Calificación
+            </h3>
+        </div>
+        <div class="card-body">
+            <form method="post" id="rating-form" aria-labelledby="form-title" 
+                  aria-describedby="form-instructions" novalidate>
+                {% csrf_token %}
+                
+                <div id="form-instructions" class="sr-only">
+                    Califique su experiencia con la sala utilizando estrellas del 1 al 5, donde 5 es excelente.
+                </div>
+                
+                <!-- Calificación General -->
+                <fieldset class="rating-card" aria-label="Calificación general">
+                    <legend class="h6 text-primary mb-3">
+                        <i class="fas fa-star me-2" aria-hidden="true"></i>
+                        Calificación General
+                    </legend>
+                    <div class="mb-3">
+                        {{ form.rating.label_tag }}
+                        {{ form.rating }}
+                        {% if form.rating.errors %}
+                            <div class="text-danger small mt-1" role="alert" aria-live="polite">{{ form.rating.errors }}</div>
+                        {% endif %}
+                        <div class="form-text" id="rating-help">{{ form.rating.help_text }}</div>
                     </div>
-                {% endfor %}
-            {% endif %}
+                </fieldset>
 
-            <!-- Rating Form -->
-            <div class="card shadow-sm">
-                <div class="card-header">
-                    <h5 class="mb-0">
-                        <i class="fas fa-clipboard-list me-2"></i>
-                        Formulario de Calificación
-                    </h5>
-                </div>
-                <div class="card-body">
-                    <form method="post" id="review-form">
-                        {% csrf_token %}
-                        
-                        <!-- Calificación General -->
-                        <div class="rating-card">
-                            <h6 class="text-primary mb-3">
-                                <i class="fas fa-star me-2"></i>
-                                Calificación General
-                            </h6>
-                            <div class="mb-3">
-                                {{ form.rating.label_tag }}
-                                {{ form.rating }}
-                                {% if form.rating.errors %}
-                                    <div class="text-danger small mt-1">{{ form.rating.errors }}</div>
-                                {% endif %}
-                                <div class="form-text">{{ form.rating.help_text }}</div>
-                            </div>
-                        </div>
-
-                        <!-- Calificaciones Específicas -->
-                        <div class="rating-card">
-                            <h6 class="text-primary mb-3">
-                                <i class="fas fa-list-ul me-2"></i>
-                                Calificaciones Detalladas
-                            </h6>
-                            
-                            <div class="row">
-                                <!-- Limpieza -->
-                                <div class="col-md-4 mb-3">
-                                    <label class="form-label">
-                                        <i class="fas fa-broom me-2"></i>
-                                        {{ form.cleanliness_rating.label }}
-                                    </label>
-                                    {{ form.cleanliness_rating }}
-                                    {% if form.cleanliness_rating.errors %}
-                                        <div class="text-danger small">{{ form.cleanliness_rating.errors }}</div>
-                                    {% endif %}
-                                    <div class="form-text small">{{ form.cleanliness_rating.help_text }}</div>
-                                </div>
-
-                                <!-- Equipamiento -->
-                                <div class="col-md-4 mb-3">
-                                    <label class="form-label">
-                                        <i class="fas fa-tools me-2"></i>
-                                        {{ form.equipment_rating.label }}
-                                    </label>
-                                    {{ form.equipment_rating }}
-                                    {% if form.equipment_rating.errors %}
-                                        <div class="text-danger small">{{ form.equipment_rating.errors }}</div>
-                                    {% endif %}
-                                    <div class="form-text small">{{ form.equipment_rating.help_text }}</div>
-                                </div>
-
-                                <!-- Comodidad -->
-                                <div class="col-md-4 mb-3">
-                                    <label class="form-label">
-                                        <i class="fas fa-couch me-2"></i>
-                                        {{ form.comfort_rating.label }}
-                                    </label>
-                                    {{ form.comfort_rating }}
-                                    {% if form.comfort_rating.errors %}
-                                        <div class="text-danger small">{{ form.comfort_rating.errors }}</div>
-                                    {% endif %}
-                                    <div class="form-text small">{{ form.comfort_rating.help_text }}</div>
-                                </div>
-                            </div>
-                        </div>                        <!-- Comentario -->
-                        <div class="rating-card">
-                            <h6 class="text-primary mb-3">
-                                <i class="fas fa-comment me-2"></i>
-                                Comentario Adicional
-                            </h6>
-                            
-                            <!-- Tipo de Comentario -->
-                            <div class="mb-3">
-                                <label class="form-label">
-                                    <i class="fas fa-tags me-2"></i>
-                                    {{ form.comment_type.label }}
-                                </label>
-                                {{ form.comment_type }}
-                                {% if form.comment_type.errors %}
-                                    <div class="text-danger small mt-1">{{ form.comment_type.errors }}</div>
-                                {% endif %}
-                                <div class="form-text">{{ form.comment_type.help_text }}</div>
-                            </div>
-                            
-                            <!-- Campo de Comentario -->
-                            <div class="mb-3">
-                                {{ form.comment.label_tag }}
-                                {{ form.comment }}
-                                {% if form.comment.errors %}
-                                    <div class="text-danger small mt-1">{{ form.comment.errors }}</div>
-                                {% endif %}
-                                <div class="form-text">{{ form.comment.help_text }}</div>
-                            </div>
-                        </div>
-
-                        <!-- Preview -->
-                        <div class="rating-preview" id="rating-preview" style="display: none;">
-                            <h6 class="text-muted mb-2">Vista Previa de tu Calificación:</h6>
-                            <div id="preview-content"></div>
-                        </div>
-
-                        <!-- Botones -->
-                        <div class="d-flex justify-content-between mt-4">
-                            <a href="{% url 'rooms:reservation_detail' reservation.id %}" class="btn btn-outline-secondary">
-                                <i class="fas fa-arrow-left me-2"></i>
-                                Volver a la Reserva
-                            </a>
-                            <button type="submit" class="btn btn-success btn-lg">
-                                <i class="fas fa-check me-2"></i>
-                                Enviar Calificación
-                            </button>
-                        </div>
-                    </form>
-                </div>
-            </div>
-
-            <!-- Information Card -->
-            <div class="card mt-4">
-                <div class="card-body">
-                    <h6 class="text-muted mb-3">
-                        <i class="fas fa-info-circle me-2"></i>
-                        ¿Por qué es importante tu calificación?
-                    </h6>
+                <!-- Calificaciones Específicas -->
+                <fieldset class="rating-card" aria-label="Calificaciones detalladas">
+                    <legend class="h6 text-primary mb-3">
+                        <i class="fas fa-list-ul me-2" aria-hidden="true"></i>
+                        Calificaciones Detalladas
+                    </legend>
+                    
                     <div class="row">
-                        <div class="col-md-6">
-                            <div class="d-flex mb-2">
-                                <i class="fas fa-users text-primary me-3"></i>
-                                <small>Ayuda a otros usuarios a elegir la mejor sala para sus necesidades</small>
-                            </div>
-                            <div class="d-flex mb-2">
-                                <i class="fas fa-chart-line text-success me-3"></i>
-                                <small>Nos permite mejorar continuamente la calidad de nuestras salas</small>
-                            </div>
+                        <!-- Limpieza -->
+                        <div class="col-md-4 mb-3">
+                            <label class="form-label" for="{{ form.cleanliness_rating.id_for_label }}">
+                                <i class="fas fa-broom me-2" aria-hidden="true"></i>
+                                {{ form.cleanliness_rating.label }}
+                            </label>
+                            {{ form.cleanliness_rating }}
+                            {% if form.cleanliness_rating.errors %}
+                                <div class="text-danger small" role="alert" aria-live="polite">{{ form.cleanliness_rating.errors }}</div>
+                            {% endif %}
+                            <div class="form-text small">{{ form.cleanliness_rating.help_text }}</div>
                         </div>
-                        <div class="col-md-6">
-                            <div class="d-flex mb-2">
-                                <i class="fas fa-thumbs-up text-info me-3"></i>
-                                <small>Reconoce el buen mantenimiento y servicio</small>
-                            </div>
-                            <div class="d-flex">
-                                <i class="fas fa-lightbulb text-warning me-3"></i>
-                                <small>Identifica áreas de oportunidad para mejoras</small>
-                            </div>
-                        </div>
+
+                        <!-- Equipamiento -->
+                        <div class="col-md-4 mb-3">
+                            <label class="form-label" for="{{ form.equipment_rating.id_for_label }}">
+                                <i class="fas fa-tools me-2" aria-hidden="true"></i>
+                                {{ form.equipment_rating.label }}
+                            </label>
+                        {{ form.equipment_rating }}
+                        {% if form.equipment_rating.errors %}
+                            <div class="text-danger small">{{ form.equipment_rating.errors }}</div>
+                        {% endif %}
+                        <div class="form-text small">{{ form.equipment_rating.help_text }}</div>
                     </div>
+
+                    <!-- Comodidad -->
+                    <div class="col-md-4 mb-3">
+                        <label class="form-label">
+                            <i class="fas fa-couch me-2"></i>
+                            {{ form.comfort_rating.label }}
+                        </label>
+                        {{ form.comfort_rating }}
+                        {% if form.comfort_rating.errors %}
+                            <div class="text-danger small">{{ form.comfort_rating.errors }}</div>
+                        {% endif %}
+                        <div class="form-text small">{{ form.comfort_rating.help_text }}</div>
+                    </div>
+                </div>
+            </div>                        <!-- Comentario -->
+            <div class="rating-card">
+                <h6 class="text-primary mb-3">
+                    <i class="fas fa-comment me-2"></i>
+                    Comentario Adicional
+                </h6>
+                
+                <!-- Tipo de Comentario -->
+                <div class="mb-3">
+                    <label class="form-label">
+                        <i class="fas fa-tags me-2"></i>
+                        {{ form.comment_type.label }}
+                    </label>
+                    {{ form.comment_type }}
+                    {% if form.comment_type.errors %}
+                        <div class="text-danger small mt-1">{{ form.comment_type.errors }}</div>
+                    {% endif %}
+                    <div class="form-text">{{ form.comment_type.help_text }}</div>
+                </div>
+                
+                <!-- Campo de Comentario -->
+                <div class="mb-3">
+                    {{ form.comment.label_tag }}
+                    {{ form.comment }}
+                    {% if form.comment.errors %}
+                        <div class="text-danger small mt-1">{{ form.comment.errors }}</div>
+                    {% endif %}
+                    <div class="form-text">{{ form.comment.help_text }}</div>
+                </div>
+            </div>
+
+            <!-- Preview -->
+            <div class="rating-preview" id="rating-preview" style="display: none;">
+                <h6 class="text-muted mb-2">Vista Previa de tu Calificación:</h6>
+                <div id="preview-content"></div>
+            </div>
+
+            <!-- Botones -->
+            <div class="d-flex justify-content-between mt-4">
+                <a href="{% url 'rooms:reservation_detail' reservation.id %}" class="btn btn-outline-secondary">
+                    <i class="fas fa-arrow-left me-2"></i>
+                    Volver a la Reserva
+                </a>
+                <button type="submit" class="btn btn-success btn-lg">
+                    <i class="fas fa-check me-2"></i>
+                    Enviar Calificación
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Information Card -->
+<div class="card mt-4">
+    <div class="card-body">
+        <h6 class="text-muted mb-3">
+            <i class="fas fa-info-circle me-2"></i>
+            ¿Por qué es importante tu calificación?
+        </h6>
+        <div class="row">
+            <div class="col-md-6">
+                <div class="d-flex mb-2">
+                    <i class="fas fa-users text-primary me-3"></i>
+                    <small>Ayuda a otros usuarios a elegir la mejor sala para sus necesidades</small>
+                </div>
+                <div class="d-flex mb-2">
+                    <i class="fas fa-chart-line text-success me-3"></i>
+                    <small>Nos permite mejorar continuamente la calidad de nuestras salas</small>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="d-flex mb-2">
+                    <i class="fas fa-thumbs-up text-info me-3"></i>
+                    <small>Reconoce el buen mantenimiento y servicio</small>
+                </div>
+                <div class="d-flex">
+                    <i class="fas fa-lightbulb text-warning me-3"></i>
+                    <small>Identifica áreas de oportunidad para mejoras</small>
                 </div>
             </div>
         </div>
@@ -340,6 +348,9 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Inicializar vista previa
     updatePreview();
+    });
 });
 </script>
 {% endblock %}
+</main>
+<!-- End Main Content -->

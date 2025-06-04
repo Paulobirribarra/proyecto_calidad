@@ -120,10 +120,11 @@ class CustomUserCreationForm(UserCreationForm):
     )
     
     phone_number = forms.CharField(
-        max_length=15,
-        required=False,        widget=forms.TextInput(attrs={
+        max_length=9,  # Ajustado a 9 dígitos máximo
+        required=False,
+        widget=forms.TextInput(attrs={
             'class': 'form-control',
-            'placeholder': '+56 949 377 625'
+            'placeholder': '949377625 (9 dígitos)'
         })
     )
     
@@ -206,17 +207,17 @@ class CustomUserCreationForm(UserCreationForm):
         return username
     
     def clean_phone_number(self):
-        """Validar formato de teléfono."""
+        """Validar formato de teléfono chileno."""
         phone = self.cleaned_data.get('phone_number')
         
         if phone:
             # Remover espacios y caracteres especiales para validación
-            phone_clean = re.sub(r'[^\d+]', '', phone)
+            phone_clean = re.sub(r'[^\d]', '', phone)
             
-            # Validar formato básico
-            if not re.match(r'^\+?[\d\s\-\(\)]{10,15}$', phone):
+            # Verificar si es un número chileno: debe tener exactamente 9 dígitos y empezar con 9
+            if not (phone_clean.isdigit() and len(phone_clean) == 9 and phone_clean.startswith('9')):
                 raise ValidationError(
-                    "Formato de teléfono inválido. Ejemplo: +52 555 123 4567"
+                    "Formato de teléfono inválido. Ingresa un número chileno: 9XXXXXXXX (exactamente 9 dígitos)"
                 )
         
         return phone
@@ -289,7 +290,7 @@ class ProfileForm(forms.ModelForm):
             }),
             'phone_number': forms.TextInput(attrs={
                 'class': 'form-control',
-                'placeholder': '+569 49377625'
+                'placeholder': '949377625'
             }),
             'email_notifications': forms.CheckboxInput(attrs={
                 'class': 'form-check-input'
@@ -319,14 +320,17 @@ class ProfileForm(forms.ModelForm):
         return email
     
     def clean_phone_number(self):
-        """Validar formato de teléfono."""
+        """Validar formato de teléfono chileno."""
         phone = self.cleaned_data.get('phone_number')
         
         if phone:
-            # Validar formato básico
-            if not re.match(r'^\+?[\d\s\-\(\)]{10,15}$', phone):
+            # Remover espacios y caracteres especiales para validación
+            phone_clean = re.sub(r'[^\d]', '', phone)
+            
+            # Verificar si es un número chileno: debe tener exactamente 9 dígitos y empezar con 9
+            if not (phone_clean.isdigit() and len(phone_clean) == 9 and phone_clean.startswith('9')):
                 raise ValidationError(
-                    "Formato de teléfono inválido. Ejemplo: +569 49377625"
+                    "Formato de teléfono inválido. Ingresa un número chileno: 9XXXXXXXX (exactamente 9 dígitos)"
                 )
         
         return phone
