@@ -234,9 +234,31 @@ class ReservationForm(forms.ModelForm):
         
         if room and start_time and end_time:
             # Verificar horarios de operación de la sala
-            if (start_time.time() < room.opening_time or 
-                end_time.time() > room.closing_time):
+            start_date = start_time.date()
+            end_date = end_time.date()
+            
+            # Verificar que la hora de inicio esté dentro del horario de operación
+            if start_time.time() < room.opening_time or start_time.time() > room.closing_time:
                 raise ValidationError(
+                    f"La sala '{room.name}' opera de "
+                    f"{room.opening_time.strftime('%H:%M')} a "
+                    f"{room.closing_time.strftime('%H:%M')}"
+                )
+            
+            # Verificar que la hora de fin esté dentro del horario de operación
+            # Si la reserva termina el mismo día, verificar que no exceda el horario de cierre
+            if start_date == end_date:
+                if end_time.time() > room.closing_time:
+                    raise ValidationError(
+                        f"La sala '{room.name}' opera de "
+                        f"{room.opening_time.strftime('%H:%M')} a "
+                        f"{room.closing_time.strftime('%H:%M')}"
+                    )
+            else:
+                # Si la reserva cruza medianoche, no debería ser permitida
+                # ya que las salas no operan 24 horas
+                raise ValidationError(
+                    f"Las reservas no pueden extenderse más allá de medianoche. "
                     f"La sala '{room.name}' opera de "
                     f"{room.opening_time.strftime('%H:%M')} a "
                     f"{room.closing_time.strftime('%H:%M')}"

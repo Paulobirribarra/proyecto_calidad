@@ -239,11 +239,22 @@ def room_list(request):
         logger.info(
             f"Lista de salas consultada por {request.user.username if request.user.is_authenticated else 'anónimo'}"
         )
-        
-        # Marcar las salas que el usuario puede reservar para mostrar/ocultar botones en la interfaz
+          # Marcar las salas que el usuario puede reservar y agregar información de disponibilidad
         if request.user.is_authenticated:
             for room in rooms:
                 room.user_can_reserve = room.can_be_reserved_by(request.user)
+                # Agregar información de disponibilidad contextual
+                availability_info = room.get_detailed_availability_status()
+                room.availability_status = availability_info['status']
+                room.availability_message = availability_info['message']
+                room.availability_context = availability_info['context']
+        else:
+            # Para usuarios no autenticados, también agregar info de disponibilidad
+            for room in rooms:
+                availability_info = room.get_detailed_availability_status()
+                room.availability_status = availability_info['status']
+                room.availability_message = availability_info['message']
+                room.availability_context = availability_info['context']
         context = {
             'rooms': rooms,
             'form': form,
@@ -301,9 +312,10 @@ def room_detail(request, room_id):
         # Calcular estadísticas
         total_reviews = room.total_reviews
         avg_rating = room.average_rating
+          # Verificar si el usuario actual puede reservar basado en su rol
+        can_reserve = request.user.is_authenticated and room.can_be_reserved_by(request.user) if request.user.is_authenticated else False
         
-        # Verificar si el usuario actual puede reservar basado en su rol
-        can_reserve = request.user.is_authenticated and room.can_be_reserved_by(request.user) if request.user.is_authenticated else False        # Determinar mensaje informativo sobre permisos
+        # Determinar mensaje informativo sobre permisos
         permission_message = None
         if request.user.is_authenticated and not can_reserve:
             if request.user.is_estudiante():
@@ -320,6 +332,11 @@ def room_detail(request, room_id):
                 permission_message = f"No tienes permisos para reservar esta sala. Esta sala está reservada para roles específicos (roles permitidos: {room.allowed_roles})."
         
         logger.info(f"Sala {room.name} consultada por {request.user.username if request.user.is_authenticated else 'anónimo'}")
+        
+        # Obtener información detallada de disponibilidad
+        availability_info = room.get_detailed_availability_status()
+        daily_occupation = room.get_daily_occupation_percentage()
+        
         context = {
             'room': room,
             'recent_reviews': recent_reviews,
@@ -329,7 +346,12 @@ def room_detail(request, room_id):
             'permission_message': permission_message,
             'upcoming_reservations': upcoming_reservations,
             'current_reservations': current_reservations,
-            'has_current_reservation': current_reservations.exists()
+            'has_current_reservation': current_reservations.exists(),
+            'room_availability_status': availability_info['status'],
+            'availability_message': availability_info['message'],
+            'availability_context': availability_info['context'],
+            'daily_occupation_percentage': round(daily_occupation, 1),
+            'room_is_open_now': room.is_open_now
         }
         
         return render(request, 'rooms/room_detail.html', context)

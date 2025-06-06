@@ -206,42 +206,186 @@ class Room(models.Model):
         
         return not overlapping_reservations.exists()
     
+    def get_detailed_availability_status(self):
+        """
+        Retorna información detallada sobre el estado de disponibilidad.
+        Proporciona contexto temporal más específico que el simple estado binario.
+        """
+        if not self.is_open_now:
+            return {
+                'status': 'closed',
+                'message': 'Sala cerrada por horario',
+                'context': 'closed'
+            }
+        
+        now_utc = timezone.now()
+        
+        # Obtener reservas activas
+        active_reservations = self.reservations.filter(
+            status__in=['confirmed', 'in_progress'],
+            start_time__lte=now_utc,
+            end_time__gt=now_utc
+        )
+        
+        if active_reservations.exists():
+            # Encontrar la reserva que termina más tarde
+            current_reservation = active_reservations.order_by('end_time').last()
+            
+            # Verificar si hay más reservas después hoy
+            next_reservations = self.reservations.filter(
+                status__in=['confirmed', 'in_progress'],
+                start_time__gt=current_reservation.end_time,
+                start_time__date=now_utc.date()
+            ).order_by('start_time')
+            
+            if next_reservations.exists():
+                next_reservation = next_reservations.first()
+                gap_duration = next_reservation.start_time - current_reservation.end_time
+                # Si hay menos de 15 minutos entre reservas, considerarlo como ocupado continuo
+                if gap_duration.total_seconds() < 900:  # 15 minutos
+                    message = f"Ocupada hasta las {next_reservation.end_time.strftime('%H:%M')}"
+                else:
+                    message = f"Ocupada hasta las {current_reservation.end_time.strftime('%H:%M')}, luego disponible"
+            else:
+                message = f"Ocupada hasta las {current_reservation.end_time.strftime('%H:%M')}, luego disponible"
+            
+            return {
+                'status': 'occupied',
+                'message': message,
+                'context': 'partial_occupied',
+                'next_available': current_reservation.end_time,
+                'current_reservation': current_reservation
+            }
+        else:
+            # Verificar próximas reservas hoy
+            today_reservations = self.reservations.filter(
+                status__in=['confirmed', 'in_progress'],
+                start_time__date=now_utc.date(),
+                start_time__gt=now_utc
+            ).order_by('start_time')
+            if today_reservations.exists():
+                next_reservation = today_reservations.first()
+                time_until_next = next_reservation.start_time - now_utc
+                
+                if time_until_next.total_seconds() < 3600:  # Menos de 1 hora
+                    minutes_until = int(time_until_next.total_seconds() / 60)
+                    message = f"Disponible por {minutes_until} minutos (próxima reserva a las {next_reservation.start_time.strftime('%H:%M')})"
+                else:
+                    message = f"Disponible hasta las {next_reservation.start_time.strftime('%H:%M')}"
+                
+                return {
+                    'status': 'available',
+                    'message': message,
+                    'context': 'available_with_upcoming',
+                    'next_occupied': next_reservation.start_time
+                }
+            else:
+                return {
+                    'status': 'available',
+                    'message': 'Disponible por el resto del día',
+                    'context': 'fully_available'
+                }
+    
+    def get_daily_occupation_percentage(self, date=None):
+        """
+        Calcula el porcentaje de ocupación de la sala para un día específico.
+        Útil para mostrar qué tan ocupada está realmente la sala.
+        """
+        if date is None:
+            date = timezone.now().date()
+        
+        # Obtener horarios de apertura para este día
+        opening_hours = self.get_opening_hours(date)
+        if not opening_hours:
+            return 0
+        
+        # Calcular total de horas operativas
+        total_operational_minutes = 0
+        for opening_hour in opening_hours:
+            start_dt = timezone.make_aware(
+                timezone.datetime.combine(date, opening_hour.start_time)
+            )
+            end_dt = timezone.make_aware(
+                timezone.datetime.combine(date, opening_hour.end_time)
+            )
+            total_operational_minutes += (end_dt - start_dt).total_seconds() / 60
+        
+        if total_operational_minutes == 0:
+            # Si no hay horarios específicos, usar horarios generales de la sala
+            start_dt = timezone.make_aware(
+                timezone.datetime.combine(date, self.opening_time)
+            )
+            end_dt = timezone.make_aware(
+                timezone.datetime.combine(date, self.closing_time)
+            )
+            total_operational_minutes = (end_dt - start_dt).total_seconds() / 60
+        
+        if total_operational_minutes == 0:
+            return 0
+        
+        # Calcular minutos ocupados por reservas
+        occupied_minutes = 0
+        day_reservations = self.reservations.filter(
+            status__in=['confirmed', 'in_progress'],
+            start_time__date=date
+        )
+        
+        for reservation in day_reservations:
+            # Calcular intersección con horarios de apertura
+            reservation_start = max(
+                reservation.start_time,
+                timezone.make_aware(timezone.datetime.combine(date, self.opening_time))
+            )
+            reservation_end = min(
+                reservation.end_time,
+                timezone.make_aware(timezone.datetime.combine(date, self.closing_time))
+            )
+            
+            if reservation_start < reservation_end:
+                occupied_minutes += (reservation_end - reservation_start).total_seconds() / 60
+        
+        return min(100, (occupied_minutes / total_operational_minutes) * 100)
+    
+    @property
+    def is_open_now(self):
+        """Verifica si la sala está abierta en este momento."""
+        now = timezone.now()
+        chile_tz = pytz.timezone('America/Santiago')
+        now_chile = now.astimezone(chile_tz)
+        current_time = now_chile.time()
+        
+        return self.opening_time <= current_time <= self.closing_time
+    
+    def get_opening_hours(self, date):
+        """
+        Obtiene los horarios de apertura para una fecha específica.
+        Por ahora retorna None ya que usamos horarios fijos de la sala.
+        """
+        return None
+    
     def can_be_reserved_by(self, user):
         """
         Verifica si la sala puede ser reservada por un usuario específico
-        según su rol.
-        
-        Args:
-            user: El usuario que intenta reservar
-            
-        Returns:
-            bool: True si el usuario puede reservar esta sala
+        basándose en los roles permitidos y el tipo de sala.
         """
-        if not user.is_authenticated:
+        if not self.is_active or not user.is_authenticated:
             return False
         
-        if user.is_staff or user.is_superuser:
+        # Los administradores y superusuarios pueden reservar cualquier sala
+        if user.is_superuser or user.is_staff:
             return True
-            
-        # Si el usuario es admin o profesor, puede reservar cualquier sala
-        if hasattr(user, 'is_admin') and user.is_admin():
-            return True
-            
-        if hasattr(user, 'is_profesor') and user.is_profesor():
-            return True
-        # Verificar si el rol del usuario está en los roles permitidos
-        allowed = self.allowed_roles.split(',')
         
-        if hasattr(user, 'role') and user.role in allowed:
-            # Restricciones específicas para estudiantes
-            if hasattr(user, 'is_estudiante') and user.is_estudiante():
+        # Verificar roles específicos
+        if hasattr(user, 'role'):
+            # Restricciones para estudiantes
+            if user.role == 'estudiante':
                 # Los estudiantes solo pueden reservar salas de estudio y salas individuales
                 if self.room_type in ['sala_estudio', 'sala_individual', 'auditorio']:
                     return True
                 return False
             
             # Restricciones para soporte técnico
-            if hasattr(user, 'role') and user.role == 'soporte':
+            if user.role == 'soporte':
                 # Soporte puede reservar laboratorios, salas de reuniones y auditorios
                 if self.room_type in ['laboratorio', 'sala_reunion', 'auditorio']:
                     return True
@@ -251,23 +395,6 @@ class Room(models.Model):
             return True
         
         return False
-    
-    def clean(self):
-        """Validación personalizada del modelo."""
-        super().clean()
-        
-        if self.opening_time >= self.closing_time:
-            raise ValidationError(
-                "La hora de apertura debe ser anterior a la hora de cierre"
-            )
-        
-        if self.capacity <= 0:
-            raise ValidationError("La capacidad debe ser mayor a 0")
-    
-    class Meta:
-        verbose_name = "Sala"
-        verbose_name_plural = "Salas"
-        ordering = ['name']
 
 
 class Reservation(models.Model):
@@ -275,34 +402,36 @@ class Reservation(models.Model):
     Modelo para representar una reserva de sala.
     
     Attributes:
+        user (User): Usuario que realiza la reserva
         room (Room): Sala reservada
-        user (User): Usuario que hizo la reserva
-        start_time (datetime): Hora de inicio de la reserva
-        end_time (datetime): Hora de fin de la reserva
+        start_time (datetime): Fecha y hora de inicio
+        end_time (datetime): Fecha y hora de fin
         purpose (str): Propósito de la reserva
-        status (str): Estado de la reserva
         attendees_count (int): Número de asistentes
+        notes (str): Notas adicionales
+        status (str): Estado de la reserva
     """
     
-    STATUS_CHOICES = [
+    STATUS_CHOICES = (
         ('pending', 'Pendiente'),
         ('confirmed', 'Confirmada'),
         ('in_progress', 'En Progreso'),
         ('completed', 'Completada'),
         ('cancelled', 'Cancelada'),
-        ('no_show', 'No se presentó'),
-    ]
-    
-    room = models.ForeignKey(
-        Room,
-        on_delete=models.CASCADE,
-        related_name='reservations'
     )
     
     user = models.ForeignKey(
         User,
         on_delete=models.CASCADE,
-        related_name='reservations'
+        related_name='reservations',
+        help_text="Usuario que realiza la reserva"
+    )
+    
+    room = models.ForeignKey(
+        Room,
+        on_delete=models.CASCADE,
+        related_name='reservations',
+        help_text="Sala reservada"
     )
     
     start_time = models.DateTimeField(
@@ -318,12 +447,6 @@ class Reservation(models.Model):
         help_text="Propósito o motivo de la reserva"
     )
     
-    status = models.CharField(
-        max_length=20,
-        choices=STATUS_CHOICES,
-        default='pending'
-    )
-    
     attendees_count = models.PositiveIntegerField(
         default=1,
         validators=[MinValueValidator(1)],
@@ -335,188 +458,124 @@ class Reservation(models.Model):
         help_text="Notas adicionales sobre la reserva"
     )
     
+    status = models.CharField(
+        max_length=20,
+        choices=STATUS_CHOICES,
+        default='confirmed',
+        help_text="Estado actual de la reserva"
+    )
+    
     # Metadatos
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
+    
+    class Meta:
+        verbose_name = "Reserva"
+        verbose_name_plural = "Reservas"
+        ordering = ['-start_time']
     
     def __str__(self):
         """Representación string de la reserva."""
         return f"{self.room.name} - {self.user.username} ({self.start_time.strftime('%d/%m/%Y %H:%M')})"
     
     @property
-    def duration_hours(self):
-        """Calcula la duración en horas de la reserva."""
-        duration = self.end_time - self.start_time
-        return duration.total_seconds() / 3600
+    def duration_hours_rounded(self):
+        """Calcula la duración en horas redondeadas."""
+        if self.start_time and self.end_time:
+            duration = self.end_time - self.start_time
+            return round(duration.total_seconds() / 3600, 1)
+        return None
     
     @property
-    def total_cost(self):
-        """Calcula el costo total de la reserva."""
-        return float(self.room.hourly_rate) * self.duration_hours
+    def is_active(self):
+        """Verifica si la reserva está actualmente en progreso."""
+        now = timezone.now()
+        return (self.status in ['confirmed', 'in_progress'] and 
+                self.start_time <= now <= self.end_time)
     
     def can_be_cancelled(self):
-        """
-        Verifica si la reserva puede ser cancelada.
-        
-        Returns:
-            bool: True si puede ser cancelada
-        """
-        if self.status in ['cancelled', 'completed', 'no_show']:
+        """Verifica si la reserva puede ser cancelada."""
+        if self.status != 'confirmed':
             return False
-        # Permitir cancelación hasta 1 hora antes        return timezone.now() < (self.start_time - timedelta(hours=1))
-    
-    def update_status_if_needed(self):
-        """
-        Actualiza el estado de la reserva basado en la hora actual.
         
-        Si la hora de finalización ya pasó y el estado es 'confirmed',
-        cambia el estado a 'completed'.
-        
-        Returns:
-            bool: True si se actualizó el estado
-        """
         now = timezone.now()
-        
-        if self.status == 'confirmed' and now > self.end_time:
-            self.status = 'completed'
-            self.save(update_fields=['status'])
-            logger.info(f"Reserva #{self.id} actualizada automáticamente a 'completed'")
-            return True
-        
-        return False
-    
-    def can_be_reviewed(self):
-        """
-        Verifica si la reserva puede ser calificada.
-        
-        Returns:
-            bool: True si puede ser calificada
-        """        # Actualizar el estado si es necesario antes de verificar
-        self.update_status_if_needed()
-        
-        return (self.status == 'completed' and
-                not hasattr(self, 'review'))
+        # Permitir cancelación hasta 30 minutos antes del inicio
+        time_before_start = self.start_time - now
+        return time_before_start.total_seconds() > 1800  # 30 minutos
     
     def clean(self):
-        """Validación personalizada del modelo."""
+        """Validaciones del modelo."""
         super().clean()
         
-        # Validar que ambas fechas estén presentes antes de compararlas
         if self.start_time and self.end_time:
-            # Validar que end_time sea posterior a start_time
-            if self.end_time <= self.start_time:
-                raise ValidationError(
-                    "La hora de fin debe ser posterior a la hora de inicio"
-                )
-            # Validar duración mínima y máxima (solo si ambas fechas están presentes)
-            duration = self.end_time - self.start_time
-            if duration < timedelta(minutes=1):# cambiar a 1 para reducir el tiempo minimo de reserva 
-                raise ValidationError(
-                    "La duración mínima de una reserva es 1 minuto"
-                )
+            if self.start_time >= self.end_time:
+                raise ValidationError("La hora de inicio debe ser anterior a la hora de fin.")
             
-            if duration > timedelta(hours=8):
+            # Validar que no exceda la capacidad de la sala
+            if self.attendees_count and self.room and self.attendees_count > self.room.capacity:
                 raise ValidationError(
-                    "La duración máxima de una reserva es 8 horas"
+                    f"El número de asistentes ({self.attendees_count}) excede "
+                    f"la capacidad de la sala ({self.room.capacity})."
                 )
-        # Para demostración, permitir reservas hasta 1 hora en el pasado
-        if self.start_time and not self.pk:
-            # Permitir reservas hasta 1 hora en el pasado para demostración
-            allowed_past = timezone.now() - timedelta(hours=1)
-            if self.start_time < allowed_past:
-                raise ValidationError(
-                    "Para demostraciones, solo se permiten reservas hasta 1 hora en el pasado"
-                )
-        
-        # Validar capacidad
-        if self.room and self.attendees_count > self.room.capacity:
-            raise ValidationError(
-                f"El número de asistentes ({self.attendees_count}) "
-                f"excede la capacidad de la sala ({self.room.capacity})"
-            )
-        
-        # Validar disponibilidad de la sala
-        if self.room and self.start_time and self.end_time:
-            if not self.room.is_available_at(self.start_time, self.end_time):
-                # Excluir la reserva actual si estamos editando
-                exclude_id = self.pk if self.pk else None
-                if exclude_id:
-                    overlapping = self.room.reservations.filter(
-                        status__in=['confirmed', 'in_progress'],
-                        start_time__lt=self.end_time,
-                        end_time__gt=self.start_time
-                    ).exclude(pk=exclude_id)
-                else:
-                    overlapping = self.room.reservations.filter(
-                        status__in=['confirmed', 'in_progress'],
-                        start_time__lt=self.end_time,
-                        end_time__gt=self.start_time
-                    )
-                
-                if overlapping.exists():
-                    raise ValidationError(
-                        "La sala no está disponible en el horario seleccionado"
-                    )
-    
-    class Meta:
-        verbose_name = "Reserva"
-        verbose_name_plural = "Reservas"
-        ordering = ['-start_time']
 
 
 class Review(models.Model):
     """
-    Modelo para representar una reseña/calificación de sala.
+    Modelo para representar una reseña de sala.
     
     Attributes:
         reservation (Reservation): Reserva asociada
-        rating (int): Calificación de 1 a 5
-        comment (str): Comentario opcional
-        cleanliness_rating (int): Calificación de limpieza
-        equipment_rating (int): Calificación del equipamiento
-        comfort_rating (int): Calificación de comodidad
-        comment_type (str): Tipo de comentario (elogio, sugerencia, problema)
+        rating (int): Calificación general (1-5)
+        cleanliness_rating (int): Calificación de limpieza (1-5)
+        equipment_rating (int): Calificación de equipamiento (1-5)
+        comfort_rating (int): Calificación de comodidad (1-5)
+        comment (str): Comentario de la reseña
+        comment_type (str): Tipo de comentario
     """
     
-    COMMENT_TYPE_CHOICES = [
+    COMMENT_TYPE_CHOICES = (
         ('positive', 'Comentario Positivo'),
         ('suggestion', 'Sugerencia de Mejora'),
         ('problem', 'Reporte de Problema'),
         ('neutral', 'Comentario General'),
-    ]
+    )
     
     reservation = models.OneToOneField(
         Reservation,
         on_delete=models.CASCADE,
-        related_name='review'
+        related_name='review',
+        help_text="Reserva asociada a esta reseña"
     )
     
-    # Calificación general
     rating = models.PositiveIntegerField(
         validators=[MinValueValidator(1), MaxValueValidator(5)],
         help_text="Calificación general de 1 a 5 estrellas"
     )
     
-    # Calificaciones específicas
     cleanliness_rating = models.PositiveIntegerField(
         validators=[MinValueValidator(1), MaxValueValidator(5)],
-        help_text="Calificación de limpieza de 1 a 5"
+        null=True,
+        blank=True,
+        help_text="Calificación de limpieza de 1 a 5 estrellas"
     )
     
     equipment_rating = models.PositiveIntegerField(
         validators=[MinValueValidator(1), MaxValueValidator(5)],
-        help_text="Calificación del equipamiento de 1 a 5"
+        null=True,
+        blank=True,
+        help_text="Calificación de equipamiento de 1 a 5 estrellas"
     )
     
     comfort_rating = models.PositiveIntegerField(
         validators=[MinValueValidator(1), MaxValueValidator(5)],
-        help_text="Calificación de comodidad de 1 a 5"
+        null=True,
+        blank=True,
+        help_text="Calificación de comodidad de 1 a 5 estrellas"
     )
     
     comment = models.TextField(
         blank=True,
-        max_length=1000,
-        help_text="Comentario opcional sobre la experiencia"
+        help_text="Comentario adicional sobre la experiencia"
     )
     
     comment_type = models.CharField(
@@ -530,47 +589,26 @@ class Review(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
     
-    def __str__(self):
-        """Representación string de la reseña."""
-        return f"Review {self.reservation.room.name} - {self.rating}★"
-    
-    @property
-    def room(self):
-        """Acceso directo a la sala."""
-        return self.reservation.room
-    
-    @property
-    def user(self):
-        """Acceso directo al usuario."""
-        return self.reservation.user
-    
-    @property
-    def average_specific_rating(self):
-        """Calcula el promedio de las calificaciones específicas."""
-        return round(
-            (self.cleanliness_rating + self.equipment_rating + self.comfort_rating) / 3,
-            1
-        )
-    
-    def clean(self):
-        """Validación personalizada del modelo."""
-        super().clean()
-        
-        # Solo validar si ya tenemos una reserva asignada
-        if self.reservation_id:
-            # Validar que la reserva esté completada
-            if self.reservation.status != 'completed':
-                raise ValidationError(
-                    "Solo se pueden calificar reservas completadas"
-                )
-            
-            # Log de nueva reseña
-            logger.info(
-                f"Nueva reseña creada para {self.reservation.room.name} "
-                f"por {self.reservation.user.username} - Rating: {self.rating}"
-            )
-    
     class Meta:
         verbose_name = "Reseña"
         verbose_name_plural = "Reseñas"
         ordering = ['-created_at']
+    
+    def __str__(self):
+        """Representación string de la reseña."""
+        return f"Reseña de {self.reservation.room.name} por {self.reservation.user.username} ({self.rating}★)"
+    
+    def clean(self):
+        """Validaciones del modelo."""
+        super().clean()
+        
+        # Validar que la reserva esté completada
+        if self.reservation and self.reservation.status != 'completed':
+            raise ValidationError("Solo se pueden crear reseñas para reservas completadas.")
+        
+        # Validar rangos de calificaciones
+        rating_fields = ['rating', 'cleanliness_rating', 'equipment_rating', 'comfort_rating']
+        for field_name in rating_fields:
+            value = getattr(self, field_name, None)
+            if value is not None and (value < 1 or value > 5):
+                raise ValidationError(f"La calificación {field_name} debe estar entre 1 y 5.")

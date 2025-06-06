@@ -43,21 +43,39 @@
                                 <i class="fas fa-map-marker-alt" aria-hidden="true"></i>
                                 <span aria-label="Ubicación">{{ room.location }}</span>
                             </p>
-                        </div>
-                        <div class="text-end">
-                            {% if room.is_available_now %}
+                        </div>                        <div class="text-end">
+                            {% if room_availability_status == 'available' %}
                                 <span class="badge bg-success fs-6" 
                                       role="status" 
-                                      aria-label="Estado: Sala disponible">
-                                    <i class="fas fa-circle" aria-hidden="true"></i>
-                                    Disponible
+                                      aria-label="Estado: {{ availability_message }}"
+                                      title="{{ availability_message }}">
+                                    <i class="fas fa-check-circle me-1" aria-hidden="true"></i>
+                                    {% if availability_context == 'available_with_upcoming' %}
+                                        Disponible*
+                                    {% else %}
+                                        Disponible
+                                    {% endif %}
+                                </span>
+                            {% elif room_availability_status == 'occupied' %}
+                                <span class="badge bg-warning text-dark fs-6" 
+                                      role="status" 
+                                      aria-label="Estado: {{ availability_message }}"
+                                      title="{{ availability_message }}"
+                                      style="max-width: 200px; white-space: normal; text-align: center;">
+                                    <i class="fas fa-clock me-1" aria-hidden="true"></i>
+                                    {% if availability_context == 'partial_occupied' %}
+                                        {{ availability_message|truncatechars:30 }}
+                                    {% else %}
+                                        Ocupada
+                                    {% endif %}
                                 </span>
                             {% else %}
-                                <span class="badge bg-warning fs-6" 
+                                <span class="badge bg-secondary fs-6" 
                                       role="status" 
-                                      aria-label="Estado: Sala ocupada">
-                                    <i class="fas fa-circle" aria-hidden="true"></i>
-                                    Ocupada
+                                      aria-label="Estado: {{ availability_message }}"
+                                      title="{{ availability_message }}">
+                                    <i class="fas fa-door-closed me-1" aria-hidden="true"></i>
+                                    Cerrada
                                 </span>
                             {% endif %}
                         </div>
@@ -85,22 +103,34 @@
                     <div class="mb-4" role="region" aria-labelledby="description-heading">
                         <h5 id="description-heading">Descripción</h5>
                         <p class="text-muted">{{ room.description }}</p>
-                    </div>
-
-                    <!-- Availability Status -->
+                    </div>                    <!-- Availability Status -->
                     <div class="mb-4" role="region" aria-labelledby="availability-heading">
                         <h5 id="availability-heading">Estado de Disponibilidad</h5>
                         
-                        {% if has_current_reservation %}
+                        {% if room_availability_status == 'closed' %}
+                            <div class="alert alert-secondary d-flex align-items-center" 
+                                 role="alert" 
+                                 aria-live="polite"
+                                 aria-labelledby="closed-status">
+                                <i class="fas fa-clock me-2" aria-hidden="true"></i>
+                                <div>
+                                    <strong id="closed-status">{{ availability_message }}</strong><br>
+                                    <small class="text-muted" aria-label="Horario de funcionamiento">Horario de operación: {{ room.opening_time|time:"H:i" }} - {{ room.closing_time|time:"H:i" }}</small>
+                                </div>
+                            </div>
+                        {% elif room_availability_status == 'occupied' %}
                             <div class="alert alert-warning d-flex align-items-center" 
                                  role="alert" 
                                  aria-live="polite"
                                  aria-labelledby="occupied-status">
                                 <i class="fas fa-exclamation-triangle me-2" aria-hidden="true"></i>
                                 <div>
-                                    <strong id="occupied-status">Sala Ocupada Actualmente</strong><br>
+                                    <strong id="occupied-status">{{ availability_message }}</strong><br>
+                                    {% if daily_occupation_percentage %}
+                                        <small class="text-muted">Ocupación diaria: {{ daily_occupation_percentage }}%</small><br>
+                                    {% endif %}
                                     {% for reservation in current_reservations %}
-                                        <span aria-label="Reserva activa">Reservada de {{ reservation.start_time|date:"H:i" }} a {{ reservation.end_time|date:"H:i" }} ({{ reservation.start_time|date:"d/m/Y" }})</span>
+                                        <small class="text-muted" aria-label="Reserva activa">Reservada de {{ reservation.start_time|date:"H:i" }} a {{ reservation.end_time|date:"H:i" }} ({{ reservation.start_time|date:"d/m/Y" }})</small>
                                         {% if not forloop.last %}<br>{% endif %}
                                     {% endfor %}
                                 </div>
@@ -112,7 +142,10 @@
                                  aria-labelledby="available-status">
                                 <i class="fas fa-check-circle me-2" aria-hidden="true"></i>
                                 <div>
-                                    <strong id="available-status">Sala Disponible Ahora</strong><br>
+                                    <strong id="available-status">{{ availability_message }}</strong><br>
+                                    {% if daily_occupation_percentage %}
+                                        <small class="text-muted">Ocupación diaria: {{ daily_occupation_percentage }}%</small><br>
+                                    {% endif %}
                                     <small class="text-muted" aria-label="Horario de funcionamiento">Horario de operación: {{ room.opening_time|time:"H:i" }} - {{ room.closing_time|time:"H:i" }}</small>
                                 </div>
                             </div>

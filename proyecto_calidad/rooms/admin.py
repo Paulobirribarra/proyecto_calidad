@@ -137,15 +137,14 @@ class ReservationAdmin(admin.ModelAdmin):
     )
     
     readonly_fields = ('created_at', 'updated_at')
-    
     def duration_display(self, obj):
         """Mostrar duración de la reserva."""
         try:
-            hours = obj.duration_hours
+            hours = obj.duration_hours_rounded
             if hours is None:
                 return "N/A"
             if hours >= 1:
-                return "{:.1f} horas".format(hours)
+                return "{} horas".format(hours)
             else:
                 minutes = int(hours * 60)
                 return "{} min".format(minutes)

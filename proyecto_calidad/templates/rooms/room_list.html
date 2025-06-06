@@ -424,20 +424,55 @@
                                 {% endif %}
                             </div>
                         </div>
-                    </div>
-                    
-                    <!-- Availability Indicator -->
+                    </div>                    <!-- Availability Indicator -->
                     <div class="card-footer bg-transparent">
-                        {% if room.is_available_now %}
-                            <small class="text-success">
-                                <i class="fas fa-circle" aria-hidden="true"></i>
-                                Disponible ahora
+                        {% if room.availability_status == 'available' %}
+                            {% if room.availability_context == 'available_with_upcoming' %}
+                                <small class="text-warning">
+                                    <i class="fas fa-clock" aria-hidden="true"></i>
+                                    {{ room.availability_message|truncatechars:35 }}
+                                </small>
+                            {% else %}
+                                <small class="text-success">
+                                    <i class="fas fa-check-circle" aria-hidden="true"></i>
+                                    Disponible ahora
+                                </small>
+                            {% endif %}
+                        {% elif room.availability_status == 'closed' %}
+                            <small class="text-secondary">
+                                <i class="fas fa-door-closed" aria-hidden="true"></i>
+                                Cerrada por horario
                             </small>
+                        {% elif room.availability_status == 'occupied' %}
+                            {% if room.availability_context == 'partial_occupied' %}
+                                <small class="text-warning">
+                                    <i class="fas fa-clock" aria-hidden="true"></i>
+                                    {{ room.availability_message|truncatechars:35 }}
+                                </small>
+                            {% else %}
+                                <small class="text-danger">
+                                    <i class="fas fa-exclamation-triangle" aria-hidden="true"></i>
+                                    Ocupada actualmente
+                                </small>
+                            {% endif %}
                         {% else %}
-                            <small class="text-warning">
-                                <i class="fas fa-circle" aria-hidden="true"></i>
-                                No disponible en este momento
-                            </small>
+                            <!-- Fallback para compatibilidad -->
+                            {% if room.is_available_now %}
+                                <small class="text-success">
+                                    <i class="fas fa-check-circle" aria-hidden="true"></i>
+                                    Disponible ahora
+                                </small>
+                            {% elif not room.is_open_now %}
+                                <small class="text-secondary">
+                                    <i class="fas fa-door-closed" aria-hidden="true"></i>
+                                    Cerrada por horario
+                                </small>
+                            {% else %}
+                                <small class="text-danger">
+                                    <i class="fas fa-clock" aria-hidden="true"></i>
+                                    Ocupada actualmente
+                                </small>
+                            {% endif %}
                         {% endif %}
                     </div>
                 </div>            </div>

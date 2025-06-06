@@ -210,12 +210,39 @@
                                         <i class="fas fa-map-marker-alt me-2"></i>
                                         {{ reservation.room.location }}
                                     </p>
-                                </div>
-
-                                {% if reservation.purpose %}
+                                </div>                                {% if reservation.purpose %}
                                 <div class="mb-3">
-                                    <h6 class="text-muted mb-1">Propósito:</h6>
-                                    <p class="small text-muted">{{ reservation.purpose|truncatewords:10 }}</p>
+                                    <div class="d-flex align-items-center mb-1">
+                                        <i class="fas fa-bullseye text-primary me-2" aria-hidden="true"></i>
+                                        <h6 class="text-primary mb-0 small fw-bold">Propósito de la Reserva:</h6>
+                                    </div>
+                                    <div class="alert alert-primary py-2 px-3 mb-0" 
+                                         style="background: linear-gradient(135deg, #d1ecf1 0%, #bee5eb 100%); 
+                                                border: 2px solid #17a2b8; 
+                                                border-radius: 8px; 
+                                                font-size: 0.85rem;
+                                                box-shadow: 0 2px 4px rgba(23, 162, 184, 0.1);">
+                                        <i class="fas fa-info-circle me-1 text-primary" aria-hidden="true"></i>
+                                        <strong class="text-primary">{{ reservation.purpose|truncatewords:10 }}</strong>
+                                    </div>
+                                </div>
+                                {% endif %}
+
+                                {% if reservation.notes %}
+                                <div class="mb-3">
+                                    <div class="d-flex align-items-center mb-1">
+                                        <i class="fas fa-sticky-note text-success me-2" aria-hidden="true"></i>
+                                        <h6 class="text-success mb-0 small fw-bold">Notas Adicionales:</h6>
+                                    </div>
+                                    <div class="alert alert-success py-2 px-3 mb-0" 
+                                         style="background: linear-gradient(135deg, #d4edda 0%, #c3e6cb 100%); 
+                                                border: 2px solid #28a745; 
+                                                border-radius: 8px; 
+                                                font-size: 0.85rem;
+                                                box-shadow: 0 2px 4px rgba(40, 167, 69, 0.1);">
+                                        <i class="fas fa-exclamation-circle me-1 text-success" aria-hidden="true"></i>
+                                        <strong class="text-success">{{ reservation.notes|truncatewords:10 }}</strong>
+                                    </div>
                                 </div>
                                 {% endif %}
 

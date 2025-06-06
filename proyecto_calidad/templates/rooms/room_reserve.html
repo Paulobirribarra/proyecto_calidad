@@ -79,15 +79,30 @@
                         Realizar Reserva
                     </h5>
                 </div>
-                <div class="card-body">
-                    {% if messages %}
+                <div class="card-body">                    {% if messages %}
                         {% for message in messages %}
                             <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
                                 {{ message }}
                                 <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
                             </div>
                         {% endfor %}
-                    {% endif %}                    <form method="post" id="reservation-form" 
+                    {% endif %}
+
+                    <!-- Errores generales del formulario -->
+                    {% if form.non_field_errors %}
+                        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                            <i class="fas fa-exclamation-triangle" aria-hidden="true"></i>
+                            <strong>Error en la reserva:</strong>
+                            <ul class="mb-0 mt-2">
+                                {% for error in form.non_field_errors %}
+                                    <li>{{ error }}</li>
+                                {% endfor %}
+                            </ul>
+                            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                        </div>
+                    {% endif %}
+
+                    <form method="post" id="reservation-form"
                           aria-labelledby="form-heading" 
                           aria-describedby="form-description" 
                           novalidate>
@@ -523,8 +538,7 @@ document.addEventListener('DOMContentLoaded', function() {
             const startTime = new Date(startTimeField.value);
             const endTime = new Date(endTimeField.value);
 
-            if (startTime && endTime && endTime > startTime) {
-                const duration = (endTime - startTime) / (1000 * 60 * 60); // hours
+            if (startTime && endTime && endTime > startTime) {                const duration = (endTime - startTime) / (1000 * 60 * 60); // hours
                 const cost = duration * hourlyRate;
 
                 const durationText = duration.toFixed(1) + ' horas';
