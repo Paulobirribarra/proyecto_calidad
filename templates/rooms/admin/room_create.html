@@ -32,13 +32,13 @@
                         Desde aquí puedes crear nuevas salas para el sistema.
                     </p>
                     
-                    <div class="mb-3">
-                        <strong>Características importantes:</strong>
+                    <div class="mb-3">                        <strong>Características importantes:</strong>
                         <ul class="mt-2 small">
                             <li>El nombre de la sala debe ser único</li>
                             <li>La capacidad máxima permitida es 100 personas</li>
                             <li>Los horarios deben estar entre 6:00 AM y 11:00 PM</li>
                             <li>Tarifa de $0.00 significa sala gratuita</li>
+                            <li><strong>Tipo de sala y roles permitidos son obligatorios</strong></li>
                         </ul>
                     </div>
                     
@@ -177,9 +177,7 @@
                                 {% if form.closing_time.errors %}
                                     <div class="text-danger small">{{ form.closing_time.errors }}</div>
                                 {% endif %}
-                            </div>
-
-                            <!-- Equipamiento -->
+                            </div>                            <!-- Equipamiento -->
                             <div class="col-12">
                                 <label for="{{ form.equipment.id_for_label }}" class="form-label">
                                     <i class="fas fa-tools" aria-hidden="true"></i>
@@ -190,6 +188,34 @@
                                     <div class="text-danger small">{{ form.equipment.errors }}</div>
                                 {% endif %}
                                 <div class="form-text">Lista el equipamiento disponible separado por comas</div>
+                            </div>
+
+                            <!-- Tipo de Sala -->
+                            <div class="col-md-6">
+                                <label for="{{ form.room_type.id_for_label }}" class="form-label">
+                                    <i class="fas fa-building" aria-hidden="true"></i>
+                                    Tipo de Sala *
+                                </label>
+                                {{ form.room_type }}
+                                {% if form.room_type.errors %}
+                                    <div class="text-danger small">{{ form.room_type.errors }}</div>
+                                {% endif %}
+                                <div class="form-text">Categoría o tipo de sala para mejor organización</div>
+                            </div>
+
+                            <!-- Roles Permitidos -->
+                            <div class="col-md-6">
+                                <label for="{{ form.allowed_roles.id_for_label }}" class="form-label">
+                                    <i class="fas fa-users-cog" aria-hidden="true"></i>
+                                    Roles Permitidos *
+                                </label>
+                                <div class="border rounded p-3 bg-light">
+                                    {{ form.allowed_roles }}
+                                </div>
+                                {% if form.allowed_roles.errors %}
+                                    <div class="text-danger small">{{ form.allowed_roles.errors }}</div>
+                                {% endif %}
+                                <div class="form-text">Selecciona los tipos de usuario que pueden reservar esta sala</div>
                             </div>
                         </div>
 
@@ -234,6 +260,32 @@
 {% endblock %}
 
 {% block extra_js %}
+<style>
+/* Estilos para los checkboxes de roles */
+.form-check {
+    margin-bottom: 0.5rem;
+}
+
+.form-check-input {
+    margin-top: 0.25rem;
+}
+
+.form-check-label {
+    font-weight: 500;
+    color: #495057;
+}
+
+.form-check-input:checked {
+    background-color: #198754;
+    border-color: #198754;
+}
+
+.form-check-input:focus {
+    border-color: #86b7fe;
+    box-shadow: 0 0 0 0.25rem rgba(25, 135, 84, 0.25);
+}
+</style>
+
 <script>
 document.addEventListener('DOMContentLoaded', function() {
     const form = document.getElementById('room-form');
@@ -243,10 +295,22 @@ document.addEventListener('DOMContentLoaded', function() {
     // Agregar clases Bootstrap a los campos del formulario
     const formFields = form.querySelectorAll('input, textarea, select');
     formFields.forEach(field => {
-        field.classList.add('form-control');
+        if (!field.type || field.type !== 'checkbox') {
+            field.classList.add('form-control');
+        }
     });
 
-    // Función para actualizar la vista previa
+    // Estilizar checkboxes específicamente
+    const checkboxes = form.querySelectorAll('input[type="checkbox"]');
+    checkboxes.forEach(checkbox => {
+        checkbox.classList.add('form-check-input');
+        const label = checkbox.nextElementSibling;
+        if (label) {
+            label.classList.add('form-check-label');
+        }
+        const wrapper = checkbox.parentElement;
+        wrapper.classList.add('form-check');
+    });    // Función para actualizar la vista previa
     function updatePreview() {
         const name = form.querySelector('[name="name"]').value;
         const location = form.querySelector('[name="location"]').value;
@@ -256,6 +320,8 @@ document.addEventListener('DOMContentLoaded', function() {
         const equipment = form.querySelector('[name="equipment"]').value;
         const openingTime = form.querySelector('[name="opening_time"]').value;
         const closingTime = form.querySelector('[name="closing_time"]').value;
+        const roomType = form.querySelector('[name="room_type"]');
+        const selectedRoles = form.querySelectorAll('[name="allowed_roles"]:checked');
         
         // Verificar si hay información suficiente para mostrar vista previa
         if (name || location || capacity) {
@@ -281,6 +347,25 @@ document.addEventListener('DOMContentLoaded', function() {
                 html += `<div class="col-md-4 mb-2">
                     <strong><i class="fas fa-users me-1"></i> Capacidad:</strong><br>
                     <span class="badge bg-primary">${capacity} personas</span>
+                </div>`;
+            }
+            
+            if (roomType && roomType.value) {
+                const selectedOption = roomType.options[roomType.selectedIndex];
+                html += `<div class="col-md-4 mb-2">
+                    <strong><i class="fas fa-building me-1"></i> Tipo:</strong><br>
+                    <span class="badge bg-info">${selectedOption.text}</span>
+                </div>`;
+            }
+            
+            if (selectedRoles.length > 0) {
+                const roleLabels = Array.from(selectedRoles).map(checkbox => {
+                    const label = checkbox.nextElementSibling;
+                    return label ? label.textContent.trim() : checkbox.value;
+                });
+                html += `<div class="col-md-4 mb-2">
+                    <strong><i class="fas fa-users-cog me-1"></i> Roles:</strong><br>
+                    <span class="badge bg-success">${roleLabels.join(', ')}</span>
                 </div>`;
             }
             
@@ -332,11 +417,12 @@ document.addEventListener('DOMContentLoaded', function() {
     });
 
     // Validación del formulario antes del envío
-    form.addEventListener('submit', function(e) {
-        const name = form.querySelector('[name="name"]').value.trim();
+    form.addEventListener('submit', function(e) {        const name = form.querySelector('[name="name"]').value.trim();
         const capacity = form.querySelector('[name="capacity"]').value;
         const openingTime = form.querySelector('[name="opening_time"]').value;
         const closingTime = form.querySelector('[name="closing_time"]').value;
+        const roomType = form.querySelector('[name="room_type"]').value;
+        const selectedRoles = form.querySelectorAll('[name="allowed_roles"]:checked');
         
         if (!name) {
             alert('Por favor, ingresa un nombre para la sala.');
@@ -346,6 +432,18 @@ document.addEventListener('DOMContentLoaded', function() {
         
         if (!capacity || capacity < 1 || capacity > 100) {
             alert('La capacidad debe estar entre 1 y 100 personas.');
+            e.preventDefault();
+            return;
+        }
+        
+        if (!roomType) {
+            alert('Por favor, selecciona el tipo de sala.');
+            e.preventDefault();
+            return;
+        }
+        
+        if (selectedRoles.length === 0) {
+            alert('Debe seleccionar al menos un rol permitido para la sala.');
             e.preventDefault();
             return;
         }

@@ -221,17 +221,24 @@
                                     </div>
                                     {% endif %}
                                 </div>
-                            </div>
-
-                            <!-- Notas adicionales -->
+                            </div>                            <!-- Notas adicionales -->
                             <div class="col-12">
                                 <label for="{{ form.notes.id_for_label }}" class="form-label">
                                     <i class="fas fa-sticky-note" aria-hidden="true"></i>
                                     Notas Adicionales
                                 </label>
-                                {{ form.notes }}
+                                {{ form.notes|add_class:"form-control" }}
+                                <div id="{{ form.notes.id_for_label }}-help" class="form-text">
+                                    Información adicional sobre su reserva (opcional)
+                                </div>
                                 {% if form.notes.errors %}
-                                    <div class="text-danger small">{{ form.notes.errors }}</div>
+                                    <div id="{{ form.notes.id_for_label }}-error" 
+                                         class="invalid-feedback d-block" 
+                                         role="alert" 
+                                         aria-live="polite">
+                                        <i class="fas fa-exclamation-triangle" aria-hidden="true"></i>
+                                        {{ form.notes.errors.0 }}
+                                    </div>
                                 {% endif %}
                             </div>
                         </div>

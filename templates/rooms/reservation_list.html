@@ -339,33 +339,31 @@
                     </div>
                     {% endif %}
                     {% endfor %}
-                </div>
-
-                <!-- Paginación -->
-                {% if is_paginated %}
+                </div>                <!-- Paginación -->
+                {% if reservations.has_other_pages %}
                 <nav aria-label="Navegación de reservas">
                     <ul class="pagination justify-content-center">
-                        {% if page_obj.has_previous %}
+                        {% if reservations.has_previous %}
                             <li class="page-item">
-                                <a class="page-link" href="?page=1">&laquo; Primera</a>
+                                <a class="page-link" href="?page=1{% if current_status %}&status={{ current_status }}{% endif %}{% if date_from %}&date_from={{ date_from }}{% endif %}{% if date_to %}&date_to={{ date_to }}{% endif %}">&laquo; Primera</a>
                             </li>
                             <li class="page-item">
-                                <a class="page-link" href="?page={{ page_obj.previous_page_number }}">Anterior</a>
+                                <a class="page-link" href="?page={{ reservations.previous_page_number }}{% if current_status %}&status={{ current_status }}{% endif %}{% if date_from %}&date_from={{ date_from }}{% endif %}{% if date_to %}&date_to={{ date_to }}{% endif %}">Anterior</a>
                             </li>
                         {% endif %}
 
                         <li class="page-item active">
                             <span class="page-link">
-                                Página {{ page_obj.number }} de {{ page_obj.paginator.num_pages }}
+                                Página {{ reservations.number }} de {{ reservations.paginator.num_pages }}
                             </span>
                         </li>
 
-                        {% if page_obj.has_next %}
+                        {% if reservations.has_next %}
                             <li class="page-item">
-                                <a class="page-link" href="?page={{ page_obj.next_page_number }}">Siguiente</a>
+                                <a class="page-link" href="?page={{ reservations.next_page_number }}{% if current_status %}&status={{ current_status }}{% endif %}{% if date_from %}&date_from={{ date_from }}{% endif %}{% if date_to %}&date_to={{ date_to }}{% endif %}">Siguiente</a>
                             </li>
                             <li class="page-item">
-                                <a class="page-link" href="?page={{ page_obj.paginator.num_pages }}">Última &raquo;</a>
+                                <a class="page-link" href="?page={{ reservations.paginator.num_pages }}{% if current_status %}&status={{ current_status }}{% endif %}{% if date_from %}&date_from={{ date_from }}{% endif %}{% if date_to %}&date_to={{ date_to }}{% endif %}">Última &raquo;</a>
                             </li>
                         {% endif %}
                     </ul>

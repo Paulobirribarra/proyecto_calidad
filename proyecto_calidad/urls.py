@@ -83,6 +83,13 @@ urlpatterns = [
 
 # Configuración para archivos estáticos en desarrollo
 if settings.DEBUG:
+    # Servir archivos estáticos usando staticfiles
+    from django.contrib.staticfiles.urls import staticfiles_urlpatterns
+    urlpatterns += staticfiles_urlpatterns()
+    
+    # También servir archivos estáticos desde STATIC_ROOT para admin
     urlpatterns += static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)
+    
+    # Servir archivos de media si están configurados
     if hasattr(settings, 'MEDIA_URL'):
         urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

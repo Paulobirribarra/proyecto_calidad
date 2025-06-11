@@ -14,6 +14,46 @@ from datetime import datetime, timedelta
 from .models import Room, Reservation, Review
 
 
+class MultipleRoleWidget(forms.CheckboxSelectMultiple):
+    """Widget personalizado para seleccionar múltiples roles."""
+    
+    def __init__(self, attrs=None):
+        # Definir opciones de roles
+        choices = [
+            ('admin', 'Administrador'),
+            ('profesor', 'Profesor'),
+            ('estudiante', 'Estudiante'),
+            ('soporte', 'Soporte Técnico'),
+        ]
+        super().__init__(attrs, choices)
+
+
+class RoleField(forms.MultipleChoiceField):
+    """Campo personalizado para manejar roles múltiples."""
+    
+    def __init__(self, *args, **kwargs):
+        # Definir opciones de roles
+        choices = [
+            ('admin', 'Administrador'),
+            ('profesor', 'Profesor'),
+            ('estudiante', 'Estudiante'),
+            ('soporte', 'Soporte Técnico'),
+        ]
+        kwargs['choices'] = choices
+        kwargs['widget'] = MultipleRoleWidget()
+        kwargs['required'] = True
+        super().__init__(*args, **kwargs)
+    
+    def clean(self, value):
+        """Limpiar y validar los roles seleccionados."""
+        if not value:
+            raise ValidationError("Debe seleccionar al menos un rol permitido.")
+        
+        # Convertir lista a string separado por comas
+        cleaned_value = super().clean(value)
+        return ','.join(cleaned_value)
+
+
 class RoomForm(forms.ModelForm):
     """
     Formulario para crear y editar salas.
@@ -22,11 +62,18 @@ class RoomForm(forms.ModelForm):
     la integridad de los datos de la sala.
     """
     
+    # Campo personalizado para roles permitidos
+    allowed_roles = RoleField(
+        label="Roles Permitidos *",
+        help_text="Selecciona los tipos de usuario que pueden reservar esta sala"
+    )
+    
     class Meta:
         model = Room
         fields = [
             'name', 'description', 'capacity', 'equipment',
-            'location', 'hourly_rate', 'opening_time', 'closing_time'
+            'location', 'hourly_rate', 'opening_time', 'closing_time',
+            'room_type', 'allowed_roles'
         ]
         widgets = {
             'description': forms.Textarea(attrs={
@@ -42,8 +89,19 @@ class RoomForm(forms.ModelForm):
             'hourly_rate': forms.NumberInput(attrs={
                 'step': '0.01',
                 'min': '0'
+            }),
+            'room_type': forms.Select(attrs={
+                'class': 'form-control'
             })
         }
+    
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        
+        # Si estamos editando una sala existente, cargar los roles actuales
+        if self.instance and self.instance.pk and self.instance.allowed_roles:
+            current_roles = [role.strip() for role in self.instance.allowed_roles.split(',')]
+            self.initial['allowed_roles'] = current_roles
     
     def clean_name(self):
         """Validar nombre único de sala."""
@@ -65,7 +123,6 @@ class RoomForm(forms.ModelForm):
     def clean_capacity(self):
         """Validar capacidad de la sala."""
         capacity = self.cleaned_data.get('capacity')
-        
         if capacity is not None:
             if capacity < 1:
                 raise ValidationError("La capacidad debe ser al menos 1 persona")
@@ -74,6 +131,35 @@ class RoomForm(forms.ModelForm):
         
         return capacity
     
+    def clean_allowed_roles(self):
+        """Validar roles permitidos."""
+        allowed_roles = self.cleaned_data.get('allowed_roles')
+        
+        if allowed_roles:
+            # Si ya es una cadena (viene del campo personalizado), está validada
+            if isinstance(allowed_roles, str):
+                return allowed_roles
+            
+            # Si es una lista, procesarla
+            if isinstance(allowed_roles, list):
+                # Roles válidos en el sistema
+                valid_roles = ['admin', 'profesor', 'estudiante', 'soporte']
+                
+                # Verificar que todos los roles sean válidos
+                invalid_roles = [role for role in allowed_roles if role not in valid_roles]
+                
+                if invalid_roles:
+                    raise ValidationError(
+                        f"Roles inválidos: {', '.join(invalid_roles)}. "
+                        f"Roles válidos: {', '.join(valid_roles)}"
+                    )
+                
+                # Eliminar duplicados y reformatear
+                unique_roles = list(dict.fromkeys(allowed_roles))  # Mantener orden
+                return ','.join(unique_roles)
+        
+        return allowed_roles
+
     def clean(self):
         """Validación cruzada de campos."""
         cleaned_data = super().clean()

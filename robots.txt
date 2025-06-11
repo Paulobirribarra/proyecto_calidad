@@ -1,10 +1,4 @@
 User-agent: *
-Disallow: /admin/
-Disallow: /admin
-Disallow: /login/
-Disallow: /register/
-Disallow: /password/
-Disallow: /media/private/
 Disallow: /static/admin/
 
 # Permitir acceso a las áreas públicas
@@ -12,5 +6,3 @@ Allow: /
 Allow: /rooms/
 Allow: /static/
 
-# Ruta al sitemap (si lo implementas en el futuro)
-# Sitemap: https://tudominio.com/sitemap.xml

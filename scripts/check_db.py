@@ -3,7 +3,11 @@ Script para verificar el estado actual de la base de datos.
 """
 
 import os
+import sys
 import django
+
+# Añadir el directorio padre al path
+sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 # Configurar entorno Django
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'proyecto_calidad.settings')

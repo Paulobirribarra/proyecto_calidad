@@ -464,17 +464,35 @@ def reservation_list(request):
         if updated_count > 0:
             logger.info(f"Se actualizaron automáticamente {updated_count} reservas a 'completed'")
             messages.info(request, f"Se actualizaron {updated_count} reservas completadas.")
-        
-        # Filtrar por estado si se especifica
+          # Filtrar por estado si se especifica
         status_filter = request.GET.get('status')
         if status_filter and status_filter in dict(Reservation.STATUS_CHOICES):
             reservations_queryset = reservations_queryset.filter(status=status_filter)
         
-        # Ordenar por fecha de inicio (más recientes primero)
-        reservations_queryset = reservations_queryset.order_by('-start_time')
+        # Filtrar por rango de fechas si se especifica
+        date_from = request.GET.get('date_from')
+        date_to = request.GET.get('date_to')
         
-        # Paginación
-        paginator = Paginator(reservations_queryset, 10)
+        if date_from:
+            try:
+                from_date = datetime.strptime(date_from, '%Y-%m-%d').date()
+                reservations_queryset = reservations_queryset.filter(start_time__date__gte=from_date)
+            except ValueError:
+                logger.warning(f"Formato de fecha inválido para date_from: {date_from}")
+                messages.warning(request, "Formato de fecha inválido para 'Desde'")
+        
+        if date_to:
+            try:
+                to_date = datetime.strptime(date_to, '%Y-%m-%d').date()
+                reservations_queryset = reservations_queryset.filter(start_time__date__lte=to_date)
+            except ValueError:
+                logger.warning(f"Formato de fecha inválido para date_to: {date_to}")
+                messages.warning(request, "Formato de fecha inválido para 'Hasta'")
+        
+        # Ordenar por fecha de inicio (más próximas primero)
+        reservations_queryset = reservations_queryset.order_by('start_time')
+          # Paginación
+        paginator = Paginator(reservations_queryset, 12)
         page = request.GET.get('page')
         
         try:
@@ -487,7 +505,9 @@ def reservation_list(request):
         context = {
             'reservations': reservations,
             'status_choices': Reservation.STATUS_CHOICES,
-            'current_status': status_filter
+            'current_status': status_filter,
+            'date_from': date_from,
+            'date_to': date_to
         }
         
         return render(request, 'rooms/reservation_list.html', context)

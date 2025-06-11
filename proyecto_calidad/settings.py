@@ -23,9 +23,13 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 SECRET_KEY = 'django-insecure-sl1xbq-s6(j_oy#6q59c%9jk(b=c1w-su*72lqge#&tw0(*_!x'
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = True  # Activado para desarrollo
+# DEBUG = False  # Comentado para permitir archivos estáticos
 
 ALLOWED_HOSTS = ['localhost', '127.0.0.1', 'testserver', '*']
+
+# Configuración adicional para páginas de error personalizadas
+ALLOWED_HOSTS_ENV = ['localhost', '127.0.0.1', 'testserver', '*']
 
 
 # Application definition
@@ -120,7 +124,7 @@ USE_TZ = True
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/5.2/howto/static-files/
 
-STATIC_URL = 'static/'
+STATIC_URL = '/static/'
 STATICFILES_DIRS = [
     BASE_DIR / "static",
 ]

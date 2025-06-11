@@ -57,18 +57,28 @@
                                     {% endfor %}
                                 </div>
                             {% endif %}
-                        </div>
-
-                        <!-- Password field -->
+                        </div>                        <!-- Password field -->
                         <div class="mb-3">
                             <label for="{{ form.password.id_for_label }}" class="form-label">
                                 <i class="fas fa-lock" aria-hidden="true"></i>
                                 Contraseña
                                 <span class="text-danger" aria-label="obligatorio">*</span>
                             </label>
-                            {{ form.password|add_class:"form-control" }}
+                            <div class="input-group">
+                                {{ form.password|add_class:"form-control" }}
+                                <button type="button" 
+                                        class="btn btn-outline-secondary" 
+                                        id="togglePassword"
+                                        aria-label="Mostrar u ocultar contraseña"
+                                        aria-describedby="password-toggle-help">
+                                    <i class="fas fa-eye" id="toggleIcon" aria-hidden="true"></i>
+                                </button>
+                            </div>
                             <div id="{{ form.password.id_for_label }}-help" class="form-text">
-                                Ingrese su contraseña. No se mostrarán los caracteres por seguridad
+                                Ingrese su contraseña. Use el botón del ojo para mostrar/ocultar los caracteres
+                            </div>
+                            <div id="password-toggle-help" class="sr-only">
+                                Haga clic en el botón del ojo para alternar la visibilidad de la contraseña
                             </div>
                             {% if form.password.errors %}
                                 <div id="{{ form.password.id_for_label }}-error" 
@@ -148,8 +158,98 @@
 {% endblock %}
 
 {% block extra_js %}
+<style>
+/* Estilos para el toggle de contraseña */
+#togglePassword {
+    border-left: 0;
+    cursor: pointer;
+    transition: all 0.2s ease-in-out;
+}
+
+#togglePassword:hover {
+    background-color: #e9ecef;
+    color: #495057;
+}
+
+#togglePassword:focus {
+    box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.25);
+    z-index: 3;
+}
+
+/* Asegurar que el input y el botón estén alineados */
+.input-group > .form-control:not(:last-child) {
+    border-top-right-radius: 0;
+    border-bottom-right-radius: 0;
+}
+
+.input-group > .btn:not(:first-child) {
+    border-top-left-radius: 0;
+    border-bottom-left-radius: 0;
+}
+
+/* Mejorar la accesibilidad visual */
+.input-group .form-control:focus {
+    z-index: 3;
+}
+
+/* Animación suave para el cambio de icono */
+#toggleIcon {
+    transition: transform 0.1s ease-in-out;
+}
+
+#togglePassword:active #toggleIcon {
+    transform: scale(0.9);
+}
+</style>
+
 <script>
 document.addEventListener('DOMContentLoaded', function() {
+    // Password toggle functionality
+    const togglePassword = document.querySelector('#togglePassword');
+    const passwordField = document.querySelector('#id_password');
+    const toggleIcon = document.querySelector('#toggleIcon');
+
+    if (togglePassword && passwordField && toggleIcon) {
+        togglePassword.addEventListener('click', function() {
+            // Toggle the type attribute
+            const type = passwordField.getAttribute('type') === 'password' ? 'text' : 'password';
+            passwordField.setAttribute('type', type);
+            
+            // Toggle the icon
+            if (type === 'text') {
+                toggleIcon.classList.remove('fa-eye');
+                toggleIcon.classList.add('fa-eye-slash');
+                togglePassword.setAttribute('aria-label', 'Ocultar contraseña');
+                // Anunciar el cambio para lectores de pantalla
+                const announcement = document.createElement('div');
+                announcement.className = 'sr-only';
+                announcement.setAttribute('aria-live', 'polite');
+                announcement.textContent = 'Contraseña visible';
+                document.body.appendChild(announcement);
+                setTimeout(() => document.body.removeChild(announcement), 1000);
+            } else {
+                toggleIcon.classList.remove('fa-eye-slash');
+                toggleIcon.classList.add('fa-eye');
+                togglePassword.setAttribute('aria-label', 'Mostrar contraseña');
+                // Anunciar el cambio para lectores de pantalla
+                const announcement = document.createElement('div');
+                announcement.className = 'sr-only';
+                announcement.setAttribute('aria-live', 'polite');
+                announcement.textContent = 'Contraseña oculta';
+                document.body.appendChild(announcement);
+                setTimeout(() => document.body.removeChild(announcement), 1000);
+            }
+        });
+
+        // Keyboard support for the toggle button
+        togglePassword.addEventListener('keydown', function(e) {
+            if (e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault();
+                togglePassword.click();
+            }
+        });
+    }
+
     // Add Bootstrap classes to form fields
     const formFields = document.querySelectorAll('input[type="text"], input[type="password"]');
     formFields.forEach(field => {

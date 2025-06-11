@@ -3,6 +3,7 @@ from django.utils.html import format_html
 from django.urls import reverse
 from django.utils.safestring import mark_safe
 from .models import Room, Reservation, Review
+from .forms import RoomForm
 
 
 @admin.register(Room)
@@ -13,19 +14,21 @@ class RoomAdmin(admin.ModelAdmin):
         'name', 
         'capacity', 
         'location', 
+        'room_type',
+        'allowed_roles_display',
         'is_active',
         'average_rating_display',
         'total_reservations',
-        'hourly_rate'    )
-    
+        'hourly_rate'
+    )
     list_filter = (
         'is_active', 
         'capacity', 
         'created_at',
         'hourly_rate',
-        'room_type'  # Añadimos filtro por tipo de sala
+        'room_type',
+        'allowed_roles'  # Filtro por roles permitidos
     )
-    
     search_fields = ('name', 'location', 'description')
     list_editable = ('is_active', 'hourly_rate')
     
@@ -35,6 +38,10 @@ class RoomAdmin(admin.ModelAdmin):
         }),
         ('Configuración', {
             'fields': ('is_active', 'hourly_rate', 'opening_time', 'closing_time')
+        }),
+        ('Tipo de Sala y Permisos', {
+            'fields': ('room_type', 'allowed_roles'),
+            'description': 'Configure el tipo de sala y los roles de usuario que pueden reservarla'
         }),
         ('Equipamiento', {
             'fields': ('equipment',),
@@ -47,6 +54,7 @@ class RoomAdmin(admin.ModelAdmin):
     )
     
     readonly_fields = ('created_at', 'updated_at')
+    form = RoomForm  # Usar formulario personalizado con validaciones
     
     def save_model(self, request, obj, form, change):
         """Asignar el usuario creador si está autenticado."""
@@ -84,6 +92,16 @@ class RoomAdmin(admin.ModelAdmin):
         except Exception:
             return "0 reservas"
     total_reservations.short_description = "Total reservas"
+    
+    def allowed_roles_display(self, obj):
+        """Mostrar roles permitidos de forma amigable."""
+        if obj.allowed_roles:
+            roles = obj.allowed_roles.split(',')
+            # Capitalizar primera letra de cada rol
+            formatted_roles = [role.strip().capitalize() for role in roles]
+            return ', '.join(formatted_roles)
+        return "No definido"
+    allowed_roles_display.short_description = "Roles permitidos"
     
     def get_queryset(self, request):
         """Optimizar consultas."""
