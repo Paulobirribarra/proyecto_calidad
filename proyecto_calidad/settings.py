@@ -55,6 +55,7 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    'core.session_middleware.SessionSecurityMiddleware',  # Middleware para seguridad de sesiones
     'core.middleware.SecurityMiddleware',  # Middleware personalizado para seguridad general
     'core.admin_middleware.AdminSecurityMiddleware',  # Middleware específico para panel admin
 ]
@@ -156,25 +157,29 @@ LOGGING = {
     },
     'handlers': {
         'file': {
-            'level': 'INFO',
+            'level': 'DEBUG',
             'class': 'logging.FileHandler',
             'filename': BASE_DIR / 'logs' / 'debug.log',
             'formatter': 'verbose',
         },
         'console': {
-            'level': 'INFO',
+            'level': 'WARNING',  # Cambiado a WARNING para destacar mensajes relevantes
             'class': 'logging.StreamHandler',
             'formatter': 'simple',
         },
     },
     'root': {
         'handlers': ['console', 'file'],
-        'level': 'INFO',
-    },
-    'loggers': {
+        'level': 'DEBUG',
+    },    'loggers': {
         'django': {
             'handlers': ['console', 'file'],
             'level': 'INFO',
+            'propagate': False,
+        },
+        'django.request': {
+            'handlers': ['console', 'file'],
+            'level': 'ERROR',  # Solo errores reales, no PermissionDenied
             'propagate': False,
         },
         'usuarios': {
@@ -185,6 +190,11 @@ LOGGING = {
         'rooms': {
             'handlers': ['console', 'file'],
             'level': 'INFO',
+            'propagate': False,
+        },
+        'core': {
+            'handlers': ['console', 'file'],
+            'level': 'DEBUG',  # DEBUG para capturar todos los mensajes del middleware
             'propagate': False,
         },
     },
@@ -207,3 +217,8 @@ CSRF_COOKIE_SAMESITE = 'None' if not DEBUG else 'Lax'
 LOGIN_URL = '/usuarios/login/'
 LOGIN_REDIRECT_URL = '/'
 LOGOUT_REDIRECT_URL = '/usuarios/login/'
+
+# Configuraciones de seguridad de sesión
+SESSION_EXPIRE_AT_BROWSER_CLOSE = True  # La sesión expira al cerrar el navegador
+SESSION_COOKIE_AGE = 3600  # 1 hora en segundos
+SESSION_SAVE_EVERY_REQUEST = True  # Guardar la sesión en cada solicitud

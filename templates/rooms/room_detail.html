@@ -214,9 +214,8 @@
                         {% for review in recent_reviews %}
                         <div class="card mb-3">
                             <div class="card-body">
-                                <div class="d-flex justify-content-between align-items-start mb-2">
-                                    <div>
-                                        <h6 class="mb-0">{{ review.user.get_full_name|default:review.user.username }}</h6>
+                                <div class="d-flex justify-content-between align-items-start mb-2">                                    <div>
+                                        <h6 class="mb-0">{{ review.reservation.user.get_full_name|default:review.reservation.user.username }}</h6>
                                         <small class="text-muted">{{ review.created_at|date:"d/m/Y" }}</small>
                                     </div>
                                     <div class="text-warning">

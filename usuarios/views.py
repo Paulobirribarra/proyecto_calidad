@@ -13,6 +13,7 @@ from django.contrib.auth import login, logout, authenticate
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from django.core.exceptions import ValidationError
+from django.utils import timezone
 from django.db import transaction, IntegrityError
 from django.utils import timezone
 from django.core.mail import send_mail
@@ -38,18 +39,40 @@ def user_login(request):
     
     if request.method == 'POST':
         form = LoginForm(request.POST)
-        
         if form.is_valid():
             username = form.cleaned_data['username']
             password = form.cleaned_data['password']
+            remember_me = form.cleaned_data.get('remember_me', False)
             
             user = authenticate(request, username=username, password=password)
             
             if user is not None:
                 if user.is_active:
+                    # Obtener información adicional para el log
+                    ip_address = request.META.get('REMOTE_ADDR', 'desconocida')
+                    user_agent = request.META.get('HTTP_USER_AGENT', 'desconocido')
+                    
+                    # Realizar login estándar de Django
                     login(request, user)
                     
-                    logger.info(f"Usuario {username} inició sesión exitosamente")
+                    # Configurar duración de sesión basada en "recordar datos"
+                    if remember_me:
+                        # Sesión de 30 días si el usuario marca "recordar"
+                        request.session.set_expiry(30 * 24 * 60 * 60)  # 30 días en segundos
+                        logger.info(f"[SEGURIDAD_SESIÓN] Sesión extendida activada para usuario '{username}' (30 días)")
+                    else:
+                        # Sesión expira al cerrar el navegador
+                        request.session.set_expiry(0)
+                        logger.info(f"[SEGURIDAD_SESIÓN] Sesión temporal activada para usuario '{username}' (hasta cerrar navegador)")
+                    
+                    # Marcar la sesión como activa
+                    request.session['last_activity'] = True
+                    request.session['is_logged_out'] = False
+                    request.session.modified = True
+                    
+                    # Registrar inicio de sesión con detalles para la demostración
+                    session_id = request.session.session_key
+                    logger.info(f"[SEGURIDAD_SESIÓN] Inicio de sesión exitoso: Usuario '{username}', IP {ip_address}, Sesión ID {session_id}")
                     
                     # Redirección basada en el parámetro 'next' o página por defecto
                     next_url = request.GET.get('next', 'rooms:room_list')
@@ -154,14 +177,39 @@ def user_logout(request):
     
     Cierra la sesión del usuario actual y
     redirige a la página de login.
+    
+    Se aplican medidas de seguridad adicionales para evitar
+    el acceso post-logout mediante el botón "atrás" del navegador.
     """
     if request.user.is_authenticated:
         username = request.user.username
+          # Obtener información adicional para el log
+        ip_address = request.META.get('REMOTE_ADDR', 'desconocida')
+        user_agent = request.META.get('HTTP_USER_AGENT', 'desconocido')
+        session_id = request.session.session_key
+          # Realizar logout estándar de Django (esto borra la sesión)
         logout(request)
-        logger.info(f"Usuario {username} cerró sesión")
+        
+        # Registrar cierre de sesión con detalles para la demostración
+        logger.info(f"[SEGURIDAD_SESIÓN] Cierre de sesión exitoso: Usuario '{username}', IP {ip_address}, Sesión ID {session_id}")
+        logger.debug(f"Detalles adicionales de cierre sesión: Agente {user_agent}, Fecha/hora: {timezone.now().strftime('%Y-%m-%d %H:%M:%S')}")
+        
+        # DESPUÉS del logout, crear una nueva sesión para marcar el estado de logout
+        request.session['is_logged_out'] = True
+        request.session['last_username'] = username
+        request.session['logout_timestamp'] = timezone.now().timestamp()
+        request.session.modified = True
+        
         messages.success(request, "Has cerrado sesión exitosamente.")
     
-    return redirect('usuarios:login')
+    response = redirect('usuarios:login')
+    
+    # Configurar encabezados anti-caché para la página de logout
+    response['Cache-Control'] = 'no-cache, no-store, must-revalidate, max-age=0'
+    response['Pragma'] = 'no-cache'
+    response['Expires'] = '0'
+    
+    return response
 
 
 @login_required

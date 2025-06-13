@@ -45,10 +45,30 @@ Allow: /
 """
         return HttpResponse(basic_robots, content_type='text/plain')
 
+# Función para redirigir URLs mal formadas de salas
+def redirect_room_detail(request, room_id):
+    """Redirige URLs de sala mal formadas a la URL correcta"""
+    from django.shortcuts import redirect
+    return redirect('rooms:room_detail', room_id=room_id)
+
 # Función para manejar acceso denegado
 def admin_redirect(request):
     """Redirige a la página de error 403 cuando se intenta acceder a /admin sin barra"""
+    import logging
     from django.core.exceptions import PermissionDenied
+    
+    # Log limpio para la demostración (sin stacktrace)
+    logger = logging.getLogger('core')
+    username = request.user.username if request.user.is_authenticated else 'anónimo'
+    user_role = getattr(request.user, 'role', 'desconocido') if request.user.is_authenticated else 'no autenticado'
+    ip_address = request.META.get('REMOTE_ADDR', 'desconocida')
+    
+    logger.warning(
+        f"[SEGURIDAD_ADMIN] Acceso denegado a panel administrativo: "
+        f"Usuario '{username}' (rol: {user_role}) desde IP {ip_address}. "
+        f"URL: {request.path} [Demostración de Seguridad]"
+    )
+    
     raise PermissionDenied("No tienes permisos para acceder al panel de administración")
 
 # Función para probar el error 404
@@ -73,9 +93,12 @@ urlpatterns = [
     
     # SEO y Seguridad
     path('robots.txt', robots_txt, name='robots_txt'),
-      # Aplicaciones
+    
+    # Aplicaciones
     path('usuarios/', include('usuarios.urls')),
     path('salas/', include('rooms.urls')),
+      # CORRECCIÓN: Redirigir URLs de sala mal formadas a la URL correcta
+    path('salas/<int:room_id>/', redirect_room_detail),
     
     # Redirigir la raíz a la lista de salas de manera específica
     path('', RedirectView.as_view(url='/salas/', permanent=False), name='home'),

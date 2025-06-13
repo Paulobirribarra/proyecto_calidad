@@ -81,12 +81,17 @@
                             {{ reservation.get_status_display }}
                         {% endif %}
                     </div>
-                </div>
-                <div class="btn-group">
+                </div>                <div class="btn-group">
                     <a href="{% url 'rooms:reservation_list' %}" class="btn btn-outline-secondary">
                         <i class="fas fa-arrow-left me-2"></i>
                         Volver a Mis Reservas
+                    </a>                    {% if reservation.status == 'completed' and not reservation.review %}
+                    <a href="{% url 'rooms:room_review' reservation.id %}" 
+                       class="btn btn-warning">
+                        <i class="fas fa-star me-2"></i>
+                        Calificar Experiencia
                     </a>
+                    {% endif %}
                     {% if reservation.status == 'confirmed' and reservation.can_be_cancelled %}
                     <button type="button" 
                             class="btn btn-outline-danger"

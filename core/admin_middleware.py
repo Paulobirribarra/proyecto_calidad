@@ -1,11 +1,3 @@
-"""
-Middleware especializado para proteger rutas administrativas.
-
-Este middleware está diseñado específicamente para reforzar la seguridad
-de las rutas administrativas, añadiendo una capa adicional de protección
-al verificar tanto el rol del usuario como los permisos específicos.
-"""
-
 from django.shortcuts import redirect
 from django.contrib import messages
 from django.conf import settings
@@ -25,7 +17,6 @@ class AdminSecurityMiddleware:
         self.get_response = get_response
         # Patrones de URL administrativas que requieren protección especial
         self.admin_patterns = [
-            # Formato: (regex_pattern, mensaje_rechazo)
             (r'^/rooms/admin/?$', "Acceso restringido: solo administradores pueden acceder."),
             (r'^/admin/?$', "Acceso restringido: panel de administración."),
             (r'^/admin/.*', "Acceso restringido: panel de administración."),
@@ -41,6 +32,23 @@ class AdminSecurityMiddleware:
         try:
             path = request.path
             
+            # Verificar si la sesión está marcada como cerrada
+            if request.session.get('is_logged_out', False):
+                last_username = request.session.get('last_username', 'desconocido')
+                logger.warning(
+                    f"[SEGURIDAD_ADMIN] ALERTA: Intento de acceso con sesión cerrada a ruta administrativa: "
+                    f"Usuario '{last_username}' desde IP {self.get_client_ip(request)}. "
+                    f"Posible uso del botón 'atrás' después de cerrar sesión. "
+                    f"URL solicitada: {path} [Demostración de Seguridad]"
+                )
+                request.session.flush()
+                messages.warning(
+                    request,
+                    "¡Sesión cerrada detectada! Por seguridad, se ha bloqueado el acceso a ruta administrativa. "
+                    "Inicia sesión nuevamente para continuar. [Demostración de Seguridad]"
+                )
+                return redirect(f"{settings.LOGIN_URL}?next={request.path}")
+            
             # Verificar si la ruta coincide con algún patrón administrativo
             is_admin_path = False
             admin_message = ""
@@ -55,21 +63,22 @@ class AdminSecurityMiddleware:
             if is_admin_path:
                 # Si no está autenticado, redirigir al login
                 if not request.user.is_authenticated:
-                    logger.warning(f"Intento de acceso no autenticado a ruta administrativa: {path}")
+                    logger.warning(
+                        f"[SEGURIDAD_ADMIN] ALERTA: Intento de acceso no autenticado a ruta administrativa: "
+                        f"URL: {path} desde IP: {self.get_client_ip(request)} [Demostración de Seguridad]"
+                    )
                     return redirect(f"{settings.LOGIN_URL}?next={request.path}")
                     
                 # Si está autenticado pero no es admin ni superusuario
                 if not (hasattr(request.user, 'role') and 
-                    (request.user.is_superuser or 
-                    (hasattr(request.user, 'is_admin') and request.user.is_admin()) or 
-                    (hasattr(request.user, 'role') and request.user.role == 'admin'))):
-                    # Registrar el intento
+                        (request.user.is_superuser or 
+                         (hasattr(request.user, 'is_admin') and request.user.is_admin) or 
+                         (hasattr(request.user, 'role') and request.user.role == 'admin'))):
                     logger.warning(
-                        f"Bloqueo estricto: Usuario {request.user.username} con rol "
-                        f"'{getattr(request.user, 'role', 'desconocido')}' intentó acceder a {path}"
+                        f"[SEGURIDAD_ADMIN] ALERTA: Intento de acceso no autorizado a ruta administrativa: "
+                        f"Usuario {request.user.username} con rol '{getattr(request.user, 'role', 'desconocido')}' "
+                        f"intentó acceder a {path} [Demostración de Seguridad]"
                     )
-                    
-                    # Lanzar PermissionDenied para mostrar la plantilla 403 personalizada
                     from django.core.exceptions import PermissionDenied
                     raise PermissionDenied(admin_message)
             
@@ -77,6 +86,14 @@ class AdminSecurityMiddleware:
             return self.get_response(request)
             
         except Exception as e:
-            # Registrar cualquier error y permitir el acceso para que otras capas decidan
-            logger.error(f"Error en AdminSecurityMiddleware: {str(e)}", exc_info=True)
+            logger.error(f"[SEGURIDAD_ADMIN] Error en AdminSecurityMiddleware: {str(e)}", exc_info=True)
             return self.get_response(request)
+    
+    def get_client_ip(self, request):
+        """Obtener la IP real del cliente, considerando proxies."""
+        x_forwarded_for = request.META.get('HTTP_X_FORWARDED_FOR')
+        if x_forwarded_for:
+            ip = x_forwarded_for.split(',')[0].strip()
+        else:
+            ip = request.META.get('REMOTE_ADDR', 'unknown')
+        return ip

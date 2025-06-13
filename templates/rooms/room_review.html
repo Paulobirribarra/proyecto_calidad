@@ -57,6 +57,7 @@
 
 <!-- Main Content -->
 <main id="main-content" tabindex="-1" role="main" aria-labelledby="review-title">
+<div class="container my-4">
     <!-- Breadcrumb -->
     <nav aria-label="Ruta de navegación" class="mb-4">
         <ol class="breadcrumb">
@@ -91,16 +92,16 @@
                 <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Cerrar mensaje"></button>
             </div>
         {% endfor %}
-    {% endif %}
-
-    <!-- Rating Form -->
-    <section class="card shadow-sm" aria-labelledby="form-title">
-        <div class="card-header">
-            <h3 id="form-title" class="h5 mb-0">
-                <i class="fas fa-clipboard-list me-2" aria-hidden="true"></i>                        Formulario de Calificación
-            </h3>
-        </div>
-        <div class="card-body">
+    {% endif %}    <!-- Rating Form -->
+    <div class="row justify-content-center">
+        <div class="col-lg-10 col-xl-8">
+            <section class="card shadow-sm" aria-labelledby="form-title">
+                <div class="card-header">
+                    <h3 id="form-title" class="h5 mb-0">
+                        <i class="fas fa-clipboard-list me-2" aria-hidden="true"></i>                        Formulario de Calificación
+                    </h3>
+                </div>
+                <div class="card-body">
             <form method="post" id="rating-form" aria-labelledby="form-title" 
                   aria-describedby="form-instructions" novalidate>
                 {% csrf_token %}
@@ -207,11 +208,10 @@
             <div class="rating-preview" id="rating-preview" style="display: none;">
                 <h6 class="text-muted mb-2">Vista Previa de tu Calificación:</h6>
                 <div id="preview-content"></div>
-            </div>
-
-            <!-- Botones -->
-            <div class="d-flex justify-content-between mt-4">
-                <a href="{% url 'rooms:reservation_detail' reservation.id %}" class="btn btn-outline-secondary">
+            </div>            <!-- Botones de Acción -->
+            <div class="d-grid gap-2 d-md-flex justify-content-md-between mt-4">
+                <a href="{% url 'rooms:reservation_detail' reservation.id %}" 
+                   class="btn btn-outline-secondary">
                     <i class="fas fa-arrow-left me-2"></i>
                     Volver a la Reserva
                 </a>
@@ -223,9 +223,14 @@
         </form>
     </div>
 </div>
+            </section>
+        </div>
+    </div>
 
 <!-- Information Card -->
-<div class="card mt-4">
+<div class="row justify-content-center">
+    <div class="col-lg-10 col-xl-8">
+        <div class="card mt-4">
     <div class="card-body">
         <h6 class="text-muted mb-3">
             <i class="fas fa-info-circle me-2"></i>
@@ -251,7 +256,8 @@
                     <i class="fas fa-lightbulb text-warning me-3"></i>
                     <small>Identifica áreas de oportunidad para mejoras</small>
                 </div>
-            </div>
+            </div>        </div>
+    </div>
         </div>
     </div>
 </div>
@@ -346,11 +352,11 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     });
     
-    // Inicializar vista previa
-    updatePreview();
+    // Inicializar vista previa    updatePreview();
     });
 });
 </script>
 {% endblock %}
+</div>
 </main>
 <!-- End Main Content -->

@@ -23,6 +23,19 @@ from django.utils import timezone
 
 User = get_user_model()
 
+def determinar_rol_usuario(usuario):
+    """Determina el rol del usuario basándose en su username"""
+    username = usuario.username.lower()
+    
+    if 'admin' in username:
+        return 'admin'
+    elif 'profesor' in username:
+        return 'profesor'
+    elif 'soporte' in username:
+        return 'soporte'
+    else:
+        return 'estudiante'
+
 def crear_reservas_ejemplo():
     """Crea reservas de ejemplo para diferentes usuarios y salas"""
     
@@ -42,8 +55,7 @@ def crear_reservas_ejemplo():
     
     print(f"📊 Usuarios disponibles: {len(usuarios)}")
     print(f"📊 Salas disponibles: {len(salas)}")
-    
-    # Definir algunos horarios típicos
+      # Definir algunos horarios típicos
     horarios_comunes = [
         (8, 0, 10, 0),   # 8:00 - 10:00
         (10, 0, 12, 0),  # 10:00 - 12:00
@@ -63,6 +75,50 @@ def crear_reservas_ejemplo():
         "Trabajo colaborativo",
         "Práctica de presentación"
     ]
+    
+    # Notas específicas por tipo de usuario
+    notas_por_rol = {
+        'estudiante': [
+            "Dejar la calefacción encendida, por favor",
+            "Necesito acceso a enchufes para portátil",
+            "Por favor, mantener silencio en la sala",
+            "Solicito que la temperatura esté a 22°C",
+            "Necesito buena iluminación para leer",
+            "Por favor, limpiar la pizarra antes",
+            "Requiero acceso a WiFi estable",
+            "Solicito sillas cómodas para estudio prolongado"
+        ],
+        'profesor': [
+            "Necesito un adaptador USB para la clase",
+            "Por favor, dejar el proyector encendido",
+            "Solicito pizarra limpia antes de la sesión",
+            "Requiero micrófono inalámbrico",
+            "Necesito acceso a la red del campus",
+            "Por favor, verificar funcionamiento del audio",
+            "Solicito marcadores de colores nuevos",
+            "Requiero control remoto para presentación"
+        ],
+        'admin': [
+            "Revisión de equipamiento técnico",
+            "Solicito limpieza especial de la sala",
+            "Verificar acceso restringido",
+            "Inspección de sistemas de seguridad",
+            "Mantenimiento preventivo de equipos",
+            "Verificación de protocolos de emergencia",
+            "Control de inventario de mobiliario",
+            "Supervisión de normativas de seguridad"
+        ],
+        'soporte': [
+            "Mantenimiento técnico programado",
+            "Verificación de sistemas informáticos",
+            "Actualización de software instalado",
+            "Revisión de conectividad de red",
+            "Calibración de equipos audiovisuales",
+            "Limpieza técnica de computadores",
+            "Verificación de licencias de software",
+            "Backup de configuraciones del sistema"
+        ]
+    }
     
     estados = ['confirmed', 'pending', 'completed', 'cancelled']
     
@@ -106,8 +162,7 @@ def crear_reservas_ejemplo():
                 
                 if conflictos:
                     continue  # Saltar si hay conflicto
-                
-                # Determinar estado basado en la fecha
+                  # Determinar estado basado en la fecha
                 if fecha < timezone.now().date():
                     # Reservas pasadas: completed o cancelled
                     estado = random.choice(['completed', 'cancelled'])
@@ -118,6 +173,10 @@ def crear_reservas_ejemplo():
                     # Futuras: confirmed o pending
                     estado = random.choice(['confirmed', 'pending'])
                 
+                # Determinar rol del usuario y seleccionar nota apropiada
+                rol_usuario = determinar_rol_usuario(usuario)
+                nota_seleccionada = random.choice(notas_por_rol.get(rol_usuario, ["Sin requerimientos especiales"]))
+                
                 # Crear la reserva
                 reserva = Reservation.objects.create(
                     user=usuario,
@@ -125,7 +184,8 @@ def crear_reservas_ejemplo():
                     start_time=inicio,
                     end_time=fin,
                     purpose=random.choice(propósitos),
-                    status=estado
+                    status=estado,
+                    notes=nota_seleccionada
                 )
                 
                 reservas_creadas += 1
