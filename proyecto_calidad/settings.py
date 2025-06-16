@@ -45,6 +45,7 @@ INSTALLED_APPS = [
     'usuarios.apps.UsuariosConfig',
     'rooms.apps.RoomsConfig',
     'core.apps.CoreConfig',
+    'scripts',
 ]
 
 MIDDLEWARE = [
@@ -58,6 +59,8 @@ MIDDLEWARE = [
     'core.session_middleware.SessionSecurityMiddleware',  # Middleware para seguridad de sesiones
     'core.middleware.SecurityMiddleware',  # Middleware personalizado para seguridad general
     'core.admin_middleware.AdminSecurityMiddleware',  # Middleware específico para panel admin
+    'core.reservation_security_middleware.ReservationSecurityMiddleware',  # Sistema de seguridad de reservas
+    'core.reservation_security_middleware.RateLimitMiddleware',  # Rate limiting por IP
 ]
 
 ROOT_URLCONF = 'proyecto_calidad.urls'

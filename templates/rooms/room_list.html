@@ -1,7 +1,8 @@
 {% extends 'base.html' %}
+{% load static %}
 {% load form_tags %}
 
-{% block title %}Salas Disponibles - Salas de Estudio{% endblock %}
+{% block title %}Salas Disponibles - Colegio Clara Brincefield{% endblock %}
 
 {% block extra_head %}
 <style>
@@ -45,22 +46,27 @@
 
 <!-- Hero Section -->
 {% if not user.is_authenticated %}
-<section class="hero-section">
-    <div class="container">
+<section class="hero-section">    <div class="container">
         <div class="row">
             <div class="col-lg-8 mx-auto text-center">
+                <div class="mb-4">
+                    <img src="{% static 'img/branding/logo-medium.png' %}" 
+                         alt="Logo Colegio Clara Brincefield" 
+                         class="mb-3"
+                         style="height: 120px; width: auto;">
+                </div>
                 <h1 class="display-4 fw-bold mb-3">
-                    <i class="fas fa-building" aria-hidden="true"></i>
-                    Salas de Estudio Inteligentes
+                    Colegio Clara Brincefield
                 </h1>
+                <h2 class="h3 text-muted mb-4">Sistema de Reserva de Salas</h2>
                 <p class="lead mb-4">
-                    Reserva salas de estudio modernas y bien equipadas de manera rápida y sencilla. 
-                    Gestiona tus reservas, deja reseñas y disfruta de una experiencia de estudio excepcional.
+                    Reserva aulas, laboratorios y espacios de estudio de nuestro colegio de manera rápida y sencilla. 
+                    Un sistema moderno para la comunidad educativa Clara Brincefield.
                 </p>
                 <div class="d-flex justify-content-center gap-3">
                     <a href="{% url 'usuarios:register' %}" class="btn btn-light btn-lg">
                         <i class="fas fa-user-plus" aria-hidden="true"></i>
-                        Registrarse Gratis
+                        Registrarse
                     </a>
                     <a href="{% url 'usuarios:login' %}" class="btn btn-outline-light btn-lg">
                         <i class="fas fa-sign-in-alt" aria-hidden="true"></i>
@@ -78,24 +84,24 @@
         <div class="row">
             <div class="col-lg-4 text-center mb-4">
                 <div class="feature-icon">
-                    <i class="fas fa-calendar-check" aria-hidden="true"></i>
+                    <i class="fas fa-chalkboard-teacher" aria-hidden="true"></i>
                 </div>
-                <h4>Reservas Fáciles</h4>
-                <p class="text-muted">Sistema de reservas intuitivo con disponibilidad en tiempo real.</p>
+                <h4>Aulas Equipadas</h4>
+                <p class="text-muted">Aulas modernas con tecnología para el aprendizaje efectivo.</p>
             </div>
             <div class="col-lg-4 text-center mb-4">
                 <div class="feature-icon">
-                    <i class="fas fa-star" aria-hidden="true"></i>
+                    <i class="fas fa-microscope" aria-hidden="true"></i>
                 </div>
-                <h4>Sistema de Calificaciones</h4>
-                <p class="text-muted">Califica y revisa salas para ayudar a otros usuarios.</p>
+                <h4>Laboratorios</h4>
+                <p class="text-muted">Laboratorios de ciencias y computación completamente equipados.</p>
             </div>
             <div class="col-lg-4 text-center mb-4">
                 <div class="feature-icon">
-                    <i class="fas fa-shield-alt" aria-hidden="true"></i>
+                    <i class="fas fa-book-open" aria-hidden="true"></i>
                 </div>
-                <h4>Seguro y Confiable</h4>
-                <p class="text-muted">Plataforma segura con autenticación y protección de datos.</p>
+                <h4>Espacios de Estudio</h4>
+                <p class="text-muted">Salas silenciosas ideales para estudio individual y grupal.</p>
             </div>
         </div>
     </div>
@@ -298,7 +304,8 @@
                                         Horario específico
                                     {% endif %}
                                 </span>
-                            {% endif %}                            {% if request.GET.min_capacity %}
+                            {% endif %}
+                            {% if request.GET.min_capacity %}
                                 <span class="badge bg-warning text-dark me-1">Min. {{ request.GET.min_capacity }} personas</span>
                             {% endif %}
                         </small>

@@ -31,8 +31,7 @@ class Room(models.Model):
         description (str): Descripción detallada de la sala
         capacity (int): Capacidad máxima de personas
         equipment (str): Equipamiento disponible
-        location (str): Ubicación física de la sala
-        is_active (bool): Si la sala está disponible para reservas
+        location (str): Ubicación física de la sala        is_active (bool): Si la sala está disponible para reservas
         hourly_rate (decimal): Tarifa por hora (opcional)
         room_type (str): Tipo de sala para control de permisos
         allowed_roles (str): Roles que pueden reservar esta sala
@@ -40,11 +39,13 @@ class Room(models.Model):
     
     ROOM_TYPE_CHOICES = (
         ('aula', 'Aula'),
-        ('sala_estudio', 'Sala de Estudio'),
-        ('sala_individual', 'Sala Individual'),
-        ('sala_reunion', 'Sala de Reuniones'),
-        ('laboratorio', 'Laboratorio'),
+        ('laboratorio_ciencias', 'Laboratorio de Ciencias'),
+        ('laboratorio_informatica', 'Laboratorio de Informática'),
+        ('biblioteca', 'Biblioteca'),
+        ('sala_profesores', 'Sala de Profesores'),
         ('auditorio', 'Auditorio'),
+        ('equipamiento', 'Equipamiento/Recurso'),
+        ('sala_reunion', 'Sala de Reuniones'),
     )
     
     name = models.CharField(
@@ -81,8 +82,7 @@ class Room(models.Model):
         max_digits=8,
         decimal_places=2,
         default=0.00,
-        help_text="Tarifa por hora (0.00 = gratuita)"
-    )
+        help_text="Tarifa por hora (0.00 = gratuita)"    )
     
     # Configuración de horarios
     opening_time = models.TimeField(
@@ -97,9 +97,9 @@ class Room(models.Model):
     
     # Tipos de sala y permisos
     room_type = models.CharField(
-        max_length=20,
+        max_length=30,
         choices=ROOM_TYPE_CHOICES,
-        default='sala_estudio',
+        default='aula',
         help_text="Tipo de sala"
     )
     
@@ -584,8 +584,7 @@ class Review(models.Model):
         default='neutral',
         help_text="Tipo de comentario para categorización"
     )
-    
-    # Metadatos
+      # Metadatos
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
     
@@ -596,15 +595,27 @@ class Review(models.Model):
     
     def __str__(self):
         """Representación string de la reseña."""
-        return f"Reseña de {self.reservation.room.name} por {self.reservation.user.username} ({self.rating}★)"
+        try:
+            if hasattr(self, 'reservation_id') and self.reservation_id:
+                return f"Reseña de {self.reservation.room.name} por {self.reservation.user.username} ({self.rating}★)"
+            else:
+                return f"Reseña (sin reserva asignada) - Rating: {self.rating}★"
+        except (AttributeError, Review.reservation.RelatedObjectDoesNotExist):
+            return f"Reseña (ID: {self.pk or 'nuevo'}) - Rating: {self.rating}★"
     
     def clean(self):
         """Validaciones del modelo."""
         super().clean()
         
-        # Validar que la reserva esté completada
-        if self.reservation and self.reservation.status != 'completed':
-            raise ValidationError("Solo se pueden crear reseñas para reservas completadas.")
+        # Validar que la reserva esté completada (solo si reservation_id está establecido)
+        if hasattr(self, 'reservation_id') and self.reservation_id:
+            try:
+                reservation = self.reservation
+                if reservation and reservation.status != 'completed':
+                    raise ValidationError("Solo se pueden crear reseñas para reservas completadas.")
+            except Review.reservation.RelatedObjectDoesNotExist:
+                # La reserva no está asignada todavía, saltear esta validación
+                pass
         
         # Validar rangos de calificaciones
         rating_fields = ['rating', 'cleanliness_rating', 'equipment_rating', 'comfort_rating']

@@ -1,0 +1,288 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Mis Estadísticas de Reservas - Salas de Estudio{% endblock %}
+
+{% block content %}
+<div class="container my-5">
+    <div class="row mb-4">
+        <div class="col-12">
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item"><a href="{% url 'rooms:room_list' %}">Salas</a></li>
+                    <li class="breadcrumb-item"><a href="{% url 'rooms:reservation_list' %}">Mis Reservas</a></li>
+                    <li class="breadcrumb-item active" aria-current="page">Estadísticas</li>
+                </ol>
+            </nav>
+        </div>
+    </div>
+
+    <div class="row mb-4">
+        <div class="col-12">
+            <h1 class="h2">
+                <i class="fas fa-chart-bar"></i>
+                Mis Estadísticas de Reservas
+            </h1>
+            <p class="text-muted">
+                Información sobre tu uso del sistema de reservas y límites aplicables.
+            </p>
+        </div>
+    </div>
+
+    {% if is_blocked %}
+    <div class="alert alert-danger" role="alert">
+        <h4 class="alert-heading">
+            <i class="fas fa-ban"></i>
+            Cuenta Temporalmente Bloqueada
+        </h4>
+        <p>
+            Tu cuenta está temporalmente bloqueada hasta las <strong>{{ blocked_until|time:"H:i" }}</strong> 
+            del {{ blocked_until|date:"d/m/Y" }} por comportamiento abusivo detectado.
+        </p>
+        <hr>
+        <p class="mb-0">
+            Durante este período no podrás crear nuevas reservas. El bloqueo se levantará automáticamente.
+        </p>
+    </div>
+    {% endif %}
+
+    {% if violations %}
+    <div class="alert alert-warning" role="alert">
+        <h4 class="alert-heading">
+            <i class="fas fa-exclamation-triangle"></i>
+            Límites Excedidos
+        </h4>
+        <ul class="mb-0">
+            {% for violation in violations %}
+            <li>{{ violation.message }}</li>
+            {% endfor %}
+        </ul>
+    </div>
+    {% endif %}
+
+    {% if warnings %}
+    <div class="alert alert-info" role="alert">
+        <h4 class="alert-heading">
+            <i class="fas fa-info-circle"></i>
+            Advertencias
+        </h4>
+        <ul class="mb-0">
+            {% for warning in warnings %}
+            <li>{{ warning.message }}</li>
+            {% endfor %}
+        </ul>
+    </div>
+    {% endif %}
+
+    {% if has_security_info %}
+    <!-- Límites y Uso Actual -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h3 class="h5 mb-0">
+                        <i class="fas fa-tachometer-alt"></i>
+                        Uso Actual vs Límites (Rol: {{ security_rules.get_role_display }})
+                    </h3>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <!-- Reservas por Frecuencia -->
+                        <div class="col-md-6">
+                            <h6 class="text-primary">Frecuencia de Reservas</h6>
+                            
+                            <!-- Por Hora -->
+                            <div class="mb-3">
+                                <label class="form-label">Última Hora</label>
+                                <div class="progress">
+                                    {% widthratio stats.hour.current stats.hour.limit 100 as hour_percentage %}
+                                    <div class="progress-bar {% if hour_percentage >= 80 %}bg-danger{% elif hour_percentage >= 60 %}bg-warning{% else %}bg-success{% endif %}" 
+                                         role="progressbar" 
+                                         style="width: {{ hour_percentage }}%"
+                                         aria-valuenow="{{ stats.hour.current }}" 
+                                         aria-valuemin="0" 
+                                         aria-valuemax="{{ stats.hour.limit }}">
+                                        {{ stats.hour.current }}/{{ stats.hour.limit }}
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Por Día -->
+                            <div class="mb-3">
+                                <label class="form-label">Últimas 24 Horas</label>
+                                <div class="progress">
+                                    {% widthratio stats.day.current stats.day.limit 100 as day_percentage %}
+                                    <div class="progress-bar {% if day_percentage >= 80 %}bg-danger{% elif day_percentage >= 60 %}bg-warning{% else %}bg-success{% endif %}" 
+                                         role="progressbar" 
+                                         style="width: {{ day_percentage }}%"
+                                         aria-valuenow="{{ stats.day.current }}" 
+                                         aria-valuemin="0" 
+                                         aria-valuemax="{{ stats.day.limit }}">
+                                        {{ stats.day.current }}/{{ stats.day.limit }}
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Por Semana -->
+                            <div class="mb-3">
+                                <label class="form-label">Esta Semana</label>
+                                <div class="progress">
+                                    {% widthratio stats.week.current stats.week.limit 100 as week_percentage %}
+                                    <div class="progress-bar {% if week_percentage >= 80 %}bg-danger{% elif week_percentage >= 60 %}bg-warning{% else %}bg-success{% endif %}" 
+                                         role="progressbar" 
+                                         style="width: {{ week_percentage }}%"
+                                         aria-valuenow="{{ stats.week.current }}" 
+                                         aria-valuemin="0" 
+                                         aria-valuemax="{{ stats.week.limit }}">
+                                        {{ stats.week.current }}/{{ stats.week.limit }}
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Concurrentes -->
+                            <div class="mb-3">
+                                <label class="form-label">Reservas Activas Ahora</label>
+                                <div class="progress">
+                                    {% widthratio stats.concurrent.current stats.concurrent.limit 100 as concurrent_percentage %}
+                                    <div class="progress-bar {% if concurrent_percentage >= 80 %}bg-danger{% elif concurrent_percentage >= 60 %}bg-warning{% else %}bg-success{% endif %}" 
+                                         role="progressbar" 
+                                         style="width: {{ concurrent_percentage }}%"
+                                         aria-valuenow="{{ stats.concurrent.current }}" 
+                                         aria-valuemin="0" 
+                                         aria-valuemax="{{ stats.concurrent.limit }}">
+                                        {{ stats.concurrent.current }}/{{ stats.concurrent.limit }}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Horas Reservadas -->
+                        <div class="col-md-6">
+                            <h6 class="text-primary">Duración Total Reservada</h6>
+                            
+                            <!-- Horas Hoy -->
+                            <div class="mb-3">
+                                <label class="form-label">Hoy</label>
+                                <div class="progress">
+                                    {% widthratio hours_stats.daily.current hours_stats.daily.limit 100 as daily_hours_percentage %}
+                                    <div class="progress-bar {% if daily_hours_percentage >= 80 %}bg-danger{% elif daily_hours_percentage >= 60 %}bg-warning{% else %}bg-info{% endif %}" 
+                                         role="progressbar" 
+                                         style="width: {{ daily_hours_percentage }}%"
+                                         aria-valuenow="{{ hours_stats.daily.current }}" 
+                                         aria-valuemin="0" 
+                                         aria-valuemax="{{ hours_stats.daily.limit }}">
+                                        {{ hours_stats.daily.current|floatformat:1 }}/{{ hours_stats.daily.limit }} hrs
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Horas Esta Semana -->
+                            <div class="mb-3">
+                                <label class="form-label">Esta Semana</label>
+                                <div class="progress">
+                                    {% widthratio hours_stats.weekly.current hours_stats.weekly.limit 100 as weekly_hours_percentage %}
+                                    <div class="progress-bar {% if weekly_hours_percentage >= 80 %}bg-danger{% elif weekly_hours_percentage >= 60 %}bg-warning{% else %}bg-info{% endif %}" 
+                                         role="progressbar" 
+                                         style="width: {{ weekly_hours_percentage }}%"
+                                         aria-valuenow="{{ hours_stats.weekly.current }}" 
+                                         aria-valuemin="0" 
+                                         aria-valuemax="{{ hours_stats.weekly.limit }}">
+                                        {{ hours_stats.weekly.current|floatformat:1 }}/{{ hours_stats.weekly.limit }} hrs
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Información adicional -->
+                            <div class="mt-4">
+                                <h6 class="text-secondary">Límites Adicionales</h6>
+                                <ul class="list-unstyled">
+                                    <li><i class="fas fa-calendar-plus text-muted"></i> <strong>Anticipación máxima:</strong> {{ security_rules.max_advance_days }} días</li>
+                                    <li><i class="fas fa-clock text-muted"></i> <strong>Duración de bloqueo:</strong> {{ security_rules.block_duration_minutes }} minutos</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Reservas Recientes -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h3 class="h5 mb-0">
+                        <i class="fas fa-history"></i>
+                        Reservas Recientes
+                    </h3>
+                </div>
+                <div class="card-body">
+                    {% if recent_reservations %}
+                    <div class="table-responsive">
+                        <table class="table table-sm">
+                            <thead>
+                                <tr>
+                                    <th>Sala</th>
+                                    <th>Fecha y Hora</th>
+                                    <th>Duración</th>
+                                    <th>Estado</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for reservation in recent_reservations %}
+                                <tr>
+                                    <td>
+                                        <a href="{% url 'rooms:room_detail' reservation.room.id %}">
+                                            {{ reservation.room.name }}
+                                        </a>
+                                    </td>
+                                    <td>{{ reservation.start_time|date:"d/m/Y H:i" }}</td>
+                                    <td>{{ reservation.duration_hours_rounded }} hrs</td>
+                                    <td>
+                                        {% if reservation.status == 'confirmed' %}
+                                            <span class="badge bg-success">Confirmada</span>
+                                        {% elif reservation.status == 'in_progress' %}
+                                            <span class="badge bg-primary">En Progreso</span>
+                                        {% elif reservation.status == 'completed' %}
+                                            <span class="badge bg-secondary">Completada</span>
+                                        {% elif reservation.status == 'cancelled' %}
+                                            <span class="badge bg-danger">Cancelada</span>
+                                        {% else %}
+                                            <span class="badge bg-warning">{{ reservation.get_status_display }}</span>
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    {% else %}
+                    <p class="text-muted text-center">No tienes reservas recientes.</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Acciones -->
+    <div class="row mt-4">
+        <div class="col-12">
+            <div class="d-flex justify-content-between">
+                <a href="{% url 'rooms:reservation_list' %}" class="btn btn-secondary">
+                    <i class="fas fa-list"></i>
+                    Ver Todas Mis Reservas
+                </a>
+                
+                {% if rate_allowed and not is_blocked %}
+                <a href="{% url 'rooms:room_list' %}" class="btn btn-primary">
+                    <i class="fas fa-plus"></i>
+                    Hacer Nueva Reserva
+                </a>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

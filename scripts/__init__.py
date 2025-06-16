@@ -1,6 +1,4 @@
 # This file makes the scripts directory a Python package
-# and ensures that our modules can be imported
+# Management commands for Colegio Clara Brincefield
 
-from .logger_config import setup_script_logging
-
-__all__ = ['setup_script_logging']
+__all__ = []

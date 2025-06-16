@@ -381,6 +381,28 @@ def room_reserve(request, room_id):
                 f"Esta sala solo está disponible para ciertos roles de usuario."
             )
             return redirect('rooms:room_detail', room_id=room_id)
+        
+        # NUEVO: Obtener información de límites de seguridad para mostrar al usuario
+        try:
+            from core.reservation_security import SecurityManager
+            security_rules = SecurityManager.get_security_rules(request.user)
+            rate_allowed, rate_violations, rate_warnings = SecurityManager.check_rate_limits(request.user)
+            
+            # Mostrar advertencias de límites si existen
+            for warning in rate_warnings:
+                messages.warning(request, f"Advertencia: {warning['message']}")
+            
+            # Si hay violaciones, mostrar información y redirigir
+            if not rate_allowed:
+                for violation in rate_violations:
+                    messages.error(request, f"Límite excedido: {violation['message']}")
+                return redirect('rooms:room_detail', room_id=room_id)
+                
+        except ImportError:
+            security_rules = None
+            rate_allowed = True
+            rate_warnings = []
+        
         if request.method == 'POST':
             form = ReservationForm(request.POST, user=request.user, room=room)
             # Asignar la sala antes de validar
@@ -393,6 +415,25 @@ def room_reserve(request, room_id):
                     reservation.room = room  # Asegurar que la sala se asigne correctamente
                     reservation.status = 'confirmed'
                     reservation.save()
+                    
+                    # NUEVO: Registrar la acción de seguridad
+                    try:
+                        from core.reservation_security import SecurityManager
+                        SecurityManager.log_action(
+                            user=request.user,
+                            action='create',
+                            room_name=room.name,
+                            reservation_id=reservation.id,
+                            ip_address=request.META.get('REMOTE_ADDR'),
+                            user_agent=request.META.get('HTTP_USER_AGENT', ''),
+                            additional_data={
+                                'start_time': reservation.start_time.isoformat(),
+                                'end_time': reservation.end_time.isoformat(),
+                                'duration_hours': reservation.duration_hours_rounded
+                            }
+                        )
+                    except ImportError:
+                        pass
                     
                     logger.info(
                         f"Nueva reserva creada: {reservation.room.name} "
@@ -409,6 +450,11 @@ def room_reserve(request, room_id):
                     
                     return redirect('rooms:reservation_detail', reservation_id=reservation.id)
             else:
+                # NUEVO: Mostrar advertencias de seguridad si las hay
+                if hasattr(form, '_security_warnings'):
+                    for warning in form._security_warnings:
+                        messages.warning(request, f"Advertencia: {warning['message']}")
+                
                 logger.warning(
                     f"Error en formulario de reserva por {request.user.username}: "
                     f"{form.errors}"
@@ -430,9 +476,13 @@ def room_reserve(request, room_id):
             
             form = ReservationForm(initial=initial_data, user=request.user, room=room)
         
+        # NUEVO: Agregar información de límites al contexto
         context = {
             'room': room,
-            'form': form
+            'form': form,
+            'security_rules': security_rules,
+            'rate_allowed': rate_allowed,
+            'has_security_info': security_rules is not None
         }
         
         return render(request, 'rooms/room_reserve.html', context)
@@ -615,36 +665,35 @@ def room_review(request, reservation_id):
             reservation.status = 'completed'
             reservation.save(update_fields=['status'])
             logger.info(f"Reserva #{reservation.id} actualizada automáticamente a 'completed' en room_review")
-        
-        # Verificar que la reserva esté completada
+          # Verificar que la reserva esté completada
         if reservation.status != 'completed':
             messages.warning(request, 
                 "Solo puedes calificar reservas completadas. Esta reserva tiene estado: "
                 f"{dict(Reservation.STATUS_CHOICES).get(reservation.status, reservation.status)}."
             )
-            return redirect('rooms:reservation_detail', reservation_id=reservation_id)
-        
-        # Verificar que no exista ya una reseña
-        if hasattr(reservation, 'review'):
+            return redirect('rooms:reservation_detail', reservation_id=reservation_id)        # Verificar que no exista ya una reseña
+        try:
+            existing_review = Review.objects.get(reservation=reservation)
             messages.info(request, "Ya has calificado esta reserva.")
             return redirect('rooms:reservation_detail', reservation_id=reservation_id)
+        except Review.DoesNotExist:            # No existe reseña, podemos continuar
+            pass
         
         if request.method == 'POST':
+            logger.info(f"POST request recibido para crear reseña de reserva {reservation_id}")
+            
             form = ReviewForm(request.POST)
             
             if form.is_valid():
-                with transaction.atomic():
-                    review = form.save(commit=False)
-                    review.reservation = reservation
-                    # Llamar clean() manualmente para evitar problemas de validación
-                    try:
+                logger.info("Formulario válido, creando reseña...")
+                try:
+                    with transaction.atomic():
+                        review = form.save(commit=False)
+                        review.reservation = reservation
                         review.clean()
                         review.save()
                         
-                        logger.info(
-                            f"Nueva reseña creada para {reservation.room.name} "
-                            f"por {request.user.username} - Rating: {review.rating}"
-                        )
+                        logger.info(f"Review guardado exitosamente con ID: {review.id}")
                         
                         messages.success(
                             request, 
@@ -654,11 +703,21 @@ def room_review(request, reservation_id):
                         
                         return redirect('rooms:reservation_detail', reservation_id=reservation_id)
                         
-                    except ValidationError as e:
-                        logger.error(f"Error de validación al crear reseña: {str(e)}")
-                        form.add_error(None, str(e))
-                        messages.error(request, f"Error al crear la reseña: {str(e)}")
+                except ValidationError as e:
+                    logger.error(f"Error de validación al crear reseña: {str(e)}")
+                    form.add_error(None, str(e))
+                    messages.error(request, f"Error de validación: {str(e)}")
+                except Exception as e:
+                    logger.error(f"Error inesperado al crear reseña: {str(e)}", exc_info=True)
+                    messages.error(request, f"Error inesperado al guardar la reseña: {str(e)}")
+            else:
+                logger.warning(f"Formulario de reseña inválido para reserva {reservation_id}")
+                logger.warning(f"Errores del formulario: {form.errors}")
+                for field, errors in form.errors.items():
+                    for error in errors:
+                        messages.error(request, f"Error en {field}: {error}")
         else:
+            logger.info(f"GET request para mostrar formulario de reseña de reserva {reservation_id}")
             form = ReviewForm()
         
         context = {
@@ -835,3 +894,126 @@ def error_500(request):
     """Vista personalizada para error 500."""
     logger.error(f"Error 500 - Error interno del servidor en: {request.path}")
     return render(request, 'errors/500.html', status=500)
+
+
+@login_required
+@handle_exception
+def user_reservation_stats(request):
+    """Vista para mostrar estadísticas de uso de reservas del usuario actual."""
+    try:
+        # Obtener información de seguridad del usuario
+        try:
+            from core.reservation_security import SecurityManager
+            security_rules = SecurityManager.get_security_rules(request.user)
+            is_blocked, blocked_until = SecurityManager.is_user_blocked(request.user)
+            rate_allowed, violations, warnings = SecurityManager.check_rate_limits(request.user)
+            
+            has_security_info = True
+        except ImportError:
+            security_rules = None
+            is_blocked = False
+            blocked_until = None
+            rate_allowed = True
+            violations = []
+            warnings = []
+            has_security_info = False
+        
+        # Calcular estadísticas de uso
+        now = timezone.now()
+        today = now.date()
+        week_start = now - timedelta(days=now.weekday())
+        week_start = week_start.replace(hour=0, minute=0, second=0, microsecond=0)
+        
+        user_reservations = request.user.reservations.all()
+        
+        # Estadísticas actuales
+        stats = {
+            'hour': {
+                'current': user_reservations.filter(
+                    created_at__gte=now - timedelta(hours=1),
+                    status__in=['confirmed', 'in_progress']
+                ).count(),
+                'limit': security_rules.max_reservations_per_hour if security_rules else 0
+            },
+            'day': {
+                'current': user_reservations.filter(
+                    created_at__gte=now - timedelta(days=1),
+                    status__in=['confirmed', 'in_progress']
+                ).count(),
+                'limit': security_rules.max_reservations_per_day if security_rules else 0
+            },
+            'week': {
+                'current': user_reservations.filter(
+                    created_at__gte=week_start,
+                    status__in=['confirmed', 'in_progress']
+                ).count(),
+                'limit': security_rules.max_reservations_per_week if security_rules else 0
+            },
+            'concurrent': {
+                'current': user_reservations.filter(
+                    status__in=['confirmed', 'in_progress'],
+                    start_time__lte=now,
+                    end_time__gt=now
+                ).count(),
+                'limit': security_rules.max_concurrent_reservations if security_rules else 0
+            }
+        }
+        
+        # Calcular horas reservadas
+        daily_reservations = user_reservations.filter(
+            start_time__date=today,
+            status__in=['confirmed', 'in_progress']
+        )
+        
+        daily_hours = sum([
+            (res.end_time - res.start_time).total_seconds() / 3600
+            for res in daily_reservations
+        ])
+        
+        weekly_reservations = user_reservations.filter(
+            start_time__gte=week_start,
+            start_time__lt=week_start + timedelta(days=7),
+            status__in=['confirmed', 'in_progress']
+        )
+        
+        weekly_hours = sum([
+            (res.end_time - res.start_time).total_seconds() / 3600
+            for res in weekly_reservations
+        ])
+        
+        hours_stats = {
+            'daily': {
+                'current': daily_hours,
+                'limit': security_rules.max_total_hours_per_day if security_rules else 0
+            },
+            'weekly': {
+                'current': weekly_hours,
+                'limit': security_rules.max_total_hours_per_week if security_rules else 0
+            }
+        }
+        
+        # Reservas recientes
+        recent_reservations = user_reservations.filter(
+            status__in=['confirmed', 'in_progress', 'completed']
+        ).order_by('-created_at')[:10]
+        
+        context = {
+            'has_security_info': has_security_info,
+            'security_rules': security_rules,
+            'is_blocked': is_blocked,
+            'blocked_until': blocked_until,
+            'rate_allowed': rate_allowed,
+            'violations': violations,
+            'warnings': warnings,
+            'stats': stats,
+            'hours_stats': hours_stats,
+            'recent_reservations': recent_reservations,
+            'user_role': SecurityManager.get_user_role(request.user) if has_security_info else 'unknown'
+        }
+        
+        return render(request, 'rooms/user_reservation_stats.html', context)
+    
+    except Exception as e:
+        logger.error(f"Error en user_reservation_stats: {str(e)}", exc_info=True)
+        messages.error(request, "Error al cargar las estadísticas.")
+        return redirect('rooms:reservation_list')

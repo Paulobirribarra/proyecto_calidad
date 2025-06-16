@@ -29,6 +29,9 @@ user_urlpatterns = [
     
     # Reseñas
     path('reserva/<int:reservation_id>/calificar/', views.room_review, name='room_review'),
+
+    # Estadísticas de usuario
+    path('stats/', views.user_reservation_stats, name='user_reservation_stats'),
 ]
 
 # URLs específicas para administradores (con prefijo 'admin/' protegido por middleware)
