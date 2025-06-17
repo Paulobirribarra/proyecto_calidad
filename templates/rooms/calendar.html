@@ -1,0 +1,602 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Calendario de Reservas - Sistema de Salas{% endblock %}
+
+{% block extra_head %}
+<!-- CSS para calendario básico -->
+<style>
+    .calendar-stats {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        border-radius: 10px;
+    }
+    
+    .room-filter-card {
+        max-height: 400px;
+        overflow-y: auto;
+    }
+    
+    .occupation-indicator {
+        height: 4px;
+        border-radius: 2px;
+        margin-bottom: 8px;
+    }
+    
+    .legend-item {
+        display: flex;
+        align-items: center;
+        margin-bottom: 5px;
+    }
+    
+    .legend-color {
+        width: 15px;
+        height: 15px;
+        border-radius: 3px;
+        margin-right: 8px;
+    }
+    
+    /* Calendario básico */
+    .simple-calendar {
+        min-height: 500px;
+        border: 1px solid #dee2e6;
+        border-radius: 8px;
+        padding: 15px;
+    }
+    
+    .calendar-week-header {
+        display: grid;
+        grid-template-columns: repeat(7, 1fr);
+        gap: 10px;
+        margin-bottom: 15px;
+        font-weight: bold;
+        text-align: center;
+    }
+    
+    .calendar-day {
+        border: 1px solid #e9ecef;
+        border-radius: 5px;
+        padding: 10px;
+        min-height: 120px;
+        background: #f8f9fa;
+    }
+    
+    .calendar-event {
+        background: #28a745;
+        color: white;
+        padding: 3px 6px;
+        border-radius: 3px;
+        font-size: 0.8rem;
+        margin-bottom: 2px;
+        cursor: pointer;
+    }
+    
+    .calendar-event.in-progress {
+        background: #dc3545;
+    }
+    
+    .calendar-event.pending {
+        background: #ffc107;
+        color: #212529;
+    }
+    
+    .calendar-grid {
+        display: grid;
+        grid-template-columns: repeat(7, 1fr);
+        gap: 10px;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid my-4">
+    <!-- Header -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item"><a href="{% url 'rooms:room_list' %}">Salas</a></li>
+                    <li class="breadcrumb-item active" aria-current="page">Calendario</li>
+                </ol>
+            </nav>
+            
+            <div class="d-flex justify-content-between align-items-center">
+                <h2>
+                    <i class="fas fa-calendar-week me-2"></i>
+                    Calendario de Reservas
+                </h2>
+                <div class="btn-group">
+                    <a href="{% url 'rooms:room_list' %}" class="btn btn-outline-primary">
+                        <i class="fas fa-search me-1"></i>
+                        Buscar Salas
+                    </a>
+                    <a href="{% url 'rooms:reservation_list' %}" class="btn btn-outline-secondary">
+                        <i class="fas fa-list me-1"></i>
+                        Mis Reservas
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <!-- Panel Lateral -->
+        <div class="col-lg-3">
+            <!-- Estadísticas de Ocupación -->
+            <div class="card calendar-stats mb-4">
+                <div class="card-body text-center">
+                    <h5 class="card-title">
+                        <i class="fas fa-chart-pie me-2"></i>
+                        Estado Actual
+                    </h5>
+                    <div class="row text-center">
+                        <div class="col-6">
+                            <h3 class="mb-0">{{ occupied_now }}</h3>
+                            <small>En Uso</small>
+                        </div>
+                        <div class="col-6">
+                            <h3 class="mb-0">{{ available_rooms.count }}</h3>
+                            <small>Disponibles</small>
+                        </div>
+                    </div>
+                    <div class="mt-3">
+                        <div class="occupation-indicator bg-light">
+                            <div class="bg-warning h-100" style="width: {{ occupation_percentage }}%; border-radius: 2px;"></div>
+                        </div>
+                        <small>{{ occupation_percentage }}% de ocupación</small>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Leyenda -->
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h6 class="mb-0">
+                        <i class="fas fa-info-circle me-2"></i>
+                        Leyenda
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <div class="legend-item">
+                        <div class="legend-color" style="background-color: #28a745;"></div>
+                        <small>Confirmada</small>
+                    </div>
+                    <div class="legend-item">
+                        <div class="legend-color" style="background-color: #dc3545;"></div>
+                        <small>En Progreso</small>
+                    </div>
+                    <div class="legend-item">
+                        <div class="legend-color" style="background-color: #ffc107;"></div>
+                        <small>Pendiente</small>
+                    </div>
+                    <div class="legend-item">
+                        <div class="legend-color" style="background-color: #6c757d;"></div>
+                        <small>Cancelada</small>
+                    </div>
+                </div>
+            </div>            <!-- Filtros -->
+            <div class="card room-filter-card">
+                <div class="card-header">
+                    <h6 class="mb-0">
+                        <i class="fas fa-filter me-2"></i>
+                        Filtros
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <!-- Filtro por Tipo de Sala -->
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">
+                            <i class="fas fa-building me-1"></i>
+                            Tipo de Sala
+                        </label>
+                        <select class="form-select form-select-sm" id="roomTypeFilter">
+                            <option value="">Todos los tipos</option>
+                            {% for room_type_key, room_type_name in room_type_options %}
+                            <option value="{{ room_type_key }}">{{ room_type_name }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    
+                    <hr>
+                    
+                    <!-- Filtro por Sala Específica -->
+                    <div class="mb-2">
+                        <label class="form-label fw-bold">
+                            <i class="fas fa-door-open me-1"></i>
+                            Sala Específica
+                        </label>
+                    </div>
+                    <div class="form-check mb-2">
+                        <input class="form-check-input room-filter" type="radio" name="roomFilter" id="all-rooms" value="" checked>
+                        <label class="form-check-label" for="all-rooms">
+                            <strong>Todas las salas</strong>
+                        </label>
+                    </div>                    <div id="rooms-list">
+                        {% for room in rooms %}
+                        <div class="form-check mb-2 room-option" data-room-type="{{ room.room_type }}">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div class="flex-grow-1">
+                                    <input class="form-check-input room-filter" type="radio" name="roomFilter" id="room-{{ room.id }}" value="{{ room.id }}">
+                                    <label class="form-check-label" for="room-{{ room.id }}">
+                                        {{ room.name }}
+                                        <small class="text-muted d-block">
+                                            {{ room.location }} - {{ room.get_room_type_display }}
+                                        </small>
+                                    </label>
+                                </div>
+                                <a href="{% url 'rooms:room_detail' room.id %}" 
+                                   class="btn btn-outline-primary btn-sm ms-2" 
+                                   title="Ver detalles de {{ room.name }}"
+                                   target="_blank">
+                                    <i class="fas fa-external-link-alt"></i>
+                                </a>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+
+            <!-- Salas Disponibles Ahora -->
+            <div class="card mt-4">
+                <div class="card-header">
+                    <h6 class="mb-0">
+                        <i class="fas fa-check-circle text-success me-2"></i>
+                        Disponibles Ahora
+                    </h6>
+                </div>
+                <div class="card-body">                    {% for room in available_rooms|slice:":8" %}
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <div class="flex-grow-1">
+                            <strong>{{ room.name }}</strong>
+                            <br><small class="text-muted">{{ room.location }} - {{ room.get_room_type_display }}</small>
+                        </div>
+                        <div class="btn-group btn-group-sm" role="group">
+                            <a href="{% url 'rooms:room_detail' room.id %}" 
+                               class="btn btn-outline-primary" 
+                               title="Ver detalles de la sala">
+                                <i class="fas fa-eye"></i>
+                            </a>
+                            <a href="{% url 'rooms:room_reserve' room.id %}" 
+                               class="btn btn-success"
+                               title="Reservar sala">
+                                <i class="fas fa-calendar-plus"></i>
+                            </a>
+                        </div>
+                    </div>
+                    {% if not forloop.last %}<hr class="my-2">{% endif %}
+                    {% empty %}
+                    <p class="text-muted text-center">No hay salas disponibles en este momento</p>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Calendario Principal -->
+        <div class="col-lg-9">
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">
+                        <i class="fas fa-calendar me-2"></i>
+                        Vista de Calendario
+                    </h5>                    <div class="form-check form-switch">
+                        <input class="form-check-input" type="checkbox" id="showAllReservations">
+                        <label class="form-check-label" for="showAllReservations">
+                            Ver todas las reservas
+                        </label>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <!-- Calendario Simple con Bootstrap -->
+                    <div class="simple-calendar">
+                        <div class="d-flex justify-content-between align-items-center mb-3">
+                            <button class="btn btn-outline-primary" id="prevWeek">
+                                <i class="fas fa-chevron-left"></i> Anterior
+                            </button>
+                            <h5 id="currentWeekTitle">Semana del 17 al 23 de Junio 2025</h5>
+                            <button class="btn btn-outline-primary" id="nextWeek">
+                                Siguiente <i class="fas fa-chevron-right"></i>
+                            </button>
+                        </div>
+                        
+                        <div class="calendar-week-header">
+                            <div>Lunes</div>
+                            <div>Martes</div>
+                            <div>Miércoles</div>
+                            <div>Jueves</div>
+                            <div>Viernes</div>
+                            <div>Sábado</div>
+                            <div>Domingo</div>
+                        </div>
+                        
+                        <div class="calendar-grid" id="calendarGrid">
+                            <!-- Los días se generarán dinámicamente -->
+                        </div>
+                    </div>
+                    
+                    <div class="mt-3 text-center">
+                        <small class="text-muted">
+                            <i class="fas fa-sync-alt me-1"></i>
+                            Última actualización: <span id="lastUpdate"></span>
+                        </small>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal para detalles de reserva -->
+<div class="modal fade" id="reservationModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Detalles de la Reserva</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div id="reservation-details">
+                    <!-- El contenido se cargará dinámicamente -->
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
+                <div id="reservation-actions">
+                    <!-- Los botones de acción se cargarán dinámicamente -->
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<!-- JavaScript para calendario simple -->
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    let currentDate = new Date();
+    let currentRoomFilter = '';
+    let showAllReservations = false;
+    
+    // Referencias a elementos
+    const calendarGrid = document.getElementById('calendarGrid');
+    const currentWeekTitle = document.getElementById('currentWeekTitle');
+    const lastUpdate = document.getElementById('lastUpdate');
+    
+    // Función para obtener el lunes de la semana
+    function getMonday(date) {
+        const d = new Date(date);
+        const day = d.getDay();
+        const diff = d.getDate() - day + (day === 0 ? -6 : 1);
+        return new Date(d.setDate(diff));
+    }
+    
+    // Función para formatear fecha
+    function formatDate(date) {
+        return date.toLocaleDateString('es-ES', {
+            weekday: 'long',
+            year: 'numeric',
+            month: 'long',
+            day: 'numeric'
+        });
+    }
+    
+    // Función para renderizar el calendario
+    function renderCalendar() {
+        const monday = getMonday(currentDate);
+        const dates = [];
+        
+        // Generar las 7 fechas de la semana
+        for (let i = 0; i < 7; i++) {
+            const date = new Date(monday);
+            date.setDate(monday.getDate() + i);
+            dates.push(date);
+        }
+        
+        // Actualizar título
+        const startDate = dates[0].toLocaleDateString('es-ES', { day: 'numeric', month: 'long' });
+        const endDate = dates[6].toLocaleDateString('es-ES', { day: 'numeric', month: 'long', year: 'numeric' });
+        currentWeekTitle.textContent = `Semana del ${startDate} al ${endDate}`;
+        
+        // Limpiar grid
+        calendarGrid.innerHTML = '';
+        
+        // Generar días
+        dates.forEach(date => {
+            const dayDiv = document.createElement('div');
+            dayDiv.className = 'calendar-day';
+            
+            const dayNumber = date.getDate();
+            const isToday = date.toDateString() === new Date().toDateString();
+            
+            dayDiv.innerHTML = `
+                <div class="fw-bold ${isToday ? 'text-primary' : ''}" style="margin-bottom: 8px;">
+                    ${dayNumber} ${isToday ? '(Hoy)' : ''}
+                </div>
+                <div class="events-container" data-date="${date.toISOString().split('T')[0]}">
+                    <div class="text-muted small">Cargando...</div>
+                </div>
+            `;
+            
+            calendarGrid.appendChild(dayDiv);
+        });
+        
+        // Cargar eventos
+        loadEvents();
+    }
+    
+    // Función para cargar eventos
+    function loadEvents() {
+        const monday = getMonday(currentDate);
+        const sunday = new Date(monday);
+        sunday.setDate(monday.getDate() + 6);
+        
+        const params = new URLSearchParams({
+            start: monday.toISOString().split('T')[0],
+            end: sunday.toISOString().split('T')[0],
+            show_all: showAllReservations
+        });
+        
+        if (currentRoomFilter) {
+            params.append('room_id', currentRoomFilter);
+        }
+        
+        fetch(`{% url 'rooms:calendar_events_api' %}?${params}`)
+            .then(response => response.json())
+            .then(events => {
+                // Limpiar eventos existentes
+                document.querySelectorAll('.events-container').forEach(container => {
+                    container.innerHTML = '';
+                });
+                
+                // Agrupar eventos por fecha
+                const eventsByDate = {};
+                events.forEach(event => {
+                    const date = event.start.split('T')[0];
+                    if (!eventsByDate[date]) {
+                        eventsByDate[date] = [];
+                    }
+                    eventsByDate[date].push(event);
+                });
+                
+                // Renderizar eventos
+                Object.keys(eventsByDate).forEach(date => {
+                    const container = document.querySelector(`[data-date="${date}"]`);
+                    if (container) {
+                        const dayEvents = eventsByDate[date];
+                        dayEvents.forEach(event => {
+                            const eventDiv = document.createElement('div');
+                            eventDiv.className = `calendar-event ${event.extendedProps.status}`;
+                            
+                            const startTime = new Date(event.start).toLocaleTimeString('es-ES', {
+                                hour: '2-digit',
+                                minute: '2-digit'
+                            });
+                            
+                            eventDiv.innerHTML = `
+                                <div class="fw-bold">${startTime}</div>
+                                <div>${event.extendedProps.room_name}</div>
+                                <small>${event.extendedProps.user_name}</small>
+                            `;
+                            
+                            eventDiv.addEventListener('click', () => showEventDetails(event));
+                            container.appendChild(eventDiv);
+                        });
+                        
+                        if (dayEvents.length === 0) {
+                            container.innerHTML = '<small class="text-muted">Sin eventos</small>';
+                        }
+                    }
+                });
+                
+                // Actualizar timestamp
+                lastUpdate.textContent = new Date().toLocaleTimeString('es-ES');
+            })
+            .catch(error => {
+                console.error('Error cargando eventos:', error);
+                document.querySelectorAll('.events-container').forEach(container => {
+                    container.innerHTML = '<small class="text-danger">Error al cargar</small>';
+                });
+            });
+    }
+      // Función para mostrar detalles del evento
+    function showEventDetails(event) {
+        const props = event.extendedProps;
+        const startTime = new Date(event.start);
+        const endTime = new Date(event.end);
+        
+        const detailsHTML = `
+            <div class="row">
+                <div class="col-md-6">
+                    <h6><i class="fas fa-door-open me-2"></i>Sala</h6>
+                    <p>${props.room_name}</p>
+                </div>
+                <div class="col-md-6">
+                    <h6><i class="fas fa-user me-2"></i>Usuario</h6>
+                    <p>${props.user_name}</p>
+                </div>
+                <div class="col-md-6">
+                    <h6><i class="fas fa-calendar me-2"></i>Fecha</h6>
+                    <p>${startTime.toLocaleDateString('es-ES')}</p>
+                </div>
+                <div class="col-md-6">
+                    <h6><i class="fas fa-clock me-2"></i>Horario</h6>
+                    <p>${startTime.toLocaleTimeString('es-ES', {hour: '2-digit', minute: '2-digit'})} - 
+                       ${endTime.toLocaleTimeString('es-ES', {hour: '2-digit', minute: '2-digit'})}</p>
+                </div>
+                <div class="col-12">
+                    <h6><i class="fas fa-bullseye me-2"></i>Propósito</h6>
+                    <p>${props.purpose || 'No especificado'}</p>
+                </div>
+            </div>
+        `;
+          // Agregar botón de "Ver Sala" en las acciones del modal
+        const roomDetailUrl = "{% url 'rooms:room_detail' 999 %}".replace('999', props.room_id);
+        const actionsHTML = `
+            <a href="${roomDetailUrl}" 
+               class="btn btn-primary me-2" 
+               target="_blank"
+               title="Ver detalles de la sala">
+                <i class="fas fa-door-open me-1"></i>
+                Ver Sala
+            </a>
+        `;
+        
+        document.getElementById('reservation-details').innerHTML = detailsHTML;
+        document.getElementById('reservation-actions').innerHTML = actionsHTML;
+        new bootstrap.Modal(document.getElementById('reservationModal')).show();
+    }
+    
+    // Event listeners
+    document.getElementById('prevWeek').addEventListener('click', () => {
+        currentDate.setDate(currentDate.getDate() - 7);
+        renderCalendar();
+    });
+    
+    document.getElementById('nextWeek').addEventListener('click', () => {
+        currentDate.setDate(currentDate.getDate() + 7);
+        renderCalendar();
+    });
+    
+    document.getElementById('showAllReservations').addEventListener('change', function() {
+        showAllReservations = this.checked;
+        loadEvents();
+    });
+      // Filtros por sala
+    document.querySelectorAll('.room-filter').forEach(filter => {
+        filter.addEventListener('change', function() {
+            currentRoomFilter = this.value;
+            loadEvents();
+        });
+    });
+    
+    // Filtro por tipo de sala
+    document.getElementById('roomTypeFilter').addEventListener('change', function() {
+        const selectedType = this.value;
+        const roomOptions = document.querySelectorAll('.room-option');
+        
+        roomOptions.forEach(option => {
+            const roomType = option.getAttribute('data-room-type');
+            if (selectedType === '' || roomType === selectedType) {
+                option.style.display = 'block';
+            } else {
+                option.style.display = 'none';
+                // Si la sala oculta estaba seleccionada, deseleccionarla
+                const radio = option.querySelector('input[type="radio"]');
+                if (radio && radio.checked) {
+                    document.getElementById('all-rooms').checked = true;
+                    currentRoomFilter = '';
+                    loadEvents();
+                }
+            }
+        });
+    });
+    
+    // Inicializar calendario
+    renderCalendar();
+    
+    // Auto-refresh cada 5 minutos
+    setInterval(loadEvents, 5 * 60 * 1000);
+});
+</script>
+{% endblock %}

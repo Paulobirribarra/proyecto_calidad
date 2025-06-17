@@ -18,6 +18,7 @@ from django.db import transaction, IntegrityError
 from django.utils import timezone
 from django.core.mail import send_mail
 from django.conf import settings
+from datetime import timedelta
 import logging
 
 from .models import CustomUser
@@ -297,6 +298,8 @@ def dashboard(request):
     y accesos rápidos a funciones principales.
     """
     user = request.user
+    now = timezone.now()
+    today = now.date()
     
     # Estadísticas generales
     total_rooms = Room.objects.filter(is_active=True).count()
@@ -305,7 +308,7 @@ def dashboard(request):
     # Próximas reservas
     upcoming_reservations = user.reservations.filter(
         status__in=['confirmed', 'pending'],
-        start_time__gt=timezone.now()
+        start_time__gt=now
     ).select_related('room').order_by('start_time')[:3]
     
     # Salas populares (más reservadas)
@@ -326,6 +329,32 @@ def dashboard(request):
             common_hours = Counter(user_reservations_times).most_common(3)
             suggested_times = [hour for hour, count in common_hours]
     
+    # Datos del calendario para el widget
+    # Salas ocupadas ahora mismo
+    occupied_rooms = Room.objects.filter(
+        reservations__status='in_progress',
+        reservations__start_time__lte=now,
+        reservations__end_time__gt=now
+    ).distinct().count()
+    
+    # Porcentaje de ocupación
+    occupation_percentage = round((occupied_rooms / total_rooms * 100) if total_rooms > 0 else 0)
+    
+    # Salas disponibles ahora
+    available_now = Room.objects.filter(is_active=True).exclude(
+        reservations__status__in=['confirmed', 'in_progress'],
+        reservations__start_time__lte=now,
+        reservations__end_time__gt=now
+    )[:5]
+    
+    # Próximas liberaciones (reservas que terminan pronto)
+    from rooms.models import Reservation
+    next_available = Reservation.objects.filter(
+        status='in_progress',
+        end_time__gt=now,
+        end_time__lte=now + timedelta(hours=2)
+    ).select_related('room').order_by('end_time')[:3]
+    
     context = {
         'user': user,
         'total_rooms': total_rooms,
@@ -333,7 +362,14 @@ def dashboard(request):
         'upcoming_reservations': upcoming_reservations,
         'popular_rooms': popular_rooms,
         'suggested_times': suggested_times,
-        'title': 'Dashboard'    }
+        'title': 'Dashboard',
+        # Datos del calendario
+        'today': today,
+        'occupied_rooms': occupied_rooms,
+        'occupation_percentage': occupation_percentage,
+        'available_now': available_now,
+        'next_available': next_available,
+    }
     return render(request, 'usuarios/dashboard.html', context)
 
 

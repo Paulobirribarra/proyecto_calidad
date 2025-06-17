@@ -353,7 +353,6 @@ class Room(models.Model):
         chile_tz = pytz.timezone('America/Santiago')
         now_chile = now.astimezone(chile_tz)
         current_time = now_chile.time()
-        
         return self.opening_time <= current_time <= self.closing_time
     
     def get_opening_hours(self, date):
@@ -375,7 +374,28 @@ class Room(models.Model):
         if user.is_superuser or user.is_staff:
             return True
         
-        # Verificar roles específicos
+        # Verificar roles específicos configurados en allowed_roles
+        if self.allowed_roles:
+            allowed_roles_list = [role.strip().lower() for role in self.allowed_roles.split(',')]
+            
+            # Verificar si el rol del usuario está en la lista permitida
+            if hasattr(user, 'role'):
+                user_role = user.role.lower()
+                if user_role in allowed_roles_list:
+                    return True
+                
+                # También verificar variaciones del rol de soporte
+                if user_role == 'soporte' and 'soporte' in allowed_roles_list:
+                    return True
+                    
+                # Verificar si 'admin' está permitido y el usuario es admin
+                if 'admin' in allowed_roles_list and (user.is_superuser or user.is_staff):
+                    return True
+            
+            # Si el rol no está en la lista permitida, denegar acceso
+            return False
+        
+        # Si no hay allowed_roles configurado, usar la lógica por defecto basada en tipo de sala
         if hasattr(user, 'role'):
             # Restricciones para estudiantes
             if user.role == 'estudiante':
@@ -391,7 +411,7 @@ class Room(models.Model):
                     return True
                 return False
                 
-            # Para otros roles permitidos
+            # Para otros roles permitidos (profesor, admin)
             return True
         
         return False
@@ -468,7 +488,6 @@ class Reservation(models.Model):
     # Metadatos
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
-    
     class Meta:
         verbose_name = "Reserva"
         verbose_name_plural = "Reservas"
@@ -502,6 +521,17 @@ class Reservation(models.Model):
         # Permitir cancelación hasta 30 minutos antes del inicio
         time_before_start = self.start_time - now
         return time_before_start.total_seconds() > 1800  # 30 minutos
+    
+    def get_status_color(self):
+        """Retorna la clase de color Bootstrap para el estado de la reserva."""
+        status_colors = {
+            'pending': 'warning',      # Amarillo
+            'confirmed': 'primary',    # Azul
+            'in_progress': 'success',  # Verde
+            'completed': 'secondary',  # Gris
+            'cancelled': 'danger',     # Rojo
+        }
+        return status_colors.get(self.status, 'secondary')
     
     def clean(self):
         """Validaciones del modelo."""

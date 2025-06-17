@@ -26,12 +26,16 @@ user_urlpatterns = [
     path('mis-reservas/', views.reservation_list, name='my_reservations'),
     path('reserva/<int:reservation_id>/', views.reservation_detail, name='reservation_detail'),
     path('reserva/<int:reservation_id>/cancelar/', views.reservation_cancel, name='reservation_cancel'),
-    
     # Reseñas
     path('reserva/<int:reservation_id>/calificar/', views.room_review, name='room_review'),
-
+    path('sala/<int:room_id>/reseñas/', views.room_reviews, name='room_reviews'),
+    
     # Estadísticas de usuario
     path('stats/', views.user_reservation_stats, name='user_reservation_stats'),
+    
+    # Calendario de reservas
+    path('calendario/', views.calendar_view, name='calendar'),
+    path('api/calendario/eventos/', views.calendar_events_api, name='calendar_events_api'),
 ]
 
 # URLs específicas para administradores (con prefijo 'admin/' protegido por middleware)

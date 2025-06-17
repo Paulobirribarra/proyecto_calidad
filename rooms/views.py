@@ -207,24 +207,27 @@ def room_list(request):
             elif available_date:
                 # Solo filtrar por fecha, sin horarios específicos
                 # El usuario puede ver la disponibilidad detallada en la página de cada sala
-                pass
-        
-        # Filtrar salas que el usuario puede reservar antes de la paginación
+                pass        # Filtrar salas que el usuario puede reservar antes de la paginación
+        # MEJORA UX: Todos los usuarios ven solo las salas que pueden reservar (excepto administradores)
         if request.user.is_authenticated:
-            # Crear una lista temporaria de salas a filtrar
-            filtered_rooms = []
-            # Almacenar solo los IDs de las salas que el usuario puede reservar
-            allowed_room_ids = []
+            # Verificar si es administrador
+            is_super_admin = (request.user.is_superuser or 
+                            (hasattr(request.user, 'is_admin') and request.user.is_admin()))
             
-            for room in rooms_queryset:
-                if room.can_be_reserved_by(request.user):
-                    allowed_room_ids.append(room.id)
-            
-            # Filtrar el queryset con los IDs permitidos
-            if not (request.user.is_staff or request.user.is_superuser or
-                   (hasattr(request.user, 'is_admin') and request.user.is_admin()) or
-                   (hasattr(request.user, 'is_profesor') and request.user.is_profesor())):
-                rooms_queryset = rooms_queryset.filter(id__in=allowed_room_ids)
+            # Solo filtrar si NO es super administrador
+            if not is_super_admin:
+                # Crear una nueva lista con solo las salas que puede reservar
+                filtered_room_ids = []
+                for room in rooms_queryset:
+                    if room.can_be_reserved_by(request.user):
+                        filtered_room_ids.append(room.id)
+                
+                # Aplicar el filtro al queryset
+                if filtered_room_ids:
+                    rooms_queryset = rooms_queryset.filter(id__in=filtered_room_ids)
+                else:
+                    # Si no hay salas permitidas, mostrar queryset vacío
+                    rooms_queryset = Room.objects.none()
         
         # Paginación después del filtrado
         paginator = Paginator(rooms_queryset.order_by('name'), 12)
@@ -1017,3 +1020,262 @@ def user_reservation_stats(request):
         logger.error(f"Error en user_reservation_stats: {str(e)}", exc_info=True)
         messages.error(request, "Error al cargar las estadísticas.")
         return redirect('rooms:reservation_list')
+
+
+# Vistas del Calendario
+
+@login_required
+@handle_exception
+def calendar_view(request):
+    """
+    Vista principal del calendario de reservas.
+    
+    Muestra un calendario interactivo con todas las reservas
+    del usuario y información de disponibilidad de salas.
+    """
+    try:
+        now = timezone.now()
+        today = now.date()
+          # Obtener todas las salas activas
+        rooms = Room.objects.filter(is_active=True).order_by('name')
+        
+        # Filtrar salas que el usuario puede reservar y obtener tipos únicos
+        user_reservable_rooms = []
+        available_room_types = set()
+        
+        for room in rooms:
+            if room.can_be_reserved_by(request.user):
+                user_reservable_rooms.append(room)
+                available_room_types.add(room.room_type)
+        
+        # Preparar opciones de filtro por tipo de sala
+        room_type_choices = dict(Room.ROOM_TYPE_CHOICES)
+        available_room_type_options = [
+            (room_type, room_type_choices.get(room_type, room_type))
+            for room_type in available_room_types
+        ]
+        
+        # Obtener reservas para el rango de visualización
+        # Por defecto, mostrar la semana actual
+        start_of_week = now - timedelta(days=now.weekday())
+        end_of_week = start_of_week + timedelta(days=6)
+        
+        # Reservas del usuario en la semana
+        user_reservations = request.user.reservations.filter(
+            start_time__date__gte=start_of_week.date(),
+            start_time__date__lte=end_of_week.date(),
+            status__in=['confirmed', 'in_progress', 'pending']
+        ).select_related('room').order_by('start_time')
+        
+        # Reservas de hoy de todas las salas (para mostrar ocupación general)
+        today_all_reservations = Reservation.objects.filter(
+            start_time__date=today,
+            status__in=['confirmed', 'in_progress']
+        ).select_related('room', 'user').order_by('start_time')
+        
+        # Estadísticas de ocupación
+        total_rooms = rooms.count()
+        occupied_now = rooms.filter(
+            reservations__status='in_progress',
+            reservations__start_time__lte=now,
+            reservations__end_time__gt=now
+        ).distinct().count()        # Salas disponibles ahora (solo las que el usuario puede reservar)
+        available_rooms_all = rooms.exclude(
+            reservations__status__in=['confirmed', 'in_progress'],
+            reservations__start_time__lte=now,
+            reservations__end_time__gt=now
+        )
+        
+        # Filtrar available_rooms por permisos del usuario
+        if request.user.is_authenticated:
+            # Solo administradores ven todas las salas disponibles
+            if request.user.is_superuser or (hasattr(request.user, 'is_admin') and request.user.is_admin()):
+                available_rooms = available_rooms_all
+            else:
+                # Para otros usuarios, solo mostrar salas que pueden reservar
+                user_reservable_room_ids = [room.id for room in user_reservable_rooms]
+                available_rooms = available_rooms_all.filter(id__in=user_reservable_room_ids)
+        else:
+            available_rooms = available_rooms_all
+        
+        context = {
+            'rooms': user_reservable_rooms,  # Solo salas que el usuario puede reservar
+            'all_rooms': rooms,  # Todas las salas para referencia
+            'room_type_options': available_room_type_options,
+            'user_reservations': user_reservations,
+            'today_all_reservations': today_all_reservations,
+            'today': today,
+            'total_rooms': total_rooms,
+            'occupied_now': occupied_now,
+            'available_rooms': available_rooms,
+            'occupation_percentage': round((occupied_now / total_rooms * 100) if total_rooms > 0 else 0),
+            'start_of_week': start_of_week.date(),
+            'end_of_week': end_of_week.date(),
+        }
+        
+        return render(request, 'rooms/calendar.html', context)
+        
+    except Exception as e:
+        logger.error(f"Error en calendar_view: {str(e)}", exc_info=True)
+        messages.error(request, "Error al cargar el calendario.")
+        return redirect('rooms:room_list')
+
+
+@login_required
+@handle_exception  
+def calendar_events_api(request):
+    """
+    API endpoint para obtener eventos del calendario en formato JSON.
+    
+    Retorna las reservas en formato compatible con FullCalendar.js
+    """
+    try:
+        # Obtener parámetros de fecha del request
+        start_date = request.GET.get('start')
+        end_date = request.GET.get('end')
+        
+        if start_date and end_date:
+            start_dt = datetime.strptime(start_date, '%Y-%m-%d').date()
+            end_dt = datetime.strptime(end_date, '%Y-%m-%d').date()
+        else:
+            # Por defecto, mostrar desde hoy hasta 30 días adelante
+            start_dt = timezone.now().date()
+            end_dt = start_dt + timedelta(days=30)
+        
+        # Filtros opcionales
+        room_id = request.GET.get('room_id')
+        show_all = request.GET.get('show_all', 'false').lower() == 'true'        # Determinar qué salas mostrar según el rol del usuario
+        if request.user.is_superuser or (hasattr(request.user, 'is_admin') and request.user.is_admin()):
+            # Los administradores pueden ver todas las salas
+            available_rooms = Room.objects.filter(is_active=True)
+            user_reservable_room_ids = list(available_rooms.values_list('id', flat=True))
+        else:
+            # Usuarios normales solo ven salas que pueden reservar
+            available_rooms = Room.objects.filter(is_active=True)
+            user_reservable_room_ids = [
+                room.id for room in available_rooms 
+                if room.can_be_reserved_by(request.user)
+            ]
+        
+        # Construir query base - filtrar por salas según permisos
+        reservations_query = Reservation.objects.filter(
+            start_time__date__gte=start_dt,
+            start_time__date__lte=end_dt,
+            status__in=['confirmed', 'in_progress', 'pending'],
+            room_id__in=user_reservable_room_ids
+        ).select_related('room', 'user')
+        
+        # Filtrar por sala si se especifica (y si el usuario puede verla)
+        if room_id:
+            if int(room_id) in user_reservable_room_ids:
+                reservations_query = reservations_query.filter(room_id=room_id)
+            else:
+                # Si el usuario no puede ver esta sala, no mostrar nada
+                reservations_query = reservations_query.none()
+        
+        # Si no es admin y no se especifica show_all, mostrar solo las del usuario
+        if not show_all and not request.user.is_staff:
+            reservations_query = reservations_query.filter(user=request.user)
+        
+        # Construir eventos para FullCalendar
+        events = []
+        for reservation in reservations_query:
+            # Determinar color según estado
+            color_map = {
+                'confirmed': '#28a745',    # Verde
+                'in_progress': '#dc3545',  # Rojo
+                'pending': '#ffc107',      # Amarillo
+            }
+            
+            event = {
+                'id': reservation.id,
+                'title': f"{reservation.room.name}",
+                'start': reservation.start_time.isoformat(),
+                'end': reservation.end_time.isoformat(),
+                'backgroundColor': color_map.get(reservation.status, '#6c757d'),
+                'borderColor': color_map.get(reservation.status, '#6c757d'),                'textColor': '#ffffff',
+                'extendedProps': {
+                    'status': reservation.status,
+                    'room_id': reservation.room.id,
+                    'room_name': reservation.room.name,
+                    'user_name': reservation.user.get_full_name() or reservation.user.username,
+                    'purpose': reservation.purpose,
+                    'attendees': reservation.attendees_count,
+                    'can_edit': reservation.user == request.user or request.user.is_staff,
+                }
+            }
+            
+            # Agregar información del usuario si es admin o si es el dueño
+            if request.user.is_staff or reservation.user == request.user:
+                event['title'] += f" - {reservation.user.get_full_name() or reservation.user.username}"
+            
+            events.append(event)
+        
+        return JsonResponse(events, safe=False)
+        
+    except Exception as e:
+        logger.error(f"Error en calendar_events_api: {str(e)}", exc_info=True)
+        return JsonResponse({'error': 'Error al cargar eventos'}, status=500)
+
+
+def room_reviews(request, room_id):
+    """Vista para mostrar todas las reseñas de una sala específica."""
+    room = get_object_or_404(Room, id=room_id)
+    
+    # Obtener todas las reseñas de la sala ordenadas por fecha
+    reviews = Review.objects.filter(
+        reservation__room=room
+    ).select_related(
+        'reservation__user'
+    ).order_by('-created_at')
+    
+    # Obtener estadísticas de reseñas
+    total_reviews = reviews.count()
+    
+    # Cálculo de promedios
+    if total_reviews > 0:
+        from django.db.models import Avg
+        
+        avg_rating = reviews.aggregate(Avg('rating'))['rating__avg'] or 0
+        avg_cleanliness = reviews.aggregate(Avg('cleanliness_rating'))['cleanliness_rating__avg'] or 0
+        avg_equipment = reviews.aggregate(Avg('equipment_rating'))['equipment_rating__avg'] or 0
+        avg_comfort = reviews.aggregate(Avg('comfort_rating'))['comfort_rating__avg'] or 0
+        
+        # Distribución de calificaciones
+        rating_distribution = {}
+        for i in range(1, 6):
+            rating_distribution[i] = reviews.filter(rating=i).count()
+        
+        # Porcentaje por tipo de comentario
+        comment_types = {}
+        for choice in Review.COMMENT_TYPE_CHOICES:
+            count = reviews.filter(comment_type=choice[0]).count()
+            if total_reviews > 0:
+                comment_types[choice[1]] = (count, round(count * 100 / total_reviews, 1))
+            else:
+                comment_types[choice[1]] = (0, 0)
+    else:
+        avg_rating = avg_cleanliness = avg_equipment = avg_comfort = 0
+        rating_distribution = {i: 0 for i in range(1, 6)}
+        comment_types = {choice[1]: (0, 0) for choice in Review.COMMENT_TYPE_CHOICES}
+    
+    # Paginación
+    from django.core.paginator import Paginator
+    paginator = Paginator(reviews, 10)  # 10 reseñas por página
+    page_number = request.GET.get('page')
+    page_obj = paginator.get_page(page_number)
+    
+    context = {
+        'room': room,
+        'reviews': page_obj,
+        'total_reviews': total_reviews,
+        'avg_rating': round(avg_rating, 1),
+        'avg_cleanliness': round(avg_cleanliness, 1),
+        'avg_equipment': round(avg_equipment, 1),
+        'avg_comfort': round(avg_comfort, 1),
+        'rating_distribution': rating_distribution,
+        'comment_types': comment_types,
+        'page_obj': page_obj,
+    }
+    
+    return render(request, 'rooms/room_reviews.html', context)

@@ -26,10 +26,11 @@ SECRET_KEY = 'django-insecure-sl1xbq-s6(j_oy#6q59c%9jk(b=c1w-su*72lqge#&tw0(*_!x
 DEBUG = True  # Activado para desarrollo
 # DEBUG = False  # Comentado para permitir archivos estáticos
 
-ALLOWED_HOSTS = ['localhost', '127.0.0.1', 'testserver', '*']
+# SEGURIDAD: Solo hosts locales permitidos en desarrollo
+ALLOWED_HOSTS = ['localhost', '127.0.0.1', 'testserver']
 
 # Configuración adicional para páginas de error personalizadas
-ALLOWED_HOSTS_ENV = ['localhost', '127.0.0.1', 'testserver', '*']
+ALLOWED_HOSTS_ENV = ['localhost', '127.0.0.1', 'testserver']
 
 
 # Application definition

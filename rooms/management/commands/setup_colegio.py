@@ -45,16 +45,99 @@ class Command(BaseCommand):
             admin_user = User.objects.filter(is_superuser=True).first()
         except:
             pass
-        
-        # Datos de salas y equipamiento para el colegio
+          # Datos de salas y equipamiento para el colegio
+        # Organizados por roles para asegurar distribución equilibrada
         rooms_data = [
-            # Aulas principales
+            # SALAS PARA ESTUDIANTES (6+ salas)
+            # Salas de estudio individuales
+            {
+                'name': 'Sala de Estudio Individual A1',
+                'description': 'Sala de estudio individual equipada para concentración y trabajo personal.',
+                'capacity': 1,
+                'equipment': 'Escritorio, silla ergonómica, lámpara de lectura, conexión eléctrica, WiFi',
+                'location': 'Edificio Biblioteca - Primer Piso',
+                'room_type': 'sala_individual',
+                'opening_time': '07:00',
+                'closing_time': '20:00',
+                'allowed_roles': 'admin,estudiante'
+            },
+            {
+                'name': 'Sala de Estudio Individual A2',
+                'description': 'Cabina de estudio con ambiente silencioso para concentración máxima.',
+                'capacity': 1,
+                'equipment': 'Escritorio amplio, silla cómoda, lámpara LED, toma corriente, ambiente silencioso',
+                'location': 'Edificio Biblioteca - Primer Piso',
+                'room_type': 'sala_individual',
+                'opening_time': '07:00',
+                'closing_time': '20:00',
+                'allowed_roles': 'admin,estudiante'
+            },
+            {
+                'name': 'Sala de Estudio Individual A3',
+                'description': 'Espacio personal de estudio con vista al jardín para un ambiente relajante.',
+                'capacity': 1,
+                'equipment': 'Mesa de estudio, silla ajustable, luz natural, conexión a internet',
+                'location': 'Edificio Biblioteca - Segundo Piso',
+                'room_type': 'sala_individual',
+                'opening_time': '07:00',
+                'closing_time': '20:00',
+                'allowed_roles': 'admin,estudiante'
+            },
+            
+            # Salas de estudio grupales para estudiantes
+            {
+                'name': 'Sala de Estudio Grupal B1',
+                'description': 'Sala para grupos de estudio de 4-6 estudiantes con pizarra.',
+                'capacity': 6,
+                'equipment': 'Mesa redonda, 6 sillas, pizarra acrílica, marcadores, proyector portátil',
+                'location': 'Edificio Biblioteca - Primer Piso',
+                'room_type': 'sala_estudio',
+                'opening_time': '07:00',
+                'closing_time': '20:00',
+                'allowed_roles': 'admin,estudiante'
+            },
+            {
+                'name': 'Sala de Estudio Grupal B2',
+                'description': 'Espacio colaborativo para proyectos grupales y discusión.',
+                'capacity': 8,
+                'equipment': 'Mesas modulares, 8 sillas, pizarra interactiva, TV, conexión HDMI',
+                'location': 'Edificio Biblioteca - Segundo Piso',
+                'room_type': 'sala_estudio',
+                'opening_time': '07:00',
+                'closing_time': '20:00',
+                'allowed_roles': 'admin,estudiante'
+            },
+            {
+                'name': 'Sala de Estudio Grupal B3',
+                'description': 'Sala multiuso para trabajo en equipo y presentaciones estudiantiles.',
+                'capacity': 10,
+                'equipment': 'Mesa de conferencias, 10 sillas, proyector, pantalla, laptop compartida',
+                'location': 'Edificio Estudiantes - Primer Piso',
+                'room_type': 'sala_estudio',
+                'opening_time': '07:00',
+                'closing_time': '20:00',
+                'allowed_roles': 'admin,estudiante'
+            },
+            {
+                'name': 'Auditorio Estudiantil',
+                'description': 'Pequeño auditorio para presentaciones y actividades estudiantiles.',
+                'capacity': 50,
+                'equipment': 'Asientos tipo anfiteatro, proyector, sistema de sonido, micrófono',
+                'location': 'Edificio Estudiantes - Planta Baja',
+                'room_type': 'auditorio',
+                'opening_time': '08:00',
+                'closing_time': '18:00',
+                'allowed_roles': 'admin,estudiante'
+            },
+            
+            # SALAS PARA PROFESORES (6+ salas)
+            # Aulas de clases
             {
                 'name': 'Aula 1A - Primaria',
-                'description': 'Aula principal para estudiantes de primer grado. Equipada con mobiliario adaptado para niños y materiales didácticos básicos.',
+                'description': 'Aula principal para estudiantes de primer grado con mobiliario adaptado.',
                 'capacity': 25,
-                'equipment': 'Pizarra acrílica, proyector, computadora, sistema de sonido, estantes para libros, mobiliario infantil',
-                'location': 'Edificio Principal - Primer Piso - Ala Este',
+                'equipment': 'Pizarra acrílica, proyector, computadora, sistema de sonido, mobiliario infantil',
+                'location': 'Edificio Principal - Primer Piso',
                 'room_type': 'aula',
                 'opening_time': '07:00',
                 'closing_time': '18:00',
@@ -62,10 +145,10 @@ class Command(BaseCommand):
             },
             {
                 'name': 'Aula 2B - Primaria',
-                'description': 'Aula para estudiantes de segundo grado con enfoque en matemáticas y ciencias básicas.',
+                'description': 'Aula para segundo grado con tecnología educativa integrada.',
                 'capacity': 25,
-                'equipment': 'Pizarra digital interactiva, proyector, tablets educativas, manipulativos matemáticos, cámara de documentos',
-                'location': 'Edificio Principal - Primer Piso - Ala Oeste',
+                'equipment': 'Pizarra digital interactiva, tablets educativas, manipulativos matemáticos',
+                'location': 'Edificio Principal - Primer Piso',
                 'room_type': 'aula',
                 'opening_time': '07:00',
                 'closing_time': '18:00',
@@ -73,10 +156,10 @@ class Command(BaseCommand):
             },
             {
                 'name': 'Aula 6A - Primaria Superior',
-                'description': 'Aula para estudiantes de sexto grado, preparación para secundaria.',
+                'description': 'Aula para sexto grado con preparación para secundaria.',
                 'capacity': 30,
-                'equipment': 'Pizarra inteligente, proyector HD, laptops, impresora, biblioteca de aula, microscopios básicos',
-                'location': 'Edificio Principal - Segundo Piso - Ala Norte',
+                'equipment': 'Pizarra inteligente, laptops, impresora, biblioteca de aula, microscopios',
+                'location': 'Edificio Principal - Segundo Piso',
                 'room_type': 'aula',
                 'opening_time': '07:00',
                 'closing_time': '18:00',
@@ -84,10 +167,10 @@ class Command(BaseCommand):
             },
             {
                 'name': 'Aula 7A - Secundaria',
-                'description': 'Aula principal para estudiantes de séptimo grado, transición a educación secundaria.',
+                'description': 'Aula principal para séptimo grado con tecnología avanzada.',
                 'capacity': 32,
-                'equipment': 'Sistema audiovisual completo, laptops, pizarra digital, conexión a internet de alta velocidad',
-                'location': 'Edificio Secundaria - Primer Piso - Ala Central',
+                'equipment': 'Sistema audiovisual completo, laptops, pizarra digital, internet alta velocidad',
+                'location': 'Edificio Secundaria - Primer Piso',
                 'room_type': 'aula',
                 'opening_time': '07:00',
                 'closing_time': '19:00',
@@ -95,196 +178,260 @@ class Command(BaseCommand):
             },
             {
                 'name': 'Aula 10B - Secundaria',
-                'description': 'Aula para estudiantes de décimo grado con enfoque en preparación universitaria.',
+                'description': 'Aula para décimo grado con preparación universitaria.',
                 'capacity': 35,
-                'equipment': 'Proyector 4K, sistema de conferencias, laptops individuales, impresora 3D básica, calculadoras científicas',
-                'location': 'Edificio Secundaria - Segundo Piso - Ala Sur',
+                'equipment': 'Proyector 4K, sistema conferencias, laptops individuales, impresora 3D',
+                'location': 'Edificio Secundaria - Segundo Piso',
                 'room_type': 'aula',
                 'opening_time': '07:00',
                 'closing_time': '19:00',
                 'allowed_roles': 'admin,profesor'
             },
-            
-            # Laboratorios
             {
-                'name': 'Laboratorio de Ciencias - Química',
-                'description': 'Laboratorio especializado en química con equipamiento de seguridad completo y reactivos básicos.',
-                'capacity': 24,
-                'equipment': 'Mesas de laboratorio con agua y gas, campana extractora, microscopios ópticos, balanzas analíticas, material de vidrio, reactivos básicos, kit de primeros auxilios',
-                'location': 'Edificio Ciencias - Primer Piso',
-                'room_type': 'laboratorio_ciencias',
-                'opening_time': '07:00',
-                'closing_time': '17:00',
-                'allowed_roles': 'admin,profesor'
-            },
-            {
-                'name': 'Laboratorio de Ciencias - Biología',
-                'description': 'Laboratorio de biología con equipamiento para observación y experimentación.',
-                'capacity': 28,
-                'equipment': 'Microscopios binoculares, estereoscopios, modelos anatómicos, terrarios, acuarios, esqueletos didácticos, láminas histológicas',
-                'location': 'Edificio Ciencias - Segundo Piso',
-                'room_type': 'laboratorio_ciencias',
-                'opening_time': '07:00',
-                'closing_time': '17:00',
-                'allowed_roles': 'admin,profesor'
-            },
-            {
-                'name': 'Laboratorio de Informática 1',
-                'description': 'Laboratorio principal de computación con equipos de última generación.',
-                'capacity': 30,
-                'equipment': '30 computadoras de escritorio, servidor local, proyector, pizarra digital, impresora láser, escáner, kit de robótica básica',
-                'location': 'Edificio Tecnología - Primer Piso',
-                'room_type': 'laboratorio_informatica',
-                'opening_time': '07:00',
-                'closing_time': '19:00',
-                'allowed_roles': 'admin,profesor,estudiante'
-            },
-            {
-                'name': 'Laboratorio de Informática 2 - Robótica',
-                'description': 'Laboratorio especializado en robótica y programación avanzada.',
+                'name': 'Aula de Arte y Creatividad',
+                'description': 'Espacio especializado para clases de arte, música y actividades creativas.',
                 'capacity': 20,
-                'equipment': 'Laptops de alto rendimiento, kits de robótica LEGO Mindstorms, Arduino, Raspberry Pi, impresora 3D profesional, soldadores, multímetros',
-                'location': 'Edificio Tecnología - Segundo Piso',
-                'room_type': 'laboratorio_informatica',
+                'equipment': 'Mesas de arte, caballetes, proyector, equipo de sonido, materiales básicos',
+                'location': 'Edificio Cultural - Primer Piso',
+                'room_type': 'aula',
                 'opening_time': '07:00',
-                'closing_time': '19:00',
+                'closing_time': '18:00',
                 'allowed_roles': 'admin,profesor'
             },
             
-            # Espacios especiales
+            # Auditorio principal
             {
-                'name': 'Biblioteca Clara Brincefield',
-                'description': 'Biblioteca principal del colegio con zona de estudio silencioso y recursos digitales.',
-                'capacity': 50,
-                'equipment': 'Catálogo digital, computadoras de consulta, impresora, scanner, proyector para presentaciones, zona de lectura cómoda',
-                'location': 'Edificio Central - Primer Piso',
-                'room_type': 'biblioteca',
-                'opening_time': '07:00',
-                'closing_time': '20:00',
-                'allowed_roles': 'admin,profesor,estudiante'
-            },
-            {
-                'name': 'Auditorio Principal',
-                'description': 'Auditorio para eventos, conferencias y presentaciones institucionales.',
+                'name': 'Auditorio Principal Clara Brincefield',
+                'description': 'Auditorio principal para eventos, conferencias y presentaciones institucionales.',
                 'capacity': 200,
-                'equipment': 'Sistema de sonido profesional, proyectores de alta definición, iluminación escénica, micrófono inalámbrico, cámaras de video',
+                'equipment': 'Sistema sonido profesional, proyectores HD, iluminación escénica, cámaras',
                 'location': 'Edificio Central - Planta Baja',
                 'room_type': 'auditorio',
                 'opening_time': '07:00',
                 'closing_time': '21:00',
-                'allowed_roles': 'admin'
+                'allowed_roles': 'admin,profesor'
             },
+            
+            # Salas de reuniones para profesores
             {
-                'name': 'Sala de Profesores',
-                'description': 'Espacio privado para reuniones del personal docente y planificación académica.',
+                'name': 'Sala de Profesores Principal',
+                'description': 'Espacio principal para reuniones del personal docente y planificación.',
                 'capacity': 25,
-                'equipment': 'Mesa de reuniones, proyector, laptops institucionales, impresora, cafetera, casilleros personales',
+                'equipment': 'Mesa reuniones, proyector, laptops, impresora, cafetera, casilleros',
                 'location': 'Edificio Administrativo - Segundo Piso',
-                'room_type': 'sala_profesores',
+                'room_type': 'sala_reunion',
                 'opening_time': '06:30',
                 'closing_time': '19:00',
                 'allowed_roles': 'admin,profesor'
             },
             {
-                'name': 'Sala de Reuniones - Dirección',
-                'description': 'Sala de reuniones para la dirección académica y administrativa.',
+                'name': 'Sala de Coordinación Académica',
+                'description': 'Sala para coordinadores académicos y reuniones de área.',
                 'capacity': 12,
-                'equipment': 'Mesa ejecutiva, sistema de videoconferencias, proyector, laptops, teléfono de conferencias',
-                'location': 'Edificio Administrativo - Segundo Piso',
+                'equipment': 'Mesa ejecutiva, sistema videoconferencias, proyector, teléfono conferencias',
+                'location': 'Edificio Administrativo - Primer Piso',
                 'room_type': 'sala_reunion',
                 'opening_time': '07:00',
                 'closing_time': '18:00',
-                'allowed_roles': 'admin'
+                'allowed_roles': 'admin,profesor'
             },
             
-            # Equipamiento móvil/recursos
+            # SALAS PARA SOPORTE TÉCNICO (6+ salas/equipos)
+            # Laboratorios de informática
+            {
+                'name': 'Laboratorio de Informática 1',
+                'description': 'Laboratorio principal de computación con equipos de última generación.',
+                'capacity': 30,
+                'equipment': '30 computadoras, servidor local, proyector, pizarra digital, impresora láser',
+                'location': 'Edificio Tecnología - Primer Piso',
+                'room_type': 'laboratorio_informatica',
+                'opening_time': '07:00',
+                'closing_time': '19:00',
+                'allowed_roles': 'admin,profesor,soporte'
+            },
+            {
+                'name': 'Laboratorio de Informática 2 - Robótica',
+                'description': 'Laboratorio especializado en robótica y programación avanzada.',
+                'capacity': 20,
+                'equipment': 'Laptops alto rendimiento, kits robótica, Arduino, impresora 3D profesional',
+                'location': 'Edificio Tecnología - Segundo Piso',
+                'room_type': 'laboratorio_informatica',
+                'opening_time': '07:00',
+                'closing_time': '19:00',
+                'allowed_roles': 'admin,profesor,soporte'
+            },
+            {
+                'name': 'Laboratorio de Reparación Técnica',
+                'description': 'Espacio para mantenimiento y reparación de equipos tecnológicos.',
+                'capacity': 5,
+                'equipment': 'Banco trabajo, herramientas especializadas, multímetros, soldadores, repuestos',
+                'location': 'Edificio Tecnología - Sótano',
+                'room_type': 'laboratorio_informatica',
+                'opening_time': '08:00',
+                'closing_time': '17:00',
+                'allowed_roles': 'admin,soporte'
+            },
+            
+            # Salas de reuniones para soporte
+            {
+                'name': 'Sala de Reuniones Técnicas',
+                'description': 'Sala para reuniones del equipo de soporte técnico y planificación IT.',
+                'capacity': 8,
+                'equipment': 'Mesa reuniones, laptops, proyector, pizarra, conexión múltiples dispositivos',
+                'location': 'Edificio Tecnología - Primer Piso',
+                'room_type': 'sala_reunion',
+                'opening_time': '08:00',
+                'closing_time': '18:00',
+                'allowed_roles': 'admin,soporte'
+            },
+            {
+                'name': 'Centro de Soporte Técnico',
+                'description': 'Centro principal de atención y soporte técnico para usuarios.',
+                'capacity': 6,
+                'equipment': 'Escritorios de atención, computadoras, teléfonos, sistema tickets, almacén',
+                'location': 'Edificio Tecnología - Planta Baja',
+                'room_type': 'sala_reunion',
+                'opening_time': '07:00',
+                'closing_time': '19:00',
+                'allowed_roles': 'admin,soporte'
+            },
+            
+            # Auditorio para soporte (capacitaciones técnicas)
+            {
+                'name': 'Aula de Capacitación Técnica',
+                'description': 'Espacio para capacitaciones técnicas y entrenamientos del personal.',
+                'capacity': 30,
+                'equipment': 'Proyector, sistema sonido, laptops, simuladores, material didáctico técnico',
+                'location': 'Edificio Tecnología - Segundo Piso',
+                'room_type': 'auditorio',
+                'opening_time': '08:00',
+                'closing_time': '18:00',
+                'allowed_roles': 'admin,soporte'
+            },
+            
+            # EQUIPAMIENTO MÓVIL (Accesible para múltiples roles)
+            {
+                'name': 'Videoproyector Portátil - VP001',
+                'description': 'Proyector de alta definición para presentaciones móviles.',
+                'capacity': 1,
+                'equipment': 'Proyector HD, cables HDMI/VGA, control remoto, estuche, trípode',
+                'location': 'Depósito Audiovisual - Edificio Central',
+                'room_type': 'equipamiento',
+                'opening_time': '07:00',
+                'closing_time': '19:00',
+                'allowed_roles': 'admin,profesor,soporte'
+            },
+            {
+                'name': 'Videoproyector Portátil - VP002',
+                'description': 'Segundo proyector móvil para eventos simultáneos.',
+                'capacity': 1,
+                'equipment': 'Proyector HD, cables múltiples, control remoto, estuche, trípode',
+                'location': 'Depósito Audiovisual - Edificio Central',
+                'room_type': 'equipamiento',
+                'opening_time': '07:00',
+                'closing_time': '19:00',
+                'allowed_roles': 'admin,profesor,soporte'
+            },
             {
                 'name': 'Carrito de Laptops - Set A',
-                'description': 'Conjunto de 25 laptops educativas con carrito de carga para uso en cualquier aula.',
+                'description': 'Conjunto de 25 laptops educativas con carrito de carga móvil.',
                 'capacity': 1,
-                'equipment': '25 laptops educativas, carrito con sistema de carga, router WiFi móvil, cables y accesorios',
-                'location': 'Depósito de Tecnología - Edificio Principal',
+                'equipment': '25 laptops educativas, carrito carga, router WiFi móvil, cables',
+                'location': 'Depósito Tecnología - Edificio Principal',
                 'room_type': 'equipamiento',
                 'opening_time': '07:00',
                 'closing_time': '18:00',
-                'allowed_roles': 'admin,profesor'
+                'allowed_roles': 'admin,profesor,soporte'
             },
             {
                 'name': 'Carrito de Tablets - Set B',
                 'description': 'Conjunto de 30 tablets educativas para actividades interactivas.',
                 'capacity': 1,
-                'equipment': '30 tablets Android educativas, aplicaciones pedagógicas, carrito con carga inalámbrica, fundas protectoras',
-                'location': 'Depósito de Tecnología - Edificio Principal',
+                'equipment': '30 tablets Android educativas, apps pedagógicas, carga inalámbrica',
+                'location': 'Depósito Tecnología - Edificio Principal',
                 'room_type': 'equipamiento',
                 'opening_time': '07:00',
                 'closing_time': '18:00',
-                'allowed_roles': 'admin,profesor'
-            },
-            {
-                'name': 'Videoproyector Portátil - VP001',
-                'description': 'Proyector de alta definición para presentaciones en cualquier espacio.',
-                'capacity': 1,
-                'equipment': 'Proyector HD, cables HDMI y VGA, control remoto, estuche de transporte, trípode',
-                'location': 'Depósito Audiovisual - Edificio Central',
-                'room_type': 'equipamiento',
-                'opening_time': '07:00',
-                'closing_time': '19:00',
-                'allowed_roles': 'admin,profesor'
-            },
-            {
-                'name': 'Videoproyector Portátil - VP002',
-                'description': 'Segundo proyector móvil de respaldo para eventos simultáneos.',
-                'capacity': 1,
-                'equipment': 'Proyector HD, cables múltiples, control remoto, estuche de transporte, trípode',
-                'location': 'Depósito Audiovisual - Edificio Central',
-                'room_type': 'equipamiento',
-                'opening_time': '07:00',
-                'closing_time': '19:00',
-                'allowed_roles': 'admin,profesor'
-            },
-            {
-                'name': 'Kit de Microscopios - Ciencias',
-                'description': 'Conjunto de microscopios portátiles para prácticas de laboratorio.',
-                'capacity': 1,
-                'equipment': '15 microscopios ópticos, láminas preparadas, porta y cubreobjetos, maletín de transporte',
-                'location': 'Laboratorio de Biología - Almacén',
-                'room_type': 'equipamiento',
-                'opening_time': '07:00',
-                'closing_time': '17:00',
-                'allowed_roles': 'admin,profesor'
+                'allowed_roles': 'admin,profesor,soporte'
             },
             {
                 'name': 'Kit de Robótica Educativa - LEGO',
                 'description': 'Kits de robótica LEGO Mindstorms para clases de tecnología.',
                 'capacity': 1,
-                'equipment': '10 kits LEGO Mindstorms EV3, sensores adicionales, pistas de competencia, manual de actividades',
-                'location': 'Laboratorio de Robótica - Almacén',
+                'equipment': '10 kits LEGO Mindstorms EV3, sensores, pistas competencia, manuales',
+                'location': 'Laboratorio Robótica - Almacén',
                 'room_type': 'equipamiento',
                 'opening_time': '07:00',
                 'closing_time': '19:00',
-                'allowed_roles': 'admin,profesor'
+                'allowed_roles': 'admin,profesor,soporte'
+            },
+            {
+                'name': 'Sistema de Sonido Portátil',
+                'description': 'Equipo de sonido móvil para eventos y presentaciones.',
+                'capacity': 1,
+                'equipment': 'Altavoces amplificados, micrófonos inalámbricos, mezcladora, batería',
+                'location': 'Depósito Audiovisual - Edificio Central',
+                'room_type': 'equipamiento',
+                'opening_time': '07:00',
+                'closing_time': '20:00',
+                'allowed_roles': 'admin,profesor,soporte'
             },
             {
                 'name': 'Cámara de Documentos - CD001',
                 'description': 'Cámara para mostrar documentos y objetos en tiempo real.',
                 'capacity': 1,
-                'equipment': 'Cámara de documentos con zoom, conexión USB, software incluido, base articulada',
+                'equipment': 'Cámara documentos con zoom, conexión USB, software, base articulada',
                 'location': 'Depósito Audiovisual - Edificio Central',
                 'room_type': 'equipamiento',
                 'opening_time': '07:00',
                 'closing_time': '18:00',
-                'allowed_roles': 'admin,profesor'
+                'allowed_roles': 'admin,profesor,soporte'
             },
             {
-                'name': 'Sistema de Sonido Portátil',
-                'description': 'Equipo de sonido móvil para eventos al aire libre y presentaciones.',
+                'name': 'Impresora 3D Educativa',
+                'description': 'Impresora 3D para proyectos educativos y prototipos.',
                 'capacity': 1,
-                'equipment': 'Altavoces amplificados, micrófonos inalámbricos, mezcladora, cables, batería portátil',
-                'location': 'Depósito Audiovisual - Edificio Central',
+                'equipment': 'Impresora 3D, filamentos PLA, software diseño 3D, herramientas',
+                'location': 'Laboratorio Tecnología - Almacén',
                 'room_type': 'equipamiento',
+                'opening_time': '08:00',
+                'closing_time': '17:00',
+                'allowed_roles': 'admin,profesor,soporte'
+            },
+            
+            # ESPACIOS ADICIONALES PARA ADMIN (acceso total)
+            {
+                'name': 'Biblioteca Clara Brincefield',
+                'description': 'Biblioteca principal del colegio con recursos digitales y físicos.',
+                'capacity': 50,
+                'equipment': 'Catálogo digital, computadoras consulta, impresora, scanner, zona lectura',
+                'location': 'Edificio Central - Primer Piso',
+                'room_type': 'biblioteca',
                 'opening_time': '07:00',
                 'closing_time': '20:00',
-                'allowed_roles': 'admin,profesor'
+                'allowed_roles': 'admin,profesor,estudiante,soporte'
+            },
+            {
+                'name': 'Sala de Dirección Ejecutiva',
+                'description': 'Sala de reuniones para la dirección y junta directiva.',
+                'capacity': 15,
+                'equipment': 'Mesa ejecutiva, sistema videoconferencias 4K, proyector, teléfono conferencias',
+                'location': 'Edificio Administrativo - Tercer Piso',
+                'room_type': 'sala_reunion',
+                'opening_time': '07:00',
+                'closing_time': '19:00',
+                'allowed_roles': 'admin'
+            },
+            {
+                'name': 'Sala de Servidores',
+                'description': 'Centro de datos principal del colegio con servidores y sistemas críticos.',
+                'capacity': 2,
+                'equipment': 'Servidores principales, sistema de respaldo, UPS, control ambiental',
+                'location': 'Edificio Tecnología - Sótano',
+                'room_type': 'sala_servidor',
+                'opening_time': '00:00',
+                'closing_time': '23:59',
+                'allowed_roles': 'admin'
             }
         ]
         
@@ -314,9 +461,8 @@ class Command(BaseCommand):
             
             created_count += 1
             self.stdout.write(f'✅ Creado: {room.name}')
-        
-        # Resumen final
-        self.stdout.write('\n' + '='*60)
+          # Resumen final
+        self.stdout.write('\n' + '='*70)
         self.stdout.write(
             self.style.SUCCESS(
                 f'🎉 ¡Configuración completada para el Colegio Clara Brincefield!'
@@ -324,17 +470,75 @@ class Command(BaseCommand):
         )
         self.stdout.write(f'📊 Total de salas/equipamiento creado: {created_count}')
         
-        # Estadísticas por tipo
+        # Estadísticas por tipo de sala
         stats = {}
         for room_type, room_name in Room.ROOM_TYPE_CHOICES:
             count = Room.objects.filter(room_type=room_type).count()
             if count > 0:
                 stats[room_name] = count
         
-        self.stdout.write('\n📈 Distribución por tipo:')
+        self.stdout.write('\n📈 Distribución por tipo de sala:')
         for tipo, cantidad in stats.items():
             self.stdout.write(f'   • {tipo}: {cantidad}')
         
-        self.stdout.write('\n🏫 El sistema está listo para ser usado en el Colegio Clara Brincefield')
-        self.stdout.write('💡 Recuerda que el campo "valor" está oculto en los formularios pero se mantiene en el modelo')
+        # Estadísticas por roles - contando salas accesibles
+        self.stdout.write('\n� Salas accesibles por rol:')
+        
+        roles_stats = {
+            'estudiante': Room.objects.filter(allowed_roles__icontains='estudiante').count(),
+            'profesor': Room.objects.filter(allowed_roles__icontains='profesor').count(),
+            'soporte': Room.objects.filter(allowed_roles__icontains='soporte').count(),
+            'admin': Room.objects.filter(allowed_roles__icontains='admin').count(),
+        }
+        
+        role_names = {
+            'estudiante': 'Estudiantes',
+            'profesor': 'Profesores', 
+            'soporte': 'Soporte Técnico',
+            'admin': 'Administradores'
+        }
+        
+        for role, count in roles_stats.items():
+            name = role_names.get(role, role.title())
+            self.stdout.write(f'   • {name}: {count} salas/equipos')
+        
+        # Detalles específicos por rol
+        self.stdout.write('\n🔍 Detalles por rol:')
+        
+        # Estudiantes
+        estudiante_rooms = Room.objects.filter(allowed_roles__icontains='estudiante')
+        self.stdout.write(f'\n   👥 ESTUDIANTES ({estudiante_rooms.count()} salas):')
+        for room_type in ['sala_individual', 'sala_estudio', 'auditorio', 'biblioteca']:
+            count = estudiante_rooms.filter(room_type=room_type).count()
+            type_name = dict(Room.ROOM_TYPE_CHOICES).get(room_type, room_type)
+            if count > 0:
+                self.stdout.write(f'      - {type_name}: {count}')
+        
+        # Profesores
+        profesor_rooms = Room.objects.filter(allowed_roles__icontains='profesor')
+        self.stdout.write(f'\n   �‍🏫 PROFESORES ({profesor_rooms.count()} salas):')
+        for room_type in ['aula', 'auditorio', 'sala_reunion', 'equipamiento']:
+            count = profesor_rooms.filter(room_type=room_type).count()
+            type_name = dict(Room.ROOM_TYPE_CHOICES).get(room_type, room_type)
+            if count > 0:
+                self.stdout.write(f'      - {type_name}: {count}')
+        
+        # Soporte Técnico
+        soporte_rooms = Room.objects.filter(allowed_roles__icontains='soporte')
+        self.stdout.write(f'\n   🔧 SOPORTE TÉCNICO ({soporte_rooms.count()} salas):')
+        for room_type in ['laboratorio_informatica', 'sala_reunion', 'auditorio', 'equipamiento']:
+            count = soporte_rooms.filter(room_type=room_type).count()
+            type_name = dict(Room.ROOM_TYPE_CHOICES).get(room_type, room_type)
+            if count > 0:
+                self.stdout.write(f'      - {type_name}: {count}')
+        
+        # Administradores
+        admin_rooms = Room.objects.filter(allowed_roles__icontains='admin')
+        self.stdout.write(f'\n   👑 ADMINISTRADORES ({admin_rooms.count()} salas):')
+        self.stdout.write('      - Acceso total a todas las salas y equipamiento')
+        
+        self.stdout.write('\n' + '='*70)
+        self.stdout.write('🏫 El sistema está listo para demostración del Colegio Clara Brincefield')
+        self.stdout.write('✅ Cada rol tiene al menos 6 salas/equipos disponibles')
         self.stdout.write('🔧 Todos los recursos están configurados como gratuitos (valor = 0.00)')
+        self.stdout.write('📅 Los filtros del calendario mostrarán solo opciones relevantes por rol')

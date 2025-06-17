@@ -93,10 +93,10 @@ urlpatterns = [
     
     # SEO y Seguridad
     path('robots.txt', robots_txt, name='robots_txt'),
-    
-    # Aplicaciones
+      # Aplicaciones
     path('usuarios/', include('usuarios.urls')),
     path('salas/', include('rooms.urls')),
+    path('rooms/', include('rooms.urls')),  # Agregar también la ruta 'rooms' para compatibilidad
       # CORRECCIÓN: Redirigir URLs de sala mal formadas a la URL correcta
     path('salas/<int:room_id>/', redirect_room_detail),
     

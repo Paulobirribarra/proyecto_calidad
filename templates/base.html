@@ -816,13 +816,18 @@
                 <span class="navbar-toggler-icon"></span>
             </button>
             
-            <div class="collapse navbar-collapse" id="navbarNav">
-                <ul class="navbar-nav me-auto">
+            <div class="collapse navbar-collapse" id="navbarNav">                <ul class="navbar-nav me-auto">
                     {% if user.is_authenticated %}
                         <li class="nav-item">
                             <a class="nav-link" href="{% url 'rooms:room_list' %}">
                                 <i class="fas fa-list" aria-hidden="true"></i>
                                 Salas Disponibles
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="{% url 'rooms:calendar' %}">
+                                <i class="fas fa-calendar-week" aria-hidden="true"></i>
+                                Calendario
                             </a>
                         </li>
                         <li class="nav-item">
@@ -871,8 +876,11 @@
                                data-bs-toggle="dropdown" aria-expanded="false">
                                 <i class="fas fa-user" aria-hidden="true"></i>
                                 {{ user.get_full_name|default:user.username }}
-                            </a>
-                            <ul class="dropdown-menu" aria-labelledby="userDropdown">
+                            </a>                            <ul class="dropdown-menu" aria-labelledby="userDropdown">
+                                <li><a class="dropdown-item" href="{% url 'usuarios:dashboard' %}">
+                                    <i class="fas fa-tachometer-alt" aria-hidden="true"></i>
+                                    Dashboard
+                                </a></li>
                                 <li><a class="dropdown-item" href="{% url 'usuarios:profile' %}">
                                     <i class="fas fa-user-edit" aria-hidden="true"></i>
                                     Mi Perfil

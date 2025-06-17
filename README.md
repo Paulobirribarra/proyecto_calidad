@@ -55,8 +55,15 @@ pip install -r requirements.txt
 # 4. Configurar base de datos
 python manage.py migrate
 
-# 5. Configurar datos iniciales (usuarios, salas, reservas demo)
-python scripts/run_setup.py
+# 5. Poblado de datos para demostración (¡IMPORTANTE!)
+# Opción A: Poblado completo automático (RECOMENDADO)
+python manage.py setup_completo --reset
+
+# Opción B: Poblado manual por pasos
+python manage.py setup_colegio --delete-existing    # Crear salas del colegio
+python manage.py setup_usuarios --reset             # Crear usuarios de prueba
+python manage.py setup_reservas --reset --cantidad 40  # Crear reservas
+python manage.py setup_reseñas --cantidad 20 --reset   # Crear reseñas
 
 # 6. Iniciar servidor
 python manage.py runserver
@@ -66,16 +73,69 @@ python manage.py runserver
 
 ---
 
+## 🎯 Poblado de Datos para Demostración
+
+### ⚡ Setup Rápido para Presentación (1 comando)
+
+```powershell
+# Un solo comando para poblar todo el sistema
+python manage.py setup_completo --reset
+```
+
+**Este comando configura automáticamente:**
+- ✅ **33 salas y equipos** distribuidos por roles
+- ✅ **8 usuarios de prueba** con diferentes roles
+- ✅ **40+ reservas realistas** según permisos
+- ✅ **20+ reseñas** y calificaciones
+- ✅ **Sistema listo para demostrar**
+
+### 🔧 Comandos Individuales (control manual)
+
+```powershell
+# 1. Crear salas del Colegio Clara Brincefield (33 salas)
+python manage.py setup_colegio --delete-existing
+
+# 2. Crear usuarios de prueba (8 usuarios)
+python manage.py setup_usuarios --reset
+
+# 3. Crear reservas realistas (40 reservas)
+python manage.py setup_reservas --reset --cantidad 40
+
+# 4. Crear reseñas y calificaciones (20 reseñas)
+python manage.py setup_reseñas --cantidad 20 --reset
+```
+
+### 📊 Distribución de Datos por Rol
+
+| Rol | Usuarios | Salas Accesibles | Tipo de Salas |
+|-----|----------|------------------|---------------|
+| **👥 Estudiantes** | 3 | 8 salas | Salas estudio, individuales, biblioteca |
+| **👨‍🏫 Profesores** | 3 | 20 salas | Aulas, auditorios, equipamiento |
+| **🔧 Soporte Técnico** | 1 | 15 salas | Laboratorios informática, equipos |
+| **👑 Administradores** | 1 | 33 salas | Acceso total al sistema |
+
+---
+
 ## 👥 Usuarios de Prueba
 
-El sistema incluye usuarios predefinidos para pruebas:
+El sistema incluye usuarios predefinidos para pruebas completas:
 
-| Usuario | Contraseña | Rol | Permisos |
-|---------|------------|-----|----------|
-| **admin** | admin123 | 👑 Administrador | Acceso completo al sistema y panel admin |
-| **profesor1** | profesor2023 | 🎓 Profesor | Reservar aulas, laboratorios, auditorios |
-| **estudiante1** | estudiante2023 | 📚 Estudiante | Reservar salas de estudio y salas individuales |
-| **soporte1** | soporte2023 | 🔧 Soporte | Laboratorios y salas técnicas |
+| Usuario | Contraseña | Rol | Salas Disponibles | Descripción |
+|---------|------------|-----|------------------|-------------|
+| **admin** | admin123 | 👑 Administrador | 33 salas | Acceso completo + panel admin |
+| **Clara.Brincefield** | clave123 | 👑 Directora | 33 salas | Directora del Colegio Clara Brincefield |
+| **Dr.Juan.Perez** | clave123 | 🎓 Profesor | 20 salas | Aulas, auditorios, equipamiento |
+| **Dra.Maria.Gonzalez** | clave123 | 🎓 Profesora | 20 salas | Laboratorios, aulas especializadas |
+| **Prof.Carlos.Rodriguez** | clave123 | 🎓 Profesor | 20 salas | Educación física, arte |
+| **Miguel.Hernandez** | clave123 | 🔧 Soporte Técnico | 15 salas | Laboratorios informática, equipos |
+| **Ana.Martinez** | clave123 | 📚 Estudiante | 8 salas | Salas estudio, biblioteca |
+| **Sofia.Torres** | clave123 | 📚 Estudiante | 8 salas | Salas individuales, grupales |
+| **Pedro.Lopez** | clave123 | 📚 Estudiante | 8 salas | Auditorios estudiantiles |
+
+### � Acceso Rápido
+- **Panel Admin**: http://127.0.0.1:8000/admin/ (admin/admin123)
+- **Dashboard**: http://127.0.0.1:8000/usuarios/dashboard/
+- **Calendario**: http://127.0.0.1:8000/salas/calendario/
 
 ---
 
@@ -448,6 +508,57 @@ python manage.py runserver 8080
 - **Issues GitHub**: Para reportar bugs
 - **Documentación**: Revisar manuales en `/documentacion/`
 - **Logs**: Revisar `/logs/debug.log` para errores detallados
+
+---
+
+## 🎤 Comandos Rápidos para Presentación
+
+### ⚡ Setup Completo desde Cero (3 minutos)
+
+```powershell
+# 1. Clonar y preparar entorno
+git clone https://github.com/Paulobirribarra/proyecto_calidad.git
+cd proyecto_calidad
+python -m venv venv
+venv\Scripts\activate
+
+# 2. Instalar dependencias y configurar BD
+pip install -r requirements.txt
+python manage.py migrate
+
+# 3. Poblar con datos del Colegio Clara Brincefield
+python manage.py setup_completo --reset
+
+# 4. Iniciar servidor
+python manage.py runserver
+```
+
+### 🔄 Resetear Solo Datos (30 segundos)
+
+```powershell
+# Si solo necesitas regenerar datos
+python manage.py setup_completo --reset
+```
+
+### 🚀 URLs Importantes para Demo
+
+```
+🏠 Sistema Principal:     http://127.0.0.1:8000/
+📊 Dashboard:            http://127.0.0.1:8000/usuarios/dashboard/
+📅 Calendario:           http://127.0.0.1:8000/salas/calendario/
+🏢 Lista de Salas:       http://127.0.0.1:8000/salas/
+👤 Mi Perfil:            http://127.0.0.1:8000/usuarios/profile/
+⚙️  Panel Admin:          http://127.0.0.1:8000/admin/
+```
+
+### 📋 Flujo de Demostración Sugerido
+
+1. **Login como Estudiante** → Ver salas de estudio disponibles
+2. **Hacer reserva** → Proceso completo de reserva
+3. **Cambiar a Profesor** → Ver diferentes tipos de salas
+4. **Usar calendario** → Filtros por tipo de sala y navegación
+5. **Cambiar a Soporte** → Laboratorios y equipamiento técnico
+6. **Login como Admin** → Panel de administración completo
 
 ---
 

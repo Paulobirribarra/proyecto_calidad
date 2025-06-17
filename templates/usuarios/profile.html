@@ -120,14 +120,22 @@
                         <div class="col-12 mb-3">
                             <div class="bg-light p-3 rounded">
                                 <i class="fas fa-user-circle fa-3x text-primary mb-2" aria-hidden="true"></i>
-                                <h5 class="mb-0">{{ user.get_full_name|default:user.username }}</h5>
-                                <small class="text-muted">
+                                <h5 class="mb-0">{{ user.get_full_name|default:user.username }}</h5>                                <small class="text-muted">
                                     {% if user.is_admin %}
                                         <i class="fas fa-crown text-warning" aria-hidden="true"></i>
                                         Administrador
+                                    {% elif user.role == 'profesor' %}
+                                        <i class="fas fa-chalkboard-teacher text-success" aria-hidden="true"></i>
+                                        Profesor
+                                    {% elif user.role == 'estudiante' %}
+                                        <i class="fas fa-graduation-cap text-info" aria-hidden="true"></i>
+                                        Estudiante
+                                    {% elif user.role == 'soporte' %}
+                                        <i class="fas fa-tools text-secondary" aria-hidden="true"></i>
+                                        Soporte Técnico
                                     {% else %}
                                         <i class="fas fa-user text-primary" aria-hidden="true"></i>
-                                        Usuario Regular
+                                        {{ user.get_role_display|default:"Usuario" }}
                                     {% endif %}
                                 </small>
                             </div>
@@ -163,11 +171,9 @@
                             Nueva Reserva
                         </a>                    </div>
                 </div>
-            </section>
-
-            <!-- Account Security -->
+            </section>            <!-- Account Security -->
             <div class="card mt-4">
-                <div class="card-header bg-warning text-dark">
+                <div class="card-header bg-dark text-white">
                     <h5 class="mb-0">
                         <i class="fas fa-shield-alt" aria-hidden="true"></i>
                         Seguridad de la Cuenta
@@ -175,7 +181,7 @@
                 </div>
                 <div class="card-body">
                     <div class="mb-3">
-                        <small class="text-muted">
+                        <small class="text-dark">
                             <i class="fas fa-clock" aria-hidden="true"></i>
                             <strong>Último acceso:</strong><br>
                             {{ user.last_login|date:"d/m/Y H:i"|default:"Nunca" }}
@@ -183,7 +189,7 @@
                     </div>
                     
                     <div class="mb-3">
-                        <small class="text-muted">
+                        <small class="text-dark">
                             <i class="fas fa-calendar-plus" aria-hidden="true"></i>
                             <strong>Miembro desde:</strong><br>
                             {{ user.date_joined|date:"d/m/Y" }}
