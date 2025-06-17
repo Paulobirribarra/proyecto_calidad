@@ -13,6 +13,9 @@ from django.utils import timezone
 
 User = get_user_model()
 
+# Importar modelos de seguridad de reservas
+from .reservation_security import ReservationSecurityRule, ReservationUsageLog
+
 
 class SystemConfig(models.Model):
     """

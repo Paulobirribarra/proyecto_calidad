@@ -1,0 +1,53 @@
+{% if has_security_info and security_rules %}
+<div class="card mb-4 border-info">
+    <div class="card-header bg-info text-white">
+        <h5 class="mb-0">
+            <i class="fas fa-shield-alt"></i>
+            Límites de Reserva
+        </h5>
+    </div>
+    <div class="card-body">
+        <p class="text-muted mb-3">
+            Como usuario <strong>{{ security_rules.get_role_display }}</strong>, tienes los siguientes límites de reserva:
+        </p>
+        
+        <div class="row">
+            <div class="col-md-6">
+                <h6 class="text-primary">Límites de Frecuencia</h6>
+                <ul class="list-unstyled">
+                    <li><i class="fas fa-clock text-warning"></i> <strong>Por hora:</strong> {{ security_rules.max_reservations_per_hour }} reservas</li>
+                    <li><i class="fas fa-calendar-day text-info"></i> <strong>Por día:</strong> {{ security_rules.max_reservations_per_day }} reservas</li>
+                    <li><i class="fas fa-calendar-week text-success"></i> <strong>Por semana:</strong> {{ security_rules.max_reservations_per_week }} reservas</li>
+                    <li><i class="fas fa-users text-secondary"></i> <strong>Simultáneas:</strong> {{ security_rules.max_concurrent_reservations }} reservas activas</li>
+                </ul>
+            </div>
+            
+            <div class="col-md-6">
+                <h6 class="text-primary">Límites de Duración</h6>
+                <ul class="list-unstyled">
+                    <li><i class="fas fa-hourglass-half text-warning"></i> <strong>Horas por día:</strong> {{ security_rules.max_total_hours_per_day }} horas</li>
+                    <li><i class="fas fa-calendar text-info"></i> <strong>Horas por semana:</strong> {{ security_rules.max_total_hours_per_week }} horas</li>
+                    <li><i class="fas fa-forward text-success"></i> <strong>Anticipación máxima:</strong> {{ security_rules.max_advance_days }} días</li>
+                </ul>
+            </div>
+        </div>
+        
+        {% if security_rules.warning_threshold < 1.0 %}
+        <div class="alert alert-info mt-3">
+            <i class="fas fa-info-circle"></i>
+            <small>
+                Recibirás advertencias cuando uses el {{ security_rules.warning_threshold|floatformat:0|add:0 }}% de tus límites.
+            </small>
+        </div>
+        {% endif %}
+        
+        {% if not rate_allowed %}
+        <div class="alert alert-danger mt-3">
+            <i class="fas fa-exclamation-triangle"></i>
+            <strong>Has alcanzado uno o más límites de reserva.</strong>
+            No puedes crear nuevas reservas en este momento.
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endif %}

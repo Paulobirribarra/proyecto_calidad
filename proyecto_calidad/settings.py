@@ -26,10 +26,11 @@ SECRET_KEY = 'django-insecure-sl1xbq-s6(j_oy#6q59c%9jk(b=c1w-su*72lqge#&tw0(*_!x
 DEBUG = True  # Activado para desarrollo
 # DEBUG = False  # Comentado para permitir archivos estáticos
 
-ALLOWED_HOSTS = ['localhost', '127.0.0.1', 'testserver', '*']
+# SEGURIDAD: Solo hosts locales permitidos en desarrollo
+ALLOWED_HOSTS = ['localhost', '127.0.0.1', 'testserver']
 
 # Configuración adicional para páginas de error personalizadas
-ALLOWED_HOSTS_ENV = ['localhost', '127.0.0.1', 'testserver', '*']
+ALLOWED_HOSTS_ENV = ['localhost', '127.0.0.1', 'testserver']
 
 
 # Application definition
@@ -45,6 +46,7 @@ INSTALLED_APPS = [
     'usuarios.apps.UsuariosConfig',
     'rooms.apps.RoomsConfig',
     'core.apps.CoreConfig',
+    'scripts',
 ]
 
 MIDDLEWARE = [
@@ -58,6 +60,8 @@ MIDDLEWARE = [
     'core.session_middleware.SessionSecurityMiddleware',  # Middleware para seguridad de sesiones
     'core.middleware.SecurityMiddleware',  # Middleware personalizado para seguridad general
     'core.admin_middleware.AdminSecurityMiddleware',  # Middleware específico para panel admin
+    'core.reservation_security_middleware.ReservationSecurityMiddleware',  # Sistema de seguridad de reservas
+    'core.reservation_security_middleware.RateLimitMiddleware',  # Rate limiting por IP
 ]
 
 ROOT_URLCONF = 'proyecto_calidad.urls'

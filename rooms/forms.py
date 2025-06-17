@@ -61,8 +61,7 @@ class RoomForm(forms.ModelForm):
     Incluye validaciones personalizadas para asegurar
     la integridad de los datos de la sala.
     """
-    
-    # Campo personalizado para roles permitidos
+      # Campo personalizado para roles permitidos
     allowed_roles = RoleField(
         label="Roles Permitidos *",
         help_text="Selecciona los tipos de usuario que pueden reservar esta sala"
@@ -72,7 +71,7 @@ class RoomForm(forms.ModelForm):
         model = Room
         fields = [
             'name', 'description', 'capacity', 'equipment',
-            'location', 'hourly_rate', 'opening_time', 'closing_time',
+            'location', 'opening_time', 'closing_time',
             'room_type', 'allowed_roles'
         ]
         widgets = {
@@ -86,10 +85,6 @@ class RoomForm(forms.ModelForm):
             }),
             'opening_time': forms.TimeInput(attrs={'type': 'time'}),
             'closing_time': forms.TimeInput(attrs={'type': 'time'}),
-            'hourly_rate': forms.NumberInput(attrs={
-                'step': '0.01',
-                'min': '0'
-            }),
             'room_type': forms.Select(attrs={
                 'class': 'form-control'
             })
@@ -319,6 +314,41 @@ class ReservationForm(forms.ModelForm):
         end_time = cleaned_data.get('end_time')
         
         if room and start_time and end_time:
+            # NUEVA: Validación de seguridad antes de otras validaciones
+            if self.user:
+                try:
+                    from core.reservation_security import SecurityManager
+                    
+                    # Validar límites de seguridad
+                    security_result = SecurityManager.validate_reservation_security(
+                        user=self.user,
+                        room=room,
+                        start_time=start_time,
+                        end_time=end_time
+                    )
+                    
+                    if not security_result['allowed']:
+                        # Crear mensaje detallado con todas las violaciones
+                        violation_messages = [v['message'] for v in security_result['violations']]
+                        raise ValidationError(
+                            f"No se puede crear la reserva por límites de seguridad: " +
+                            "; ".join(violation_messages)
+                        )
+                        
+                    # Mostrar advertencias si existen (no bloquean la reserva)
+                    if security_result['warnings']:
+                        # Las advertencias se mostrarán en la vista
+                        self._security_warnings = security_result['warnings']
+                        
+                except ImportError:
+                    # Si el módulo de seguridad no está disponible, continuar sin validación
+                    pass
+                except Exception as e:
+                    # Log del error pero no bloquear la reserva por errores del sistema de seguridad
+                    import logging
+                    logger = logging.getLogger(__name__)
+                    logger.error(f"Error en validación de seguridad de reservas: {e}")
+            
             # Verificar horarios de operación de la sala
             start_date = start_time.date()
             end_date = end_time.date()
@@ -442,6 +472,8 @@ class ReviewForm(forms.ModelForm):
         }
     
     def __init__(self, *args, **kwargs):
+        # Extraer la reserva si se pasa como parámetro
+        self.reservation = kwargs.pop('reservation', None)
         super().__init__(*args, **kwargs)
         
         # Agregar clases CSS a todos los campos
@@ -449,21 +481,18 @@ class ReviewForm(forms.ModelForm):
             if 'class' not in field.widget.attrs:
                 field.widget.attrs['class'] = 'form-control'
     
-    def clean(self):
-        """Validación del formulario."""
-        cleaned_data = super().clean()
+    def save(self, commit=True):
+        """Guardar la reseña asignando la reserva."""
+        instance = super().save(commit=False)
         
-        # Verificar que todas las calificaciones estén en el rango válido
-        rating_fields = ['rating', 'cleanliness_rating', 'equipment_rating', 'comfort_rating']
+        # Asignar la reserva si se proporcionó
+        if self.reservation:
+            instance.reservation = self.reservation
         
-        for field_name in rating_fields:
-            value = cleaned_data.get(field_name)
-            if value and (value < 1 or value > 5):
-                raise forms.ValidationError(
-                    f"La calificación {field_name} debe estar entre 1 y 5"
-                )
+        if commit:
+            instance.save()
         
-        return cleaned_data
+        return instance
 
 
 class RoomSearchForm(forms.Form):

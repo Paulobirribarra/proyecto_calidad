@@ -18,26 +18,24 @@ class RoomAdmin(admin.ModelAdmin):
         'allowed_roles_display',
         'is_active',
         'average_rating_display',
-        'total_reservations',
-        'hourly_rate'
+        'total_reservations'
     )
     list_filter = (
         'is_active', 
         'capacity', 
         'created_at',
-        'hourly_rate',
         'room_type',
         'allowed_roles'  # Filtro por roles permitidos
     )
     search_fields = ('name', 'location', 'description')
-    list_editable = ('is_active', 'hourly_rate')
+    list_editable = ('is_active',)
     
     fieldsets = (
         ('Información Básica', {
             'fields': ('name', 'description', 'capacity', 'location')
         }),
         ('Configuración', {
-            'fields': ('is_active', 'hourly_rate', 'opening_time', 'closing_time')
+            'fields': ('is_active', 'opening_time', 'closing_time')
         }),
         ('Tipo de Sala y Permisos', {
             'fields': ('room_type', 'allowed_roles'),

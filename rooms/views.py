@@ -207,24 +207,27 @@ def room_list(request):
             elif available_date:
                 # Solo filtrar por fecha, sin horarios específicos
                 # El usuario puede ver la disponibilidad detallada en la página de cada sala
-                pass
-        
-        # Filtrar salas que el usuario puede reservar antes de la paginación
+                pass        # Filtrar salas que el usuario puede reservar antes de la paginación
+        # MEJORA UX: Todos los usuarios ven solo las salas que pueden reservar (excepto administradores)
         if request.user.is_authenticated:
-            # Crear una lista temporaria de salas a filtrar
-            filtered_rooms = []
-            # Almacenar solo los IDs de las salas que el usuario puede reservar
-            allowed_room_ids = []
+            # Verificar si es administrador
+            is_super_admin = (request.user.is_superuser or 
+                            (hasattr(request.user, 'is_admin') and request.user.is_admin()))
             
-            for room in rooms_queryset:
-                if room.can_be_reserved_by(request.user):
-                    allowed_room_ids.append(room.id)
-            
-            # Filtrar el queryset con los IDs permitidos
-            if not (request.user.is_staff or request.user.is_superuser or
-                   (hasattr(request.user, 'is_admin') and request.user.is_admin()) or
-                   (hasattr(request.user, 'is_profesor') and request.user.is_profesor())):
-                rooms_queryset = rooms_queryset.filter(id__in=allowed_room_ids)
+            # Solo filtrar si NO es super administrador
+            if not is_super_admin:
+                # Crear una nueva lista con solo las salas que puede reservar
+                filtered_room_ids = []
+                for room in rooms_queryset:
+                    if room.can_be_reserved_by(request.user):
+                        filtered_room_ids.append(room.id)
+                
+                # Aplicar el filtro al queryset
+                if filtered_room_ids:
+                    rooms_queryset = rooms_queryset.filter(id__in=filtered_room_ids)
+                else:
+                    # Si no hay salas permitidas, mostrar queryset vacío
+                    rooms_queryset = Room.objects.none()
         
         # Paginación después del filtrado
         paginator = Paginator(rooms_queryset.order_by('name'), 12)
@@ -381,6 +384,28 @@ def room_reserve(request, room_id):
                 f"Esta sala solo está disponible para ciertos roles de usuario."
             )
             return redirect('rooms:room_detail', room_id=room_id)
+        
+        # NUEVO: Obtener información de límites de seguridad para mostrar al usuario
+        try:
+            from core.reservation_security import SecurityManager
+            security_rules = SecurityManager.get_security_rules(request.user)
+            rate_allowed, rate_violations, rate_warnings = SecurityManager.check_rate_limits(request.user)
+            
+            # Mostrar advertencias de límites si existen
+            for warning in rate_warnings:
+                messages.warning(request, f"Advertencia: {warning['message']}")
+            
+            # Si hay violaciones, mostrar información y redirigir
+            if not rate_allowed:
+                for violation in rate_violations:
+                    messages.error(request, f"Límite excedido: {violation['message']}")
+                return redirect('rooms:room_detail', room_id=room_id)
+                
+        except ImportError:
+            security_rules = None
+            rate_allowed = True
+            rate_warnings = []
+        
         if request.method == 'POST':
             form = ReservationForm(request.POST, user=request.user, room=room)
             # Asignar la sala antes de validar
@@ -393,6 +418,25 @@ def room_reserve(request, room_id):
                     reservation.room = room  # Asegurar que la sala se asigne correctamente
                     reservation.status = 'confirmed'
                     reservation.save()
+                    
+                    # NUEVO: Registrar la acción de seguridad
+                    try:
+                        from core.reservation_security import SecurityManager
+                        SecurityManager.log_action(
+                            user=request.user,
+                            action='create',
+                            room_name=room.name,
+                            reservation_id=reservation.id,
+                            ip_address=request.META.get('REMOTE_ADDR'),
+                            user_agent=request.META.get('HTTP_USER_AGENT', ''),
+                            additional_data={
+                                'start_time': reservation.start_time.isoformat(),
+                                'end_time': reservation.end_time.isoformat(),
+                                'duration_hours': reservation.duration_hours_rounded
+                            }
+                        )
+                    except ImportError:
+                        pass
                     
                     logger.info(
                         f"Nueva reserva creada: {reservation.room.name} "
@@ -409,6 +453,11 @@ def room_reserve(request, room_id):
                     
                     return redirect('rooms:reservation_detail', reservation_id=reservation.id)
             else:
+                # NUEVO: Mostrar advertencias de seguridad si las hay
+                if hasattr(form, '_security_warnings'):
+                    for warning in form._security_warnings:
+                        messages.warning(request, f"Advertencia: {warning['message']}")
+                
                 logger.warning(
                     f"Error en formulario de reserva por {request.user.username}: "
                     f"{form.errors}"
@@ -430,9 +479,13 @@ def room_reserve(request, room_id):
             
             form = ReservationForm(initial=initial_data, user=request.user, room=room)
         
+        # NUEVO: Agregar información de límites al contexto
         context = {
             'room': room,
-            'form': form
+            'form': form,
+            'security_rules': security_rules,
+            'rate_allowed': rate_allowed,
+            'has_security_info': security_rules is not None
         }
         
         return render(request, 'rooms/room_reserve.html', context)
@@ -615,36 +668,35 @@ def room_review(request, reservation_id):
             reservation.status = 'completed'
             reservation.save(update_fields=['status'])
             logger.info(f"Reserva #{reservation.id} actualizada automáticamente a 'completed' en room_review")
-        
-        # Verificar que la reserva esté completada
+          # Verificar que la reserva esté completada
         if reservation.status != 'completed':
             messages.warning(request, 
                 "Solo puedes calificar reservas completadas. Esta reserva tiene estado: "
                 f"{dict(Reservation.STATUS_CHOICES).get(reservation.status, reservation.status)}."
             )
-            return redirect('rooms:reservation_detail', reservation_id=reservation_id)
-        
-        # Verificar que no exista ya una reseña
-        if hasattr(reservation, 'review'):
+            return redirect('rooms:reservation_detail', reservation_id=reservation_id)        # Verificar que no exista ya una reseña
+        try:
+            existing_review = Review.objects.get(reservation=reservation)
             messages.info(request, "Ya has calificado esta reserva.")
             return redirect('rooms:reservation_detail', reservation_id=reservation_id)
+        except Review.DoesNotExist:            # No existe reseña, podemos continuar
+            pass
         
         if request.method == 'POST':
+            logger.info(f"POST request recibido para crear reseña de reserva {reservation_id}")
+            
             form = ReviewForm(request.POST)
             
             if form.is_valid():
-                with transaction.atomic():
-                    review = form.save(commit=False)
-                    review.reservation = reservation
-                    # Llamar clean() manualmente para evitar problemas de validación
-                    try:
+                logger.info("Formulario válido, creando reseña...")
+                try:
+                    with transaction.atomic():
+                        review = form.save(commit=False)
+                        review.reservation = reservation
                         review.clean()
                         review.save()
                         
-                        logger.info(
-                            f"Nueva reseña creada para {reservation.room.name} "
-                            f"por {request.user.username} - Rating: {review.rating}"
-                        )
+                        logger.info(f"Review guardado exitosamente con ID: {review.id}")
                         
                         messages.success(
                             request, 
@@ -654,11 +706,21 @@ def room_review(request, reservation_id):
                         
                         return redirect('rooms:reservation_detail', reservation_id=reservation_id)
                         
-                    except ValidationError as e:
-                        logger.error(f"Error de validación al crear reseña: {str(e)}")
-                        form.add_error(None, str(e))
-                        messages.error(request, f"Error al crear la reseña: {str(e)}")
+                except ValidationError as e:
+                    logger.error(f"Error de validación al crear reseña: {str(e)}")
+                    form.add_error(None, str(e))
+                    messages.error(request, f"Error de validación: {str(e)}")
+                except Exception as e:
+                    logger.error(f"Error inesperado al crear reseña: {str(e)}", exc_info=True)
+                    messages.error(request, f"Error inesperado al guardar la reseña: {str(e)}")
+            else:
+                logger.warning(f"Formulario de reseña inválido para reserva {reservation_id}")
+                logger.warning(f"Errores del formulario: {form.errors}")
+                for field, errors in form.errors.items():
+                    for error in errors:
+                        messages.error(request, f"Error en {field}: {error}")
         else:
+            logger.info(f"GET request para mostrar formulario de reseña de reserva {reservation_id}")
             form = ReviewForm()
         
         context = {
@@ -835,3 +897,385 @@ def error_500(request):
     """Vista personalizada para error 500."""
     logger.error(f"Error 500 - Error interno del servidor en: {request.path}")
     return render(request, 'errors/500.html', status=500)
+
+
+@login_required
+@handle_exception
+def user_reservation_stats(request):
+    """Vista para mostrar estadísticas de uso de reservas del usuario actual."""
+    try:
+        # Obtener información de seguridad del usuario
+        try:
+            from core.reservation_security import SecurityManager
+            security_rules = SecurityManager.get_security_rules(request.user)
+            is_blocked, blocked_until = SecurityManager.is_user_blocked(request.user)
+            rate_allowed, violations, warnings = SecurityManager.check_rate_limits(request.user)
+            
+            has_security_info = True
+        except ImportError:
+            security_rules = None
+            is_blocked = False
+            blocked_until = None
+            rate_allowed = True
+            violations = []
+            warnings = []
+            has_security_info = False
+        
+        # Calcular estadísticas de uso
+        now = timezone.now()
+        today = now.date()
+        week_start = now - timedelta(days=now.weekday())
+        week_start = week_start.replace(hour=0, minute=0, second=0, microsecond=0)
+        
+        user_reservations = request.user.reservations.all()
+        
+        # Estadísticas actuales
+        stats = {
+            'hour': {
+                'current': user_reservations.filter(
+                    created_at__gte=now - timedelta(hours=1),
+                    status__in=['confirmed', 'in_progress']
+                ).count(),
+                'limit': security_rules.max_reservations_per_hour if security_rules else 0
+            },
+            'day': {
+                'current': user_reservations.filter(
+                    created_at__gte=now - timedelta(days=1),
+                    status__in=['confirmed', 'in_progress']
+                ).count(),
+                'limit': security_rules.max_reservations_per_day if security_rules else 0
+            },
+            'week': {
+                'current': user_reservations.filter(
+                    created_at__gte=week_start,
+                    status__in=['confirmed', 'in_progress']
+                ).count(),
+                'limit': security_rules.max_reservations_per_week if security_rules else 0
+            },
+            'concurrent': {
+                'current': user_reservations.filter(
+                    status__in=['confirmed', 'in_progress'],
+                    start_time__lte=now,
+                    end_time__gt=now
+                ).count(),
+                'limit': security_rules.max_concurrent_reservations if security_rules else 0
+            }
+        }
+        
+        # Calcular horas reservadas
+        daily_reservations = user_reservations.filter(
+            start_time__date=today,
+            status__in=['confirmed', 'in_progress']
+        )
+        
+        daily_hours = sum([
+            (res.end_time - res.start_time).total_seconds() / 3600
+            for res in daily_reservations
+        ])
+        
+        weekly_reservations = user_reservations.filter(
+            start_time__gte=week_start,
+            start_time__lt=week_start + timedelta(days=7),
+            status__in=['confirmed', 'in_progress']
+        )
+        
+        weekly_hours = sum([
+            (res.end_time - res.start_time).total_seconds() / 3600
+            for res in weekly_reservations
+        ])
+        
+        hours_stats = {
+            'daily': {
+                'current': daily_hours,
+                'limit': security_rules.max_total_hours_per_day if security_rules else 0
+            },
+            'weekly': {
+                'current': weekly_hours,
+                'limit': security_rules.max_total_hours_per_week if security_rules else 0
+            }
+        }
+        
+        # Reservas recientes
+        recent_reservations = user_reservations.filter(
+            status__in=['confirmed', 'in_progress', 'completed']
+        ).order_by('-created_at')[:10]
+        
+        context = {
+            'has_security_info': has_security_info,
+            'security_rules': security_rules,
+            'is_blocked': is_blocked,
+            'blocked_until': blocked_until,
+            'rate_allowed': rate_allowed,
+            'violations': violations,
+            'warnings': warnings,
+            'stats': stats,
+            'hours_stats': hours_stats,
+            'recent_reservations': recent_reservations,
+            'user_role': SecurityManager.get_user_role(request.user) if has_security_info else 'unknown'
+        }
+        
+        return render(request, 'rooms/user_reservation_stats.html', context)
+    
+    except Exception as e:
+        logger.error(f"Error en user_reservation_stats: {str(e)}", exc_info=True)
+        messages.error(request, "Error al cargar las estadísticas.")
+        return redirect('rooms:reservation_list')
+
+
+# Vistas del Calendario
+
+@login_required
+@handle_exception
+def calendar_view(request):
+    """
+    Vista principal del calendario de reservas.
+    
+    Muestra un calendario interactivo con todas las reservas
+    del usuario y información de disponibilidad de salas.
+    """
+    try:
+        now = timezone.now()
+        today = now.date()
+          # Obtener todas las salas activas
+        rooms = Room.objects.filter(is_active=True).order_by('name')
+        
+        # Filtrar salas que el usuario puede reservar y obtener tipos únicos
+        user_reservable_rooms = []
+        available_room_types = set()
+        
+        for room in rooms:
+            if room.can_be_reserved_by(request.user):
+                user_reservable_rooms.append(room)
+                available_room_types.add(room.room_type)
+        
+        # Preparar opciones de filtro por tipo de sala
+        room_type_choices = dict(Room.ROOM_TYPE_CHOICES)
+        available_room_type_options = [
+            (room_type, room_type_choices.get(room_type, room_type))
+            for room_type in available_room_types
+        ]
+        
+        # Obtener reservas para el rango de visualización
+        # Por defecto, mostrar la semana actual
+        start_of_week = now - timedelta(days=now.weekday())
+        end_of_week = start_of_week + timedelta(days=6)
+        
+        # Reservas del usuario en la semana
+        user_reservations = request.user.reservations.filter(
+            start_time__date__gte=start_of_week.date(),
+            start_time__date__lte=end_of_week.date(),
+            status__in=['confirmed', 'in_progress', 'pending']
+        ).select_related('room').order_by('start_time')
+        
+        # Reservas de hoy de todas las salas (para mostrar ocupación general)
+        today_all_reservations = Reservation.objects.filter(
+            start_time__date=today,
+            status__in=['confirmed', 'in_progress']
+        ).select_related('room', 'user').order_by('start_time')
+        
+        # Estadísticas de ocupación
+        total_rooms = rooms.count()
+        occupied_now = rooms.filter(
+            reservations__status='in_progress',
+            reservations__start_time__lte=now,
+            reservations__end_time__gt=now
+        ).distinct().count()        # Salas disponibles ahora (solo las que el usuario puede reservar)
+        available_rooms_all = rooms.exclude(
+            reservations__status__in=['confirmed', 'in_progress'],
+            reservations__start_time__lte=now,
+            reservations__end_time__gt=now
+        )
+        
+        # Filtrar available_rooms por permisos del usuario
+        if request.user.is_authenticated:
+            # Solo administradores ven todas las salas disponibles
+            if request.user.is_superuser or (hasattr(request.user, 'is_admin') and request.user.is_admin()):
+                available_rooms = available_rooms_all
+            else:
+                # Para otros usuarios, solo mostrar salas que pueden reservar
+                user_reservable_room_ids = [room.id for room in user_reservable_rooms]
+                available_rooms = available_rooms_all.filter(id__in=user_reservable_room_ids)
+        else:
+            available_rooms = available_rooms_all
+        
+        context = {
+            'rooms': user_reservable_rooms,  # Solo salas que el usuario puede reservar
+            'all_rooms': rooms,  # Todas las salas para referencia
+            'room_type_options': available_room_type_options,
+            'user_reservations': user_reservations,
+            'today_all_reservations': today_all_reservations,
+            'today': today,
+            'total_rooms': total_rooms,
+            'occupied_now': occupied_now,
+            'available_rooms': available_rooms,
+            'occupation_percentage': round((occupied_now / total_rooms * 100) if total_rooms > 0 else 0),
+            'start_of_week': start_of_week.date(),
+            'end_of_week': end_of_week.date(),
+        }
+        
+        return render(request, 'rooms/calendar.html', context)
+        
+    except Exception as e:
+        logger.error(f"Error en calendar_view: {str(e)}", exc_info=True)
+        messages.error(request, "Error al cargar el calendario.")
+        return redirect('rooms:room_list')
+
+
+@login_required
+@handle_exception  
+def calendar_events_api(request):
+    """
+    API endpoint para obtener eventos del calendario en formato JSON.
+    
+    Retorna las reservas en formato compatible con FullCalendar.js
+    """
+    try:
+        # Obtener parámetros de fecha del request
+        start_date = request.GET.get('start')
+        end_date = request.GET.get('end')
+        
+        if start_date and end_date:
+            start_dt = datetime.strptime(start_date, '%Y-%m-%d').date()
+            end_dt = datetime.strptime(end_date, '%Y-%m-%d').date()
+        else:
+            # Por defecto, mostrar desde hoy hasta 30 días adelante
+            start_dt = timezone.now().date()
+            end_dt = start_dt + timedelta(days=30)
+        
+        # Filtros opcionales
+        room_id = request.GET.get('room_id')
+        show_all = request.GET.get('show_all', 'false').lower() == 'true'        # Determinar qué salas mostrar según el rol del usuario
+        if request.user.is_superuser or (hasattr(request.user, 'is_admin') and request.user.is_admin()):
+            # Los administradores pueden ver todas las salas
+            available_rooms = Room.objects.filter(is_active=True)
+            user_reservable_room_ids = list(available_rooms.values_list('id', flat=True))
+        else:
+            # Usuarios normales solo ven salas que pueden reservar
+            available_rooms = Room.objects.filter(is_active=True)
+            user_reservable_room_ids = [
+                room.id for room in available_rooms 
+                if room.can_be_reserved_by(request.user)
+            ]
+        
+        # Construir query base - filtrar por salas según permisos
+        reservations_query = Reservation.objects.filter(
+            start_time__date__gte=start_dt,
+            start_time__date__lte=end_dt,
+            status__in=['confirmed', 'in_progress', 'pending'],
+            room_id__in=user_reservable_room_ids
+        ).select_related('room', 'user')
+        
+        # Filtrar por sala si se especifica (y si el usuario puede verla)
+        if room_id:
+            if int(room_id) in user_reservable_room_ids:
+                reservations_query = reservations_query.filter(room_id=room_id)
+            else:
+                # Si el usuario no puede ver esta sala, no mostrar nada
+                reservations_query = reservations_query.none()
+        
+        # Si no es admin y no se especifica show_all, mostrar solo las del usuario
+        if not show_all and not request.user.is_staff:
+            reservations_query = reservations_query.filter(user=request.user)
+        
+        # Construir eventos para FullCalendar
+        events = []
+        for reservation in reservations_query:
+            # Determinar color según estado
+            color_map = {
+                'confirmed': '#28a745',    # Verde
+                'in_progress': '#dc3545',  # Rojo
+                'pending': '#ffc107',      # Amarillo
+            }
+            
+            event = {
+                'id': reservation.id,
+                'title': f"{reservation.room.name}",
+                'start': reservation.start_time.isoformat(),
+                'end': reservation.end_time.isoformat(),
+                'backgroundColor': color_map.get(reservation.status, '#6c757d'),
+                'borderColor': color_map.get(reservation.status, '#6c757d'),                'textColor': '#ffffff',
+                'extendedProps': {
+                    'status': reservation.status,
+                    'room_id': reservation.room.id,
+                    'room_name': reservation.room.name,
+                    'user_name': reservation.user.get_full_name() or reservation.user.username,
+                    'purpose': reservation.purpose,
+                    'attendees': reservation.attendees_count,
+                    'can_edit': reservation.user == request.user or request.user.is_staff,
+                }
+            }
+            
+            # Agregar información del usuario si es admin o si es el dueño
+            if request.user.is_staff or reservation.user == request.user:
+                event['title'] += f" - {reservation.user.get_full_name() or reservation.user.username}"
+            
+            events.append(event)
+        
+        return JsonResponse(events, safe=False)
+        
+    except Exception as e:
+        logger.error(f"Error en calendar_events_api: {str(e)}", exc_info=True)
+        return JsonResponse({'error': 'Error al cargar eventos'}, status=500)
+
+
+def room_reviews(request, room_id):
+    """Vista para mostrar todas las reseñas de una sala específica."""
+    room = get_object_or_404(Room, id=room_id)
+    
+    # Obtener todas las reseñas de la sala ordenadas por fecha
+    reviews = Review.objects.filter(
+        reservation__room=room
+    ).select_related(
+        'reservation__user'
+    ).order_by('-created_at')
+    
+    # Obtener estadísticas de reseñas
+    total_reviews = reviews.count()
+    
+    # Cálculo de promedios
+    if total_reviews > 0:
+        from django.db.models import Avg
+        
+        avg_rating = reviews.aggregate(Avg('rating'))['rating__avg'] or 0
+        avg_cleanliness = reviews.aggregate(Avg('cleanliness_rating'))['cleanliness_rating__avg'] or 0
+        avg_equipment = reviews.aggregate(Avg('equipment_rating'))['equipment_rating__avg'] or 0
+        avg_comfort = reviews.aggregate(Avg('comfort_rating'))['comfort_rating__avg'] or 0
+        
+        # Distribución de calificaciones
+        rating_distribution = {}
+        for i in range(1, 6):
+            rating_distribution[i] = reviews.filter(rating=i).count()
+        
+        # Porcentaje por tipo de comentario
+        comment_types = {}
+        for choice in Review.COMMENT_TYPE_CHOICES:
+            count = reviews.filter(comment_type=choice[0]).count()
+            if total_reviews > 0:
+                comment_types[choice[1]] = (count, round(count * 100 / total_reviews, 1))
+            else:
+                comment_types[choice[1]] = (0, 0)
+    else:
+        avg_rating = avg_cleanliness = avg_equipment = avg_comfort = 0
+        rating_distribution = {i: 0 for i in range(1, 6)}
+        comment_types = {choice[1]: (0, 0) for choice in Review.COMMENT_TYPE_CHOICES}
+    
+    # Paginación
+    from django.core.paginator import Paginator
+    paginator = Paginator(reviews, 10)  # 10 reseñas por página
+    page_number = request.GET.get('page')
+    page_obj = paginator.get_page(page_number)
+    
+    context = {
+        'room': room,
+        'reviews': page_obj,
+        'total_reviews': total_reviews,
+        'avg_rating': round(avg_rating, 1),
+        'avg_cleanliness': round(avg_cleanliness, 1),
+        'avg_equipment': round(avg_equipment, 1),
+        'avg_comfort': round(avg_comfort, 1),
+        'rating_distribution': rating_distribution,
+        'comment_types': comment_types,
+        'page_obj': page_obj,
+    }
+    
+    return render(request, 'rooms/room_reviews.html', context)
