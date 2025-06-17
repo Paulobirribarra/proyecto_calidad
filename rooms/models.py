@@ -584,8 +584,7 @@ class Review(models.Model):
         default='neutral',
         help_text="Tipo de comentario para categorización"
     )
-    
-    # Metadatos
+      # Metadatos
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
     
@@ -596,7 +595,9 @@ class Review(models.Model):
     
     def __str__(self):
         """Representación string de la reseña."""
-        return f"Reseña de {self.reservation.room.name} por {self.reservation.user.username} ({self.rating}★)"
+        if self.reservation:
+            return f"Reseña de {self.reservation.room.name} por {self.reservation.user.username} ({self.rating}★)"
+        return f"Reseña (sin reserva) - Rating: {self.rating}★"
     
     def clean(self):
         """Validaciones del modelo."""
