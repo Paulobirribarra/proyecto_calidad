@@ -26,14 +26,50 @@
         </div>
     </div>    <div class="row">        <!-- Room Details -->
         <div class="col-lg-8 mb-4" id="room-details">
-            <div class="card">
-                <!-- Room Image Placeholder -->
-                <div class="card-img-top bg-light d-flex align-items-center justify-content-center" 
-                     style="height: 300px;"
+            <div class="card">                <!-- Room Image Placeholder -->
+                <div class="card-img-top position-relative overflow-hidden d-flex align-items-center justify-content-center" 
+                     style="height: 300px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);"
                      role="img" 
                      aria-label="Imagen representativa de la sala {{ room.name }}">
-                    <i class="fas fa-building fa-4x text-muted" aria-hidden="true"></i>
+                    
+                    <!-- Glassmorphism card -->
+                    <div class="text-center p-4 rounded-4 shadow-lg position-relative" 
+                         style="backdrop-filter: blur(10px); background: rgba(255, 255, 255, 0.15); border: 1px solid rgba(255, 255, 255, 0.2); box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.37);">
+                        
+                        <div class="d-inline-flex align-items-center justify-content-center rounded-circle mb-3" 
+                             style="width: 70px; height: 70px; background: rgba(255, 255, 255, 0.2); backdrop-filter: blur(10px);">
+                            <i class="fas fa-building text-white" style="font-size: 2rem;" aria-hidden="true"></i>
+                        </div>
+                        
+                        <h3 class="h4 fw-bold text-white mb-2">{{ room.name }}</h3>
+                        <p class="text-white-50 mb-2">{{ room.get_room_type_display }}</p>
+                        
+                        <div class="d-flex align-items-center justify-content-center text-white-50 small">
+                            <span class="d-flex align-items-center me-3">
+                                <i class="fas fa-users me-2" aria-hidden="true"></i>
+                                {{ room.capacity }}
+                            </span>
+                            <span class="d-flex align-items-center">
+                                <i class="fas fa-map-marker-alt me-2" aria-hidden="true"></i>
+                                {{ room.location|truncatechars:15 }}
+                            </span>
+                        </div>
+                    </div>
+                    
+                    <!-- Elementos decorativos flotantes -->
+                    <div class="position-absolute" 
+                         style="top: 30px; right: 30px; width: 20px; height: 20px; background: rgba(255, 255, 255, 0.3); border-radius: 50%; animation: float 3s ease-in-out infinite;"></div>
+                    <div class="position-absolute" 
+                         style="bottom: 40px; left: 40px; width: 15px; height: 15px; background: rgba(255, 255, 255, 0.2); border-radius: 50%; animation: float 4s ease-in-out infinite reverse;"></div>
                 </div>
+                
+                <!-- CSS para animaciones -->
+                <style>
+                @keyframes float {
+                    0%, 100% { transform: translateY(0px); }
+                    50% { transform: translateY(-10px); }
+                }
+                </style>
                 
                 <div class="card-body">
                     <div class="d-flex justify-content-between align-items-start mb-3">
